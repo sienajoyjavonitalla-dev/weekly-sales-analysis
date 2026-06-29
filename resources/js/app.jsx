@@ -16,14 +16,42 @@ function App() {
   const [activeTab, setActiveTab] = useState('upload');
   const [batchId, setBatchId] = useState('');
   const [notice, setNotice] = useState(null);
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const showNotice = useCallback((type, message) => {
     setNotice({ type, message });
   }, []);
 
+  useEffect(() => {
+    axios
+      .get('/api/me')
+      .then((response) => setUser(response.data.data))
+      .catch(() => setUser(null))
+      .finally(() => setAuthLoading(false));
+  }, []);
+
+  async function handleLogout() {
+    try {
+      await axios.post('/api/logout');
+      setUser(null);
+      setNotice(null);
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to sign out.'));
+    }
+  }
+
+  if (authLoading) {
+    return <div className="auth-loading">Loading...</div>;
+  }
+
+  if (!user) {
+    return <LoginScreen onLogin={setUser} />;
+  }
+
   return (
     <main className="app-shell">
-      <AppHeader batchId={batchId} setBatchId={setBatchId} />
+      <AppHeader batchId={batchId} setBatchId={setBatchId} user={user} onLogout={handleLogout} />
 
       {notice ? (
         <div className={`notice notice-${notice.type}`} role="status">
@@ -47,7 +75,9 @@ function App() {
         ))}
       </nav>
 
-      {activeTab === 'upload' ? <UploadScreen /> : null}
+      {activeTab === 'upload' ? (
+        <UploadScreen batchId={batchId} setBatchId={setBatchId} showNotice={showNotice} />
+      ) : null}
       {activeTab === 'rules' ? <MappingRulesScreen showNotice={showNotice} /> : null}
       {activeTab === 'review' ? (
         <ReviewRowsScreen batchId={batchId} showNotice={showNotice} />
@@ -60,7 +90,67 @@ function App() {
   );
 }
 
-function AppHeader({ batchId, setBatchId }) {
+function LoginScreen({ onLogin }) {
+  const [form, setForm] = useState({
+    email: 'sjavonitalla@wagnermeters.com',
+    password: '',
+  });
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submitLogin(event) {
+    event.preventDefault();
+    setSubmitting(true);
+    setError('');
+
+    try {
+      const response = await axios.post('/api/login', form);
+      onLogin(response.data.data);
+    } catch (loginError) {
+      setError(messageFromError(loginError, 'Please check your email and password.'));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <main className="login-page">
+      <section className="login-card">
+        <div className="login-brand">
+          <img className="login-logo" src="/images/white-logo.png" alt="Wagner Meters" />
+        </div>
+        {error ? <div className="login-error">{error}</div> : null}
+        <form className="login-form" onSubmit={submitLogin}>
+          <label>
+            <span className="login-label-text">Email <span>*</span></span>
+            <input
+              autoComplete="email"
+              required
+              type="email"
+              value={form.email}
+              onChange={(event) => setForm({ ...form, email: event.target.value })}
+            />
+          </label>
+          <label>
+            <span className="login-label-text">Password <span>*</span></span>
+            <input
+              autoComplete="current-password"
+              required
+              type="password"
+              value={form.password}
+              onChange={(event) => setForm({ ...form, password: event.target.value })}
+            />
+          </label>
+          <button className="login-button" disabled={submitting} type="submit">
+            {submitting ? 'Signing in...' : 'Sign in'}
+          </button>
+        </form>
+      </section>
+    </main>
+  );
+}
+
+function AppHeader({ batchId, setBatchId, user, onLogout }) {
   return (
     <section className="hero-card">
       <div>
@@ -71,29 +161,82 @@ function AppHeader({ batchId, setBatchId }) {
         </p>
       </div>
 
-      <label className="batch-card">
-        <span>Active Import Batch ID</span>
-        <input
-          min="1"
-          placeholder="Example: 1"
-          type="number"
-          value={batchId}
-          onChange={(event) => setBatchId(event.target.value)}
-        />
-      </label>
+      <div className="header-actions">
+        <div className="signed-in-card">
+          <span>Signed in as</span>
+          <strong>{[user.first_name, user.last_name].filter(Boolean).join(' ') || user.name}</strong>
+          <button className="link-button" type="button" onClick={onLogout}>
+            Sign out
+          </button>
+        </div>
+        <label className="batch-card">
+          <span>Active Import Batch ID</span>
+          <input
+            min="1"
+            placeholder="Example: 1"
+            type="number"
+            value={batchId}
+            onChange={(event) => setBatchId(event.target.value)}
+          />
+        </label>
+      </div>
     </section>
   );
 }
 
-function UploadScreen() {
+function UploadScreen({ batchId, setBatchId, showNotice }) {
+  const [selectedFiles, setSelectedFiles] = useState({});
+  const [uploadMessage, setUploadMessage] = useState('');
+  const [uploading, setUploading] = useState(false);
   const workbookTypes = [
-    'Sales Analysis',
-    'Income Statement',
-    'Total Sales Report',
-    'Weekly Meter Report',
-    'Open Orders',
-    'PTD Orders',
+    { key: 'sales_analysis', label: 'Sales Analysis' },
+    { key: 'income_statement', label: 'Income Statement' },
+    { key: 'total_sales_report', label: 'Total Sales Report' },
+    { key: 'weekly_meter_report', label: 'Weekly Meter Report' },
+    { key: 'open_orders', label: 'Open Orders' },
+    { key: 'ptd_orders', label: 'PTD Orders' },
   ];
+  const hasFiles = Object.values(selectedFiles).some(Boolean);
+
+  async function handleUploadClick() {
+    if (!hasFiles) {
+      setUploadMessage('Choose at least one workbook before importing.');
+      return;
+    }
+
+    const formData = new FormData();
+
+    Object.entries(selectedFiles).forEach(([type, file]) => {
+      if (file) {
+        formData.append(type, file);
+      }
+    });
+
+    if (batchId) {
+      formData.append('import_batch_id', batchId);
+    }
+
+    setUploading(true);
+    setUploadMessage('');
+
+    try {
+      const response = await axios.post('/api/workbook-imports', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      const result = response.data.data;
+      const nextBatchId = String(result.import_batch.id);
+
+      setBatchId(nextBatchId);
+      setUploadMessage(`Imported selected files into batch #${nextBatchId}.`);
+      showNotice('success', `Imported ${Object.keys(result.summary).length} workbook type(s).`);
+    } catch (error) {
+      setUploadMessage(messageFromError(error, 'Unable to upload and import the selected files.'));
+    } finally {
+      setUploading(false);
+    }
+  }
 
   return (
     <section className="panel-grid">
@@ -103,19 +246,34 @@ function UploadScreen() {
             <p className="eyebrow">Step 1</p>
             <h2>Upload Weekly Workbooks</h2>
           </div>
-          <span className="status-pill status-warning">Backend upload endpoint pending</span>
+          <span className="status-pill status-success">Partial uploads ready</span>
         </div>
         <p>
-          The parser and workbook validation command are ready. Persisted browser uploads will be wired when
-          the import-storage endpoint is added; until then, validate files from the terminal.
+          Choose one file, several files, or the full weekly set. The app will create a new batch automatically
+          unless you enter an existing Active Import Batch ID above.
         </p>
+        {uploadMessage ? <div className="upload-message">{uploadMessage}</div> : null}
         <div className="file-grid">
           {workbookTypes.map((type) => (
-            <label className="file-card" key={type}>
-              <span>{type}</span>
-              <input disabled type="file" />
+            <label className="file-card" key={type.key}>
+              <span>{type.label}</span>
+              <input
+                accept=".xlsx"
+                type="file"
+                onChange={(event) => {
+                  setSelectedFiles({
+                    ...selectedFiles,
+                    [type.key]: event.target.files?.[0] ?? null,
+                  });
+                }}
+              />
             </label>
           ))}
+        </div>
+        <div className="upload-actions">
+          <button className="primary-button" disabled={uploading} type="button" onClick={handleUploadClick}>
+            {uploading ? 'Importing...' : 'Upload / Import Selected Files'}
+          </button>
         </div>
       </article>
     </section>
@@ -282,7 +440,197 @@ function MappingRulesScreen({ showNotice }) {
           </button>
         </form>
       </article>
+
+      <CategoryManager categories={categories} loadRules={loadRules} showNotice={showNotice} />
     </section>
+  );
+}
+
+function CategoryManager({ categories, loadRules, showNotice }) {
+  const emptyForm = {
+    name: '',
+    sales_analysis_bucket: 'rhp',
+    total_sales_row_label: '',
+    weekly_meter_row_label: '',
+    sort_order: 100,
+    is_active: true,
+  };
+  const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState(null);
+
+  function editCategory(category) {
+    setEditingId(category.id);
+    setForm({
+      name: category.name ?? '',
+      sales_analysis_bucket: category.sales_analysis_bucket ?? '',
+      total_sales_row_label: category.total_sales_row_label ?? '',
+      weekly_meter_row_label: category.weekly_meter_row_label ?? '',
+      sort_order: category.sort_order ?? 100,
+      is_active: Boolean(category.is_active),
+    });
+  }
+
+  function resetCategoryForm() {
+    setEditingId(null);
+    setForm(emptyForm);
+  }
+
+  async function submitCategory(event) {
+    event.preventDefault();
+
+    const payload = {
+      ...form,
+      sort_order: Number(form.sort_order),
+      sales_analysis_bucket: form.sales_analysis_bucket || null,
+      total_sales_row_label: form.total_sales_row_label || null,
+      weekly_meter_row_label: form.weekly_meter_row_label || null,
+    };
+
+    try {
+      if (editingId) {
+        await axios.patch(`/api/product-categories/${editingId}`, payload);
+        showNotice('success', 'Category updated.');
+      } else {
+        await axios.post('/api/product-categories', payload);
+        showNotice('success', 'Category created.');
+      }
+
+      resetCategoryForm();
+      await loadRules();
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to save category.'));
+    }
+  }
+
+  async function deleteCategory(category) {
+    if (!window.confirm(`Delete category "${category.name}"?`)) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/product-categories/${category.id}`);
+      showNotice('success', 'Category deleted.');
+      await loadRules();
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to delete category.'));
+    }
+  }
+
+  return (
+    <article className="panel panel-span">
+      <div className="section-heading">
+        <div>
+          <p className="eyebrow">Categories</p>
+          <h2>Category CRUD</h2>
+        </div>
+        {editingId ? (
+          <button className="secondary-button" type="button" onClick={resetCategoryForm}>
+            Cancel Edit
+          </button>
+        ) : null}
+      </div>
+
+      <form className="category-form" onSubmit={submitCategory}>
+        <label>
+          Name
+          <input
+            required
+            value={form.name}
+            onChange={(event) => setForm({ ...form, name: event.target.value })}
+          />
+        </label>
+        <label>
+          Bucket
+          <select
+            value={form.sales_analysis_bucket}
+            onChange={(event) => setForm({ ...form, sales_analysis_bucket: event.target.value })}
+          >
+            <option value="">None</option>
+            <option value="rhp">RHP</option>
+            <option value="parts_tsd">Parts & TSD</option>
+            <option value="raw">Raw</option>
+          </select>
+        </label>
+        <label>
+          Total Sales Label
+          <input
+            value={form.total_sales_row_label}
+            onChange={(event) => setForm({ ...form, total_sales_row_label: event.target.value })}
+          />
+        </label>
+        <label>
+          Weekly Meter Label
+          <input
+            value={form.weekly_meter_row_label}
+            onChange={(event) => setForm({ ...form, weekly_meter_row_label: event.target.value })}
+          />
+        </label>
+        <label>
+          Sort Order
+          <input
+            min="0"
+            type="number"
+            value={form.sort_order}
+            onChange={(event) => setForm({ ...form, sort_order: event.target.value })}
+          />
+        </label>
+        <label className="checkbox-label">
+          <input
+            checked={form.is_active}
+            type="checkbox"
+            onChange={(event) => setForm({ ...form, is_active: event.target.checked })}
+          />
+          Active
+        </label>
+        <button className="primary-button" type="submit">
+          {editingId ? 'Update Category' : 'Create Category'}
+        </button>
+      </form>
+
+      <CategoryTable categories={categories} deleteCategory={deleteCategory} editCategory={editCategory} />
+    </article>
+  );
+}
+
+function CategoryTable({ categories, editCategory, deleteCategory }) {
+  if (categories.length === 0) {
+    return <p>No categories found.</p>;
+  }
+
+  return (
+    <div className="table-wrap table-section">
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Bucket</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {categories.map((category) => (
+            <tr key={category.id}>
+              <td>{category.code}</td>
+              <td>{category.name}</td>
+              <td>{category.sales_analysis_bucket ?? 'None'}</td>
+              <td>{category.is_active ? 'Active' : 'Inactive'}</td>
+              <td>
+                <div className="button-row">
+                  <button className="secondary-button" type="button" onClick={() => editCategory(category)}>
+                    Edit
+                  </button>
+                  <button className="danger-button" type="button" onClick={() => deleteCategory(category)}>
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

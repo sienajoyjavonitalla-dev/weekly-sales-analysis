@@ -17,10 +17,11 @@ class UploadWeeklyWorkbookSetRequest extends FormRequest
     public function rules(): array
     {
         $maxKilobytes = (int) config('weekly-analysis.uploads.max_file_size_kb');
-        $fileRule = ['required', 'file', 'mimes:xlsx', "max:{$maxKilobytes}"];
+        $fileRule = ['nullable', 'file', 'mimes:xlsx', "max:{$maxKilobytes}"];
 
         return [
-            'week_ending' => ['required', 'date'],
+            'import_batch_id' => ['nullable', 'integer', 'exists:import_batches,id'],
+            'week_ending' => ['nullable', 'date'],
             'sales_analysis' => $fileRule,
             'income_statement' => $fileRule,
             'total_sales_report' => $fileRule,
@@ -28,5 +29,17 @@ class UploadWeeklyWorkbookSetRequest extends FormRequest
             'open_orders' => $fileRule,
             'ptd_orders' => $fileRule,
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            $hasWorkbook = collect(config('weekly-analysis.uploads.required_file_types'))
+                ->contains(fn (string $type): bool => $this->hasFile($type));
+
+            if (! $hasWorkbook) {
+                $validator->errors()->add('workbooks', 'Upload at least one workbook.');
+            }
+        });
     }
 }

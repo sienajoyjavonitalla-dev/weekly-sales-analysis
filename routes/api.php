@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BatchClassificationController;
 use App\Http\Controllers\Api\GeneratedReportController;
 use App\Http\Controllers\Api\MappingRuleController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\Api\ProductCategoryController;
 use App\Http\Controllers\Api\ReconciliationController;
 use App\Http\Controllers\Api\ReportTotalController;
 use App\Http\Controllers\Api\UnmatchedSalesRowController;
+use App\Http\Controllers\Api\WorkbookImportController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
 
@@ -16,8 +18,18 @@ Route::get('/health', static fn (): JsonResponse => response()->json([
     'service' => config('app.name'),
 ]));
 
-Route::middleware(['auth', 'throttle:60,1'])->group(function (): void {
-    Route::get('/product-categories', [ProductCategoryController::class, 'index']);
+Route::middleware(['web'])->group(function (): void {
+    Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+});
+
+Route::middleware(['web', 'auth', 'throttle:60,1'])->group(function (): void {
+    Route::post('/workbook-imports', WorkbookImportController::class);
+
+    Route::apiResource('product-categories', ProductCategoryController::class)
+        ->parameters(['product-categories' => 'productCategory'])
+        ->except(['show']);
 
     Route::apiResource('mapping-rules', MappingRuleController::class)
         ->parameters(['mapping-rules' => 'mappingRule'])

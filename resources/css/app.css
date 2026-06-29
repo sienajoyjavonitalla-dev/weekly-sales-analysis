@@ -33,6 +33,94 @@ textarea {
   padding: 56px 0;
 }
 
+.auth-loading,
+.login-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  background: #11161f;
+  color: #dbe8ff;
+}
+
+.login-card {
+  width: min(360px, calc(100% - 32px));
+  padding: 38px 40px 32px;
+  border-radius: 12px;
+  background: #1d222c;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+}
+
+.login-brand {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.login-logo {
+  display: block;
+  width: 150px;
+  height: auto;
+  object-fit: contain;
+}
+
+.login-error {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border: 1px solid #7f1d1d;
+  border-radius: 8px;
+  background: #451a1a;
+  color: #fecaca;
+  font-size: 0.86rem;
+}
+
+.login-form {
+  display: grid;
+  gap: 20px;
+}
+
+.login-form label {
+  display: grid;
+  gap: 10px;
+  color: #c7dcff;
+  font-size: 0.9rem;
+}
+
+.login-label-text {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.login-label-text span {
+  color: #ff6b6b;
+}
+
+.login-form input {
+  border: 0;
+  border-radius: 6px;
+  background: #303b52;
+  color: #ffffff;
+  min-height: 46px;
+  padding: 12px 14px;
+}
+
+.login-button {
+  min-height: 40px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: #625ff4;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.login-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
 .hero-card,
 .panel {
   border: 1px solid #dfe5f1;
@@ -113,6 +201,7 @@ textarea {
 }
 
 .batch-card,
+.signed-in-card,
 .file-card,
 .stacked-form label,
 .review-controls label {
@@ -128,6 +217,22 @@ textarea {
   border: 1px solid #dfe5f1;
   border-radius: 18px;
   background: #f8fafc;
+}
+
+.header-actions {
+  display: grid;
+  gap: 14px;
+}
+
+.signed-in-card {
+  padding: 16px 20px;
+  border: 1px solid #dfe5f1;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.signed-in-card strong {
+  color: #111827;
 }
 
 input,
@@ -219,6 +324,20 @@ input:disabled {
   color: #315ea8;
 }
 
+.danger-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+  background: #fff1f2;
+  color: #be123c;
+  cursor: pointer;
+  font-weight: 800;
+}
+
 .primary-button:disabled,
 .secondary-button:disabled {
   cursor: not-allowed;
@@ -261,6 +380,11 @@ input:disabled {
   color: #92400e;
 }
 
+.status-success {
+  background: #dcfce7;
+  color: #166534;
+}
+
 .file-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -275,9 +399,50 @@ input:disabled {
   background: #f8fafc;
 }
 
+.upload-message {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid #fde68a;
+  border-radius: 14px;
+  background: #fffbeb;
+  color: #92400e;
+  font-weight: 700;
+}
+
+.upload-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
 .stacked-form {
   display: grid;
   gap: 16px;
+}
+
+.category-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.category-form label,
+.checkbox-label {
+  display: grid;
+  gap: 8px;
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.checkbox-label {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  align-self: end;
+}
+
+.checkbox-label input {
+  width: auto;
 }
 
 .form-row,
@@ -293,6 +458,10 @@ input:disabled {
 
 .table-wrap {
   overflow-x: auto;
+}
+
+.table-section {
+  margin-top: 22px;
 }
 
 table {
@@ -370,6 +539,7 @@ th {
 
   .panel-grid,
   .file-grid,
+  .category-form,
   .form-row,
   .summary-grid {
     grid-template-columns: 1fr;

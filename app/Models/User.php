@@ -12,10 +12,15 @@ class User extends Authenticatable
     use Notifiable;
 
     protected $fillable = [
-        'name',
+        'first_name',
+        'last_name',
         'email',
         'password',
         'role',
+    ];
+
+    protected $appends = [
+        'name',
     ];
 
     protected $hidden = [
@@ -34,6 +39,11 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    public function getNameAttribute(): string
+    {
+        return trim($this->first_name.' '.$this->last_name);
     }
 
     public function isAnalyst(): bool
