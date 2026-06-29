@@ -213,12 +213,6 @@ function App() {
         </aside>
 
         <section className="workspace">
-          <div className="workspace-heading">
-            <p className="eyebrow">Weekly Sales Automation</p>
-            <h1>{workflowTabs.find((tab) => tab.id === activeTab)?.label}</h1>
-            <p>Review mappings, reconcile totals, and generate Excel outputs from one weekly workflow.</p>
-          </div>
-
           {activeTab === 'upload' ? (
             <UploadScreen batchId={batchId} setBatchId={setBatchId} showNotice={showNotice} />
           ) : null}
