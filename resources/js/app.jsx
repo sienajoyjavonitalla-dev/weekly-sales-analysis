@@ -5,11 +5,11 @@ import { createRoot } from 'react-dom/client';
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 const tabs = [
-  { id: 'upload', label: 'Upload' },
-  { id: 'rules', label: 'Mapping Rules' },
-  { id: 'review', label: 'Review Rows' },
-  { id: 'reconcile', label: 'Reconcile' },
-  { id: 'exports', label: 'Exports' },
+  { id: 'upload', label: 'Upload', icon: 'UP' },
+  { id: 'rules', label: 'Mapping Rules', icon: 'MR' },
+  { id: 'review', label: 'Review Rows', icon: 'RR' },
+  { id: 'reconcile', label: 'Reconcile', icon: 'RC' },
+  { id: 'exports', label: 'Exports', icon: 'EX' },
 ];
 
 function App() {
@@ -53,39 +53,53 @@ function App() {
     <main className="app-shell">
       <AppHeader batchId={batchId} setBatchId={setBatchId} user={user} onLogout={handleLogout} />
 
-      {notice ? (
-        <div className={`notice notice-${notice.type}`} role="status">
-          {notice.message}
-          <button className="link-button" type="button" onClick={() => setNotice(null)}>
-            Dismiss
-          </button>
-        </div>
-      ) : null}
+      <div className="app-frame">
+        <aside className="sidebar" aria-label="Primary navigation">
+          <div className="sidebar-title">Workflow</div>
+          <nav className="sidebar-nav" aria-label="Weekly analysis workflow">
+            {tabs.map((tab) => (
+              <button
+                className={activeTab === tab.id ? 'sidebar-link sidebar-link-active' : 'sidebar-link'}
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <span className="sidebar-link-icon" aria-hidden="true">{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </nav>
+        </aside>
 
-      <nav className="tab-list" aria-label="Weekly analysis workflow">
-        {tabs.map((tab) => (
-          <button
-            className={activeTab === tab.id ? 'tab-button tab-button-active' : 'tab-button'}
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </nav>
+        <section className="workspace">
+          {notice ? (
+            <div className={`notice notice-${notice.type}`} role="status">
+              {notice.message}
+              <button className="link-button" type="button" onClick={() => setNotice(null)}>
+                Dismiss
+              </button>
+            </div>
+          ) : null}
 
-      {activeTab === 'upload' ? (
-        <UploadScreen batchId={batchId} setBatchId={setBatchId} showNotice={showNotice} />
-      ) : null}
-      {activeTab === 'rules' ? <MappingRulesScreen showNotice={showNotice} /> : null}
-      {activeTab === 'review' ? (
-        <ReviewRowsScreen batchId={batchId} showNotice={showNotice} />
-      ) : null}
-      {activeTab === 'reconcile' ? (
-        <ReconciliationScreen batchId={batchId} showNotice={showNotice} />
-      ) : null}
-      {activeTab === 'exports' ? <ExportsScreen batchId={batchId} showNotice={showNotice} /> : null}
+          <div className="workspace-heading">
+            <p className="eyebrow">Weekly Sales Automation</p>
+            <h1>{tabs.find((tab) => tab.id === activeTab)?.label}</h1>
+            <p>Review mappings, reconcile totals, and generate Excel outputs from one weekly workflow.</p>
+          </div>
+
+          {activeTab === 'upload' ? (
+            <UploadScreen batchId={batchId} setBatchId={setBatchId} showNotice={showNotice} />
+          ) : null}
+          {activeTab === 'rules' ? <MappingRulesScreen showNotice={showNotice} /> : null}
+          {activeTab === 'review' ? (
+            <ReviewRowsScreen batchId={batchId} showNotice={showNotice} />
+          ) : null}
+          {activeTab === 'reconcile' ? (
+            <ReconciliationScreen batchId={batchId} showNotice={showNotice} />
+          ) : null}
+          {activeTab === 'exports' ? <ExportsScreen batchId={batchId} showNotice={showNotice} /> : null}
+        </section>
+      </div>
     </main>
   );
 }
@@ -151,36 +165,46 @@ function LoginScreen({ onLogin }) {
 }
 
 function AppHeader({ batchId, setBatchId, user, onLogout }) {
+  const userName = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.name;
+  const initials = userName
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
-    <section className="hero-card">
-      <div>
-        <p className="eyebrow">Weekly Sales Automation</p>
-        <h1>Sales analysis built for Traverse exports</h1>
-        <p className="hero-copy">
-          Review mappings, reconcile totals, and generate Excel outputs from one weekly workflow.
-        </p>
+    <header className="top-nav">
+      <div className="top-nav-left">
+        <button className="menu-button" type="button" aria-label="Open navigation">
+          <span />
+          <span />
+          <span />
+        </button>
+        <strong>Analysis Report</strong>
       </div>
 
-      <div className="header-actions">
-        <div className="signed-in-card">
-          <span>Signed in as</span>
-          <strong>{[user.first_name, user.last_name].filter(Boolean).join(' ') || user.name}</strong>
-          <button className="link-button" type="button" onClick={onLogout}>
-            Sign out
-          </button>
-        </div>
-        <label className="batch-card">
-          <span>Active Import Batch ID</span>
+      <img className="top-nav-logo" src="/images/white-logo.png" alt="Wagner Meters" />
+
+      <div className="top-nav-right">
+        <label className="batch-field">
+          <span>Batch ID</span>
           <input
             min="1"
-            placeholder="Example: 1"
+            placeholder="1"
             type="number"
             value={batchId}
             onChange={(event) => setBatchId(event.target.value)}
           />
         </label>
+        <div className="user-chip" title={userName}>
+          <span className="avatar">{initials}</span>
+          <button className="link-button" type="button" onClick={onLogout}>
+            Sign out
+          </button>
+        </div>
       </div>
-    </section>
+    </header>
   );
 }
 
