@@ -25,6 +25,7 @@ Route::middleware(['web'])->group(function (): void {
 });
 
 Route::middleware(['web', 'auth', 'throttle:60,1'])->group(function (): void {
+    Route::patch('/me/theme', [AuthController::class, 'updateTheme']);
     Route::post('/workbook-imports', WorkbookImportController::class);
 
     Route::apiResource('product-categories', ProductCategoryController::class)

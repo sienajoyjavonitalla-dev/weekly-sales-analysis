@@ -45,4 +45,17 @@ class AuthController
 
         return response()->json(['message' => 'Signed out.']);
     }
+
+    public function updateTheme(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'theme' => ['required', 'string', 'in:dark,light,midnight,ocean,ember'],
+        ]);
+
+        $request->user()->update($validated);
+
+        return response()->json([
+            'data' => $request->user()->refresh(),
+        ]);
+    }
 }

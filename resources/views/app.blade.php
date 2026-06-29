@@ -6,6 +6,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>{{ config('app.name', 'Weekly Sales Analysis') }}</title>
+        <link rel="icon" type="image/png" href="{{ asset('images/black-icon-logo.png') }}">
 
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.jsx'])

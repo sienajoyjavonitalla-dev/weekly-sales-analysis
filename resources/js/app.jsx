@@ -4,12 +4,92 @@ import { createRoot } from 'react-dom/client';
 
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
-const tabs = [
-  { id: 'upload', label: 'Upload', icon: 'UP' },
-  { id: 'rules', label: 'Mapping Rules', icon: 'MR' },
-  { id: 'review', label: 'Review Rows', icon: 'RR' },
-  { id: 'reconcile', label: 'Reconcile', icon: 'RC' },
-  { id: 'exports', label: 'Exports', icon: 'EX' },
+function UploadIcon() {
+  return (
+    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+      <path d="M12 15V4" />
+      <path d="M7 9l5-5 5 5" />
+      <path d="M5 15v4h14v-4" />
+    </svg>
+  );
+}
+
+function RulesIcon() {
+  return (
+    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+      <path d="M5 6h14" />
+      <path d="M5 12h10" />
+      <path d="M5 18h6" />
+      <path d="M17 14l2 2 3-4" />
+    </svg>
+  );
+}
+
+function ReviewIcon() {
+  return (
+    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+      <path d="M6 4h9l3 3v13H6z" />
+      <path d="M14 4v4h4" />
+      <path d="M9 12h6" />
+      <path d="M9 16h4" />
+    </svg>
+  );
+}
+
+function ReconcileIcon() {
+  return (
+    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+      <path d="M7 7h10" />
+      <path d="M17 7l-3-3" />
+      <path d="M17 7l-3 3" />
+      <path d="M17 17H7" />
+      <path d="M7 17l3-3" />
+      <path d="M7 17l3 3" />
+    </svg>
+  );
+}
+
+function ExportIcon() {
+  return (
+    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+      <path d="M6 4h9l3 3v13H6z" />
+      <path d="M14 4v4h4" />
+      <path d="M12 11v6" />
+      <path d="M9 14l3 3 3-3" />
+    </svg>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+      <path d="M12 8a4 4 0 100 8 4 4 0 000-8z" />
+      <path d="M4 12h2" />
+      <path d="M18 12h2" />
+      <path d="M12 4v2" />
+      <path d="M12 18v2" />
+      <path d="M6.3 6.3l1.4 1.4" />
+      <path d="M16.3 16.3l1.4 1.4" />
+      <path d="M17.7 6.3l-1.4 1.4" />
+      <path d="M7.7 16.3l-1.4 1.4" />
+    </svg>
+  );
+}
+
+const themes = [
+  { id: 'dark', label: 'Dark' },
+  { id: 'light', label: 'Light' },
+  { id: 'midnight', label: 'Midnight' },
+  { id: 'ocean', label: 'Ocean' },
+  { id: 'ember', label: 'Ember' },
+];
+
+const workflowTabs = [
+  { id: 'upload', label: 'Upload', icon: UploadIcon },
+  { id: 'rules', label: 'Mapping Rules', icon: RulesIcon },
+  { id: 'review', label: 'Review Rows', icon: ReviewIcon },
+  { id: 'reconcile', label: 'Reconcile', icon: ReconcileIcon },
+  { id: 'exports', label: 'Exports', icon: ExportIcon },
 ];
 
 function App() {
@@ -18,6 +98,8 @@ function App() {
   const [notice, setNotice] = useState(null);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const showNotice = useCallback((type, message) => {
     setNotice({ type, message });
@@ -31,6 +113,16 @@ function App() {
       .finally(() => setAuthLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (!notice) {
+      return undefined;
+    }
+
+    const timeout = window.setTimeout(() => setNotice(null), 3000);
+
+    return () => window.clearTimeout(timeout);
+  }, [notice]);
+
   async function handleLogout() {
     try {
       await axios.post('/api/logout');
@@ -38,6 +130,21 @@ function App() {
       setNotice(null);
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to sign out.'));
+    }
+  }
+
+  async function handleThemeChange(theme) {
+    const previousUser = user;
+
+    setUser({ ...user, theme });
+
+    try {
+      const response = await axios.patch('/api/me/theme', { theme });
+      setUser(response.data.data);
+      showNotice('success', 'Theme updated.');
+    } catch (error) {
+      setUser(previousUser);
+      showNotice('error', messageFromError(error, 'Unable to update theme.'));
     }
   }
 
@@ -50,40 +157,65 @@ function App() {
   }
 
   return (
-    <main className="app-shell">
-      <AppHeader batchId={batchId} setBatchId={setBatchId} user={user} onLogout={handleLogout} />
+    <main className={`app-shell theme-${user.theme ?? 'dark'}`}>
+      <AppHeader
+        batchId={batchId}
+        isSidebarCollapsed={isSidebarCollapsed}
+        setBatchId={setBatchId}
+        user={user}
+        onLogout={handleLogout}
+        onToggleSidebar={() => setIsSidebarCollapsed((current) => !current)}
+      />
 
-      <div className="app-frame">
-        <aside className="sidebar" aria-label="Primary navigation">
+      {notice ? <FloatingAlert notice={notice} onClose={() => setNotice(null)} /> : null}
+
+      <div className={isSidebarCollapsed ? 'app-frame app-frame-collapsed' : 'app-frame'}>
+        <aside className={isSidebarCollapsed ? 'sidebar sidebar-collapsed' : 'sidebar'} aria-label="Primary navigation">
           <div className="sidebar-title">Workflow</div>
           <nav className="sidebar-nav" aria-label="Weekly analysis workflow">
-            {tabs.map((tab) => (
+            {workflowTabs.map((tab) => {
+              const Icon = tab.icon;
+
+              return (
+                <button
+                  className={activeTab === tab.id ? 'sidebar-link sidebar-link-active' : 'sidebar-link'}
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setIsSettingsOpen(false);
+                  }}
+                >
+                  <span className="sidebar-link-icon" aria-hidden="true">
+                    <Icon />
+                  </span>
+                  <span className="sidebar-link-label">{tab.label}</span>
+                </button>
+              );
+            })}
+            <div className="settings-nav-item">
               <button
-                className={activeTab === tab.id ? 'sidebar-link sidebar-link-active' : 'sidebar-link'}
-                key={tab.id}
+                aria-expanded={isSettingsOpen}
+                className={isSettingsOpen ? 'sidebar-link sidebar-link-active' : 'sidebar-link'}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => setIsSettingsOpen((current) => !current)}
               >
-                <span className="sidebar-link-icon" aria-hidden="true">{tab.icon}</span>
-                <span>{tab.label}</span>
+                <span className="sidebar-link-icon" aria-hidden="true">
+                  <SettingsIcon />
+                </span>
+                <span className="sidebar-link-label">Settings</span>
               </button>
-            ))}
+              {isSettingsOpen ? (
+                <SettingsPopup selectedTheme={user.theme ?? 'dark'} onThemeChange={handleThemeChange} />
+              ) : null}
+            </div>
           </nav>
         </aside>
 
         <section className="workspace">
-          {notice ? (
-            <div className={`notice notice-${notice.type}`} role="status">
-              {notice.message}
-              <button className="link-button" type="button" onClick={() => setNotice(null)}>
-                Dismiss
-              </button>
-            </div>
-          ) : null}
-
           <div className="workspace-heading">
             <p className="eyebrow">Weekly Sales Automation</p>
-            <h1>{tabs.find((tab) => tab.id === activeTab)?.label}</h1>
+            <h1>{workflowTabs.find((tab) => tab.id === activeTab)?.label}</h1>
             <p>Review mappings, reconcile totals, and generate Excel outputs from one weekly workflow.</p>
           </div>
 
@@ -164,7 +296,18 @@ function LoginScreen({ onLogin }) {
   );
 }
 
-function AppHeader({ batchId, setBatchId, user, onLogout }) {
+function FloatingAlert({ notice, onClose }) {
+  return (
+    <div className={`notice notice-${notice.type}`} role="alert">
+      <span className="notice-message">{notice.message}</span>
+      <button className="notice-close" type="button" aria-label="Close alert" onClick={onClose}>
+        ×
+      </button>
+    </div>
+  );
+}
+
+function AppHeader({ batchId, isSidebarCollapsed, setBatchId, user, onLogout, onToggleSidebar }) {
   const userName = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.name;
   const initials = userName
     .split(' ')
@@ -176,7 +319,13 @@ function AppHeader({ batchId, setBatchId, user, onLogout }) {
   return (
     <header className="top-nav">
       <div className="top-nav-left">
-        <button className="menu-button" type="button" aria-label="Open navigation">
+        <button
+          className="menu-button"
+          type="button"
+          aria-label={isSidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}
+          aria-pressed={isSidebarCollapsed}
+          onClick={onToggleSidebar}
+        >
           <span />
           <span />
           <span />
@@ -305,10 +454,7 @@ function UploadScreen({ batchId, setBatchId, showNotice }) {
 }
 
 function MappingRulesScreen({ showNotice }) {
-  const [rules, setRules] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({
+  const emptyRuleForm = {
     name: '',
     product_category_id: '',
     source_type: 'sales_analysis',
@@ -318,7 +464,14 @@ function MappingRulesScreen({ showNotice }) {
     target_bucket: 'rhp',
     priority: 100,
     is_active: true,
-  });
+  };
+  const [rules, setRules] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedRule, setSelectedRule] = useState(null);
+  const [editForm, setEditForm] = useState(emptyRuleForm);
+  const [createForm, setCreateForm] = useState(emptyRuleForm);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const loadRules = useCallback(async () => {
     setLoading(true);
@@ -327,8 +480,17 @@ function MappingRulesScreen({ showNotice }) {
         axios.get('/api/mapping-rules'),
         axios.get('/api/product-categories'),
       ]);
-      setRules(rulesResponse.data.data ?? []);
+      const nextRules = rulesResponse.data.data ?? [];
+
+      setRules(nextRules);
       setCategories(categoriesResponse.data.data ?? []);
+      setSelectedRule((current) => {
+        if (!current) {
+          return null;
+        }
+
+        return nextRules.find((rule) => rule.id === current.id) ?? null;
+      });
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to load mapping rules.'));
     } finally {
@@ -340,19 +502,68 @@ function MappingRulesScreen({ showNotice }) {
     loadRules();
   }, [loadRules]);
 
-  async function submitRule(event) {
+  useEffect(() => {
+    if (selectedRule) {
+      setEditForm(ruleToForm(selectedRule));
+    }
+  }, [selectedRule]);
+
+  function rulePayload(form) {
+    return {
+      ...form,
+      product_category_id: form.product_category_id || null,
+      target_bucket: form.target_bucket || null,
+      priority: Number(form.priority),
+      is_active: Boolean(form.is_active),
+    };
+  }
+
+  async function submitCreateRule(event) {
     event.preventDefault();
+
     try {
-      await axios.post('/api/mapping-rules', {
-        ...form,
-        product_category_id: form.product_category_id || null,
-        priority: Number(form.priority),
-      });
+      const response = await axios.post('/api/mapping-rules', rulePayload(createForm));
+
       showNotice('success', 'Mapping rule created.');
-      setForm((current) => ({ ...current, name: '', pattern: '' }));
+      setCreateForm(emptyRuleForm);
+      setIsCreateOpen(false);
       await loadRules();
+      setSelectedRule(response.data.data);
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to create mapping rule.'));
+    }
+  }
+
+  async function submitEditRule(event) {
+    event.preventDefault();
+
+    if (!selectedRule) {
+      return;
+    }
+
+    try {
+      const response = await axios.patch(`/api/mapping-rules/${selectedRule.id}`, rulePayload(editForm));
+
+      showNotice('success', 'Mapping rule updated.');
+      await loadRules();
+      setSelectedRule(response.data.data);
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to update mapping rule.'));
+    }
+  }
+
+  async function deleteSelectedRule() {
+    if (!selectedRule || !window.confirm(`Delete rule "${selectedRule.name}"?`)) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/mapping-rules/${selectedRule.id}`);
+      showNotice('success', 'Mapping rule deleted.');
+      setSelectedRule(null);
+      await loadRules();
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to delete mapping rule.'));
     }
   }
 
@@ -364,109 +575,207 @@ function MappingRulesScreen({ showNotice }) {
             <p className="eyebrow">Rules</p>
             <h2>Configured Mapping Rules</h2>
           </div>
-          <button className="secondary-button" type="button" onClick={loadRules}>
-            Refresh
-          </button>
+          <div className="button-row">
+            <button className="secondary-button" type="button" onClick={loadRules}>
+              Refresh
+            </button>
+            <button className="primary-button" type="button" onClick={() => setIsCreateOpen(true)}>
+              Create Rule
+            </button>
+          </div>
         </div>
-        {loading ? <p>Loading rules...</p> : <RulesTable rules={rules} />}
+        {loading ? (
+          <p>Loading rules...</p>
+        ) : (
+          <RulesTable rules={rules} selectedRule={selectedRule} onSelectRule={setSelectedRule} />
+        )}
       </article>
 
       <article className="panel">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Create</p>
-            <h2>New Rule</h2>
+            <p className="eyebrow">Details</p>
+            <h2>{selectedRule ? 'Edit Mapping Rule' : 'Select a Rule'}</h2>
           </div>
         </div>
-        <form className="stacked-form" onSubmit={submitRule}>
-          <label>
-            Rule Name
-            <input
-              required
-              value={form.name}
-              onChange={(event) => setForm({ ...form, name: event.target.value })}
-            />
-          </label>
-          <label>
-            Category
-            <select
-              value={form.product_category_id}
-              onChange={(event) => setForm({ ...form, product_category_id: event.target.value })}
-            >
-              <option value="">No category</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="form-row">
-            <label>
-              Field
-              <select
-                value={form.match_field}
-                onChange={(event) => setForm({ ...form, match_field: event.target.value })}
-              >
-                {['item_id', 'description', 'customer_name', 'sales_rep_id', 'country'].map((field) => (
-                  <option key={field} value={field}>
-                    {field}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Operator
-              <select
-                value={form.match_operator}
-                onChange={(event) => setForm({ ...form, match_operator: event.target.value })}
-              >
-                {['exact', 'starts_with', 'ends_with', 'contains', 'regex'].map((operator) => (
-                  <option key={operator} value={operator}>
-                    {operator}
-                  </option>
-                ))}
-              </select>
-            </label>
+
+        {selectedRule ? (
+          <RuleForm
+            categories={categories}
+            form={editForm}
+            primaryLabel="Update Rule"
+            setForm={setEditForm}
+            onSubmit={submitEditRule}
+          >
+            <button className="danger-button" type="button" onClick={deleteSelectedRule}>
+              Delete Rule
+            </button>
+          </RuleForm>
+        ) : (
+          <div className="empty-state">
+            <strong>No mapping rule selected</strong>
+            <p>Click a mapping rule from the table on the left to view, edit, or delete it.</p>
           </div>
-          <label>
-            Pattern
-            <input
-              required
-              value={form.pattern}
-              onChange={(event) => setForm({ ...form, pattern: event.target.value })}
-            />
-          </label>
-          <div className="form-row">
-            <label>
-              Bucket
-              <select
-                value={form.target_bucket}
-                onChange={(event) => setForm({ ...form, target_bucket: event.target.value })}
-              >
-                <option value="rhp">RHP</option>
-                <option value="parts_tsd">Parts & TSD</option>
-                <option value="raw">Raw</option>
-              </select>
-            </label>
-            <label>
-              Priority
-              <input
-                min="1"
-                type="number"
-                value={form.priority}
-                onChange={(event) => setForm({ ...form, priority: event.target.value })}
-              />
-            </label>
-          </div>
-          <button className="primary-button" type="submit">
-            Create Rule
-          </button>
-        </form>
+        )}
       </article>
+
+      {isCreateOpen ? (
+        <Modal title="Create Mapping Rule" onClose={() => setIsCreateOpen(false)}>
+          <RuleForm
+            categories={categories}
+            form={createForm}
+            primaryLabel="Create Rule"
+            setForm={setCreateForm}
+            onSubmit={submitCreateRule}
+          />
+        </Modal>
+      ) : null}
 
       <CategoryManager categories={categories} loadRules={loadRules} showNotice={showNotice} />
     </section>
+  );
+}
+
+function ruleToForm(rule) {
+  return {
+    name: rule.name ?? '',
+    product_category_id: rule.product_category_id ? String(rule.product_category_id) : '',
+    source_type: rule.source_type ?? 'sales_analysis',
+    match_field: rule.match_field ?? 'item_id',
+    match_operator: rule.match_operator ?? 'starts_with',
+    pattern: rule.pattern ?? '',
+    target_bucket: rule.target_bucket ?? 'rhp',
+    priority: rule.priority ?? 100,
+    is_active: Boolean(rule.is_active),
+  };
+}
+
+function RuleForm({ categories, children, form, primaryLabel, setForm, onSubmit }) {
+  return (
+    <form className="stacked-form" onSubmit={onSubmit}>
+      <label>
+        Rule Name
+        <input
+          required
+          value={form.name}
+          onChange={(event) => setForm({ ...form, name: event.target.value })}
+        />
+      </label>
+      <label>
+        Category
+        <select
+          value={form.product_category_id}
+          onChange={(event) => setForm({ ...form, product_category_id: event.target.value })}
+        >
+          <option value="">No category</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Source Type
+        <input
+          required
+          value={form.source_type}
+          onChange={(event) => setForm({ ...form, source_type: event.target.value })}
+        />
+      </label>
+      <div className="rule-match-row">
+        <label>
+          Field
+          <select
+            value={form.match_field}
+            onChange={(event) => setForm({ ...form, match_field: event.target.value })}
+          >
+            {['item_id', 'description', 'customer_id', 'customer_name', 'invoice_number', 'sales_rep_id', 'country', 'bill_to_state'].map((field) => (
+              <option key={field} value={field}>
+                {field}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Operator
+          <select
+            value={form.match_operator}
+            onChange={(event) => setForm({ ...form, match_operator: event.target.value })}
+          >
+            {['exact', 'starts_with', 'ends_with', 'contains', 'regex'].map((operator) => (
+              <option key={operator} value={operator}>
+                {operator}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Pattern
+          <input
+            required
+            value={form.pattern}
+            onChange={(event) => setForm({ ...form, pattern: event.target.value })}
+          />
+        </label>
+      </div>
+      <div className="form-row">
+        <label>
+          Bucket
+          <select
+            value={form.target_bucket}
+            onChange={(event) => setForm({ ...form, target_bucket: event.target.value })}
+          >
+            <option value="">None</option>
+            <option value="rhp">RHP</option>
+            <option value="parts_tsd">Parts & TSD</option>
+            <option value="raw">Raw</option>
+          </select>
+        </label>
+        <label>
+          Priority
+          <input
+            min="1"
+            type="number"
+            value={form.priority}
+            onChange={(event) => setForm({ ...form, priority: event.target.value })}
+          />
+        </label>
+      </div>
+      <label className="checkbox-label">
+        <input
+          checked={form.is_active}
+          type="checkbox"
+          onChange={(event) => setForm({ ...form, is_active: event.target.checked })}
+        />
+        Active
+      </label>
+      <div className="form-actions">
+        <button className="primary-button" type="submit">
+          {primaryLabel}
+        </button>
+        {children}
+      </div>
+    </form>
+  );
+}
+
+function Modal({ children, title, onClose }) {
+  return (
+    <div className="modal-backdrop" role="presentation">
+      <section className="modal-card" role="dialog" aria-modal="true" aria-label={title}>
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Create</p>
+            <h2>{title}</h2>
+          </div>
+          <button className="secondary-button" type="button" onClick={onClose}>
+            Close
+          </button>
+        </div>
+        {children}
+      </section>
+    </div>
   );
 }
 
@@ -658,7 +967,7 @@ function CategoryTable({ categories, editCategory, deleteCategory }) {
   );
 }
 
-function RulesTable({ rules }) {
+function RulesTable({ rules, selectedRule, onSelectRule }) {
   if (rules.length === 0) {
     return <p>No mapping rules found.</p>;
   }
@@ -677,7 +986,11 @@ function RulesTable({ rules }) {
         </thead>
         <tbody>
           {rules.map((rule) => (
-            <tr key={rule.id}>
+            <tr
+              className={selectedRule?.id === rule.id ? 'clickable-row selected-row' : 'clickable-row'}
+              key={rule.id}
+              onClick={() => onSelectRule(rule)}
+            >
               <td>{rule.priority}</td>
               <td>{rule.name}</td>
               <td>
@@ -1033,6 +1346,29 @@ function ExportsScreen({ batchId, showNotice }) {
         <ReportsTable reports={reports} />
       </article>
     </section>
+  );
+}
+
+function SettingsPopup({ selectedTheme, onThemeChange }) {
+  return (
+    <div className="settings-popup">
+      <div className="settings-section">
+        <h3>Theme</h3>
+        <div className="theme-grid">
+          {themes.map((theme) => (
+            <button
+              className={selectedTheme === theme.id ? 'theme-card theme-card-active' : 'theme-card'}
+              key={theme.id}
+              type="button"
+              onClick={() => onThemeChange(theme.id)}
+            >
+              <span className={`theme-preview theme-preview-${theme.id}`} aria-hidden="true" />
+              <strong>{theme.label}</strong>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
