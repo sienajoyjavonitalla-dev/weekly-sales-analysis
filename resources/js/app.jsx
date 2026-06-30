@@ -25,6 +25,17 @@ function RulesIcon() {
   );
 }
 
+function CategoriesIcon() {
+  return (
+    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+      <path d="M5 5h6v6H5z" />
+      <path d="M13 5h6v6h-6z" />
+      <path d="M5 13h6v6H5z" />
+      <path d="M13 13h6v6h-6z" />
+    </svg>
+  );
+}
+
 function ReviewIcon() {
   return (
     <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
@@ -123,6 +134,7 @@ const themes = [
 const workflowTabs = [
   { id: 'upload', label: 'Upload', icon: UploadIcon },
   { id: 'rules', label: 'Mapping Rules', icon: RulesIcon },
+  { id: 'categories', label: 'Categories', icon: CategoriesIcon },
   { id: 'review', label: 'Review Rows', icon: ReviewIcon },
   { id: 'reconcile', label: 'Reconcile', icon: ReconcileIcon },
   { id: 'exports', label: 'Exports', icon: ExportIcon },
@@ -255,6 +267,7 @@ function App() {
             <UploadScreen batchId={batchId} setBatchId={setBatchId} showNotice={showNotice} />
           ) : null}
           {activeTab === 'rules' ? <MappingRulesScreen showNotice={showNotice} /> : null}
+          {activeTab === 'categories' ? <CategoriesScreen showNotice={showNotice} /> : null}
           {activeTab === 'review' ? (
             <ReviewRowsScreen batchId={batchId} showNotice={showNotice} />
           ) : null}
@@ -364,7 +377,7 @@ function AppHeader({ batchId, isSidebarCollapsed, setBatchId, user, showNotice, 
           <span />
           <span />
         </button>
-        <strong>Analysis Report</strong>
+        <strong>Sales Analysis Report</strong>
       </div>
 
       <img className="top-nav-logo" src="/images/white-logo.png" alt="Wagner Meters" />
@@ -695,6 +708,15 @@ function MappingRulesScreen({ showNotice }) {
   const [editForm, setEditForm] = useState(emptyRuleForm);
   const [createForm, setCreateForm] = useState(emptyRuleForm);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('active');
+
+  const filteredRules = useMemo(() => {
+    if (statusFilter === 'all') {
+      return rules;
+    }
+
+    return rules.filter((rule) => Boolean(rule.is_active) === (statusFilter === 'active'));
+  }, [rules, statusFilter]);
 
   const loadRules = useCallback(async () => {
     setLoading(true);
@@ -730,6 +752,12 @@ function MappingRulesScreen({ showNotice }) {
       setEditForm(ruleToForm(selectedRule));
     }
   }, [selectedRule]);
+
+  useEffect(() => {
+    if (selectedRule && !filteredRules.some((rule) => rule.id === selectedRule.id)) {
+      setSelectedRule(null);
+    }
+  }, [filteredRules, selectedRule]);
 
   function rulePayload(form) {
     return {
@@ -792,16 +820,21 @@ function MappingRulesScreen({ showNotice }) {
 
   return (
     <section className="panel-grid">
-      <article className="panel">
+      <article className="panel panel-legend panel-transparent">
         <div className="section-heading">
           <div>
             <p className="eyebrow">Rules</p>
-            <h2>Configured Mapping Rules</h2>
+            <h2>Mapping Rules</h2>
           </div>
           <div className="button-row">
-            <button className="secondary-button" type="button" onClick={loadRules}>
-              <ButtonContent icon="refresh">Refresh</ButtonContent>
-            </button>
+            <label className="status-filter">
+              Status
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="all">All</option>
+              </select>
+            </label>
             <button className="primary-button" type="button" onClick={() => setIsCreateOpen(true)}>
               <ButtonContent icon="add">Create Rule</ButtonContent>
             </button>
@@ -810,11 +843,16 @@ function MappingRulesScreen({ showNotice }) {
         {loading ? (
           <p>Loading rules...</p>
         ) : (
-          <RulesTable rules={rules} selectedRule={selectedRule} onSelectRule={setSelectedRule} />
+          <RulesTable
+            rules={filteredRules}
+            selectedRule={selectedRule}
+            statusFilter={statusFilter}
+            onSelectRule={setSelectedRule}
+          />
         )}
       </article>
 
-      <article className="panel">
+      <article className="panel panel-legend">
         <div className="section-heading">
           <div>
             <p className="eyebrow">Details</p>
@@ -854,7 +892,6 @@ function MappingRulesScreen({ showNotice }) {
         </Modal>
       ) : null}
 
-      <CategoryManager categories={categories} loadRules={loadRules} showNotice={showNotice} />
     </section>
   );
 }
@@ -1002,7 +1039,7 @@ function Modal({ children, title, onClose }) {
   );
 }
 
-function CategoryManager({ categories, loadRules, showNotice }) {
+function CategoriesScreen({ showNotice }) {
   const emptyForm = {
     name: '',
     sales_analysis_bucket: 'rhp',
@@ -1011,102 +1048,225 @@ function CategoryManager({ categories, loadRules, showNotice }) {
     sort_order: 100,
     is_active: true,
   };
-  const [form, setForm] = useState(emptyForm);
-  const [editingId, setEditingId] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [editForm, setEditForm] = useState(emptyForm);
+  const [createForm, setCreateForm] = useState(emptyForm);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('active');
 
-  function editCategory(category) {
-    setEditingId(category.id);
-    setForm({
-      name: category.name ?? '',
-      sales_analysis_bucket: category.sales_analysis_bucket ?? '',
-      total_sales_row_label: category.total_sales_row_label ?? '',
-      weekly_meter_row_label: category.weekly_meter_row_label ?? '',
-      sort_order: category.sort_order ?? 100,
-      is_active: Boolean(category.is_active),
-    });
-  }
+  const filteredCategories = useMemo(() => {
+    if (statusFilter === 'all') {
+      return categories;
+    }
 
-  function resetCategoryForm() {
-    setEditingId(null);
-    setForm(emptyForm);
-  }
+    return categories.filter((category) => Boolean(category.is_active) === (statusFilter === 'active'));
+  }, [categories, statusFilter]);
 
-  async function submitCategory(event) {
-    event.preventDefault();
+  const loadCategories = useCallback(async () => {
+    setLoading(true);
 
-    const payload = {
+    try {
+      const response = await axios.get('/api/product-categories');
+      const nextCategories = response.data.data ?? [];
+
+      setCategories(nextCategories);
+      setSelectedCategory((current) => {
+        if (!current) {
+          return null;
+        }
+
+        return nextCategories.find((category) => category.id === current.id) ?? null;
+      });
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to load categories.'));
+    } finally {
+      setLoading(false);
+    }
+  }, [showNotice]);
+
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
+
+  useEffect(() => {
+    if (selectedCategory) {
+      setEditForm(categoryToForm(selectedCategory));
+    }
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    if (selectedCategory && !filteredCategories.some((category) => category.id === selectedCategory.id)) {
+      setSelectedCategory(null);
+    }
+  }, [filteredCategories, selectedCategory]);
+
+  function categoryPayload(form) {
+    return {
       ...form,
       sort_order: Number(form.sort_order),
       sales_analysis_bucket: form.sales_analysis_bucket || null,
       total_sales_row_label: form.total_sales_row_label || null,
       weekly_meter_row_label: form.weekly_meter_row_label || null,
+      is_active: Boolean(form.is_active),
     };
+  }
+
+  async function submitCreateCategory(event) {
+    event.preventDefault();
 
     try {
-      if (editingId) {
-        await axios.patch(`/api/product-categories/${editingId}`, payload);
-        showNotice('success', 'Category updated.');
-      } else {
-        await axios.post('/api/product-categories', payload);
-        showNotice('success', 'Category created.');
-      }
+      const response = await axios.post('/api/product-categories', categoryPayload(createForm));
 
-      resetCategoryForm();
-      await loadRules();
+      showNotice('success', 'Category created.');
+      setCreateForm(emptyForm);
+      setIsCreateOpen(false);
+      await loadCategories();
+      setSelectedCategory(response.data.data);
     } catch (error) {
-      showNotice('error', messageFromError(error, 'Unable to save category.'));
+      showNotice('error', messageFromError(error, 'Unable to create category.'));
     }
   }
 
-  async function deleteCategory(category) {
-    if (!window.confirm(`Delete category "${category.name}"?`)) {
+  async function submitEditCategory(event) {
+    event.preventDefault();
+
+    if (!selectedCategory) {
       return;
     }
 
     try {
-      await axios.delete(`/api/product-categories/${category.id}`);
+      const response = await axios.patch(`/api/product-categories/${selectedCategory.id}`, categoryPayload(editForm));
+
+      showNotice('success', 'Category updated.');
+      await loadCategories();
+      setSelectedCategory(response.data.data);
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to update category.'));
+    }
+  }
+
+  async function deleteSelectedCategory() {
+    if (!selectedCategory || !window.confirm(`Delete category "${selectedCategory.name}"?`)) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/product-categories/${selectedCategory.id}`);
       showNotice('success', 'Category deleted.');
-      await loadRules();
+      setSelectedCategory(null);
+      await loadCategories();
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to delete category.'));
     }
   }
 
   return (
-    <article className="panel panel-span">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">Categories</p>
-          <h2>Category CRUD</h2>
+    <section className="panel-grid">
+      <article className="panel panel-legend panel-transparent">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">List</p>
+            <h2>Categories</h2>
+          </div>
+          <div className="button-row">
+            <label className="status-filter">
+              Status
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="all">All</option>
+              </select>
+            </label>
+            <button className="primary-button" type="button" onClick={() => setIsCreateOpen(true)}>
+              <ButtonContent icon="add">Create Category</ButtonContent>
+            </button>
+          </div>
         </div>
-        {editingId ? (
-          <button className="secondary-button" type="button" onClick={resetCategoryForm}>
-            <ButtonContent icon="cancel">Cancel Edit</ButtonContent>
-          </button>
-        ) : null}
-      </div>
-
-      <form className="category-form" onSubmit={submitCategory}>
-        <label>
-          Name
-          <input
-            required
-            value={form.name}
-            onChange={(event) => setForm({ ...form, name: event.target.value })}
+        {loading ? (
+          <p>Loading categories...</p>
+        ) : (
+          <CategoryTable
+            categories={filteredCategories}
+            selectedCategory={selectedCategory}
+            statusFilter={statusFilter}
+            onSelectCategory={setSelectedCategory}
           />
-        </label>
-        <label>
-          Bucket
-          <select
-            value={form.sales_analysis_bucket}
-            onChange={(event) => setForm({ ...form, sales_analysis_bucket: event.target.value })}
-          >
-            <option value="">None</option>
-            <option value="rhp">RHP</option>
-            <option value="parts_tsd">Parts & TSD</option>
-            <option value="raw">Raw</option>
-          </select>
-        </label>
+        )}
+      </article>
+
+      <article className="panel panel-legend">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Details</p>
+            <h2>{selectedCategory ? 'Edit Category' : 'Select a Category'}</h2>
+          </div>
+        </div>
+
+        {selectedCategory ? (
+          <CategoryForm form={editForm} primaryLabel="Update Category" setForm={setEditForm} onSubmit={submitEditCategory}>
+            <button className="danger-button" type="button" onClick={deleteSelectedCategory}>
+              <ButtonContent icon="delete">Delete Category</ButtonContent>
+            </button>
+          </CategoryForm>
+        ) : (
+          <div className="empty-state">
+            <strong>No category selected</strong>
+            <p>Click a category from the table on the left to view, edit, or delete it.</p>
+          </div>
+        )}
+      </article>
+
+      {isCreateOpen ? (
+        <Modal title="Create Category" onClose={() => setIsCreateOpen(false)}>
+          <CategoryForm
+            form={createForm}
+            primaryLabel="Create Category"
+            setForm={setCreateForm}
+            onSubmit={submitCreateCategory}
+          />
+        </Modal>
+      ) : null}
+    </section>
+  );
+}
+
+function categoryToForm(category) {
+  return {
+    name: category.name ?? '',
+    sales_analysis_bucket: category.sales_analysis_bucket ?? '',
+    total_sales_row_label: category.total_sales_row_label ?? '',
+    weekly_meter_row_label: category.weekly_meter_row_label ?? '',
+    sort_order: category.sort_order ?? 100,
+    is_active: Boolean(category.is_active),
+  };
+}
+
+function CategoryForm({ children, form, primaryLabel, setForm, onSubmit }) {
+  return (
+    <form className="stacked-form" onSubmit={onSubmit}>
+      <label>
+        Name
+        <input
+          required
+          value={form.name}
+          onChange={(event) => setForm({ ...form, name: event.target.value })}
+        />
+      </label>
+      <label>
+        Bucket
+        <select
+          value={form.sales_analysis_bucket}
+          onChange={(event) => setForm({ ...form, sales_analysis_bucket: event.target.value })}
+        >
+          <option value="">None</option>
+          <option value="rhp">RHP</option>
+          <option value="parts_tsd">Parts & TSD</option>
+          <option value="raw">Raw</option>
+        </select>
+      </label>
+      <div className="form-row">
         <label>
           Total Sales Label
           <input
@@ -1121,67 +1281,57 @@ function CategoryManager({ categories, loadRules, showNotice }) {
             onChange={(event) => setForm({ ...form, weekly_meter_row_label: event.target.value })}
           />
         </label>
-        <label>
-          Sort Order
-          <input
-            min="0"
-            type="number"
-            value={form.sort_order}
-            onChange={(event) => setForm({ ...form, sort_order: event.target.value })}
-          />
-        </label>
-        <label className="checkbox-label">
-          <input
-            checked={form.is_active}
-            type="checkbox"
-            onChange={(event) => setForm({ ...form, is_active: event.target.checked })}
-          />
-          Active
-        </label>
+      </div>
+      <label>
+        Sort Order
+        <input
+          min="0"
+          type="number"
+          value={form.sort_order}
+          onChange={(event) => setForm({ ...form, sort_order: event.target.value })}
+        />
+      </label>
+      <label className="checkbox-label">
+        <input
+          checked={form.is_active}
+          type="checkbox"
+          onChange={(event) => setForm({ ...form, is_active: event.target.checked })}
+        />
+        Active
+      </label>
+      <div className="form-actions">
         <button className="primary-button" type="submit">
-          <ButtonContent icon={editingId ? 'save' : 'add'}>{editingId ? 'Update Category' : 'Create Category'}</ButtonContent>
+          <ButtonContent icon={primaryLabel.startsWith('Update') ? 'save' : 'add'}>{primaryLabel}</ButtonContent>
         </button>
-      </form>
-
-      <CategoryTable categories={categories} deleteCategory={deleteCategory} editCategory={editCategory} />
-    </article>
+        {children}
+      </div>
+    </form>
   );
 }
 
-function CategoryTable({ categories, editCategory, deleteCategory }) {
+function CategoryTable({ categories, selectedCategory, statusFilter, onSelectCategory }) {
   if (categories.length === 0) {
-    return <p>No categories found.</p>;
+    return <p>No {statusFilter === 'all' ? '' : `${statusFilter} `}categories found.</p>;
   }
 
   return (
-    <div className="table-wrap table-section">
+    <div className="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Code</th>
             <th>Name</th>
             <th>Bucket</th>
-            <th>Status</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {categories.map((category) => (
-            <tr key={category.id}>
-              <td>{category.code}</td>
+            <tr
+              className={selectedCategory?.id === category.id ? 'clickable-row selected-row' : 'clickable-row'}
+              key={category.id}
+              onClick={() => onSelectCategory(category)}
+            >
               <td>{category.name}</td>
               <td>{category.sales_analysis_bucket ?? 'None'}</td>
-              <td>{category.is_active ? 'Active' : 'Inactive'}</td>
-              <td>
-                <div className="button-row">
-                  <button className="secondary-button" type="button" onClick={() => editCategory(category)}>
-                    <ButtonContent icon="edit">Edit</ButtonContent>
-                  </button>
-                  <button className="danger-button" type="button" onClick={() => deleteCategory(category)}>
-                    <ButtonContent icon="delete">Delete</ButtonContent>
-                  </button>
-                </div>
-              </td>
             </tr>
           ))}
         </tbody>
@@ -1190,9 +1340,9 @@ function CategoryTable({ categories, editCategory, deleteCategory }) {
   );
 }
 
-function RulesTable({ rules, selectedRule, onSelectRule }) {
+function RulesTable({ rules, selectedRule, statusFilter, onSelectRule }) {
   if (rules.length === 0) {
-    return <p>No mapping rules found.</p>;
+    return <p>No {statusFilter === 'all' ? '' : `${statusFilter} `}mapping rules found.</p>;
   }
 
   return (
@@ -1200,11 +1350,8 @@ function RulesTable({ rules, selectedRule, onSelectRule }) {
       <table>
         <thead>
           <tr>
-            <th>Priority</th>
-            <th>Name</th>
             <th>Match</th>
             <th>Category</th>
-            <th>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -1214,13 +1361,10 @@ function RulesTable({ rules, selectedRule, onSelectRule }) {
               key={rule.id}
               onClick={() => onSelectRule(rule)}
             >
-              <td>{rule.priority}</td>
-              <td>{rule.name}</td>
               <td>
                 {rule.match_field} {rule.match_operator} {rule.pattern}
               </td>
               <td>{rule.product_category?.name ?? 'Unassigned'}</td>
-              <td>{rule.is_active ? 'Active' : 'Inactive'}</td>
             </tr>
           ))}
         </tbody>

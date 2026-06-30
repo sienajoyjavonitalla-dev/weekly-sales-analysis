@@ -577,7 +577,24 @@ textarea {
 }
 
 .panel {
+  position: relative;
   padding: 28px;
+}
+
+.panel-legend {
+  padding-top: 30px;
+}
+
+.panel-legend .eyebrow {
+  position: absolute;
+  top: -9px;
+  left: 22px;
+  margin: 0;
+  padding: 0 8px;
+}
+
+.panel-transparent {
+  background: transparent;
 }
 
 .panel-span {
@@ -946,6 +963,21 @@ input:disabled {
 
 .review-controls {
   margin-bottom: 16px;
+}
+
+.status-filter {
+  display: grid;
+  grid-template-columns: auto 130px;
+  gap: 8px;
+  align-items: center;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.status-filter select {
+  min-height: 42px;
+  padding: 9px 12px;
 }
 
 .table-wrap {
