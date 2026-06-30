@@ -18,10 +18,12 @@ class User extends Authenticatable
         'password',
         'role',
         'theme',
+        'profile_photo_path',
     ];
 
     protected $appends = [
         'name',
+        'profile_photo_url',
     ];
 
     protected $hidden = [
@@ -45,6 +47,15 @@ class User extends Authenticatable
     public function getNameAttribute(): string
     {
         return trim($this->first_name.' '.$this->last_name);
+    }
+
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        if (! $this->profile_photo_path) {
+            return null;
+        }
+
+        return asset('storage/'.$this->profile_photo_path);
     }
 
     public function isAnalyst(): bool

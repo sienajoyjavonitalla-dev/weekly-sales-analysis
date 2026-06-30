@@ -76,6 +76,42 @@ function SettingsIcon() {
   );
 }
 
+function ActionIcon({ name }) {
+  const paths = {
+    add: ['M12 5v14', 'M5 12h14'],
+    cancel: ['M6 6l12 12', 'M18 6L6 18'],
+    check: ['M5 13l4 4L19 7'],
+    delete: ['M5 7h14', 'M10 11v6', 'M14 11v6', 'M8 7l1-3h6l1 3', 'M7 7l1 13h8l1-13'],
+    download: ['M12 4v10', 'M8 10l4 4 4-4', 'M5 20h14'],
+    edit: ['M5 19l4-1 9-9-3-3-9 9-1 4z', 'M14 6l3 3'],
+    export: ['M6 4h9l3 3v13H6z', 'M14 4v4h4', 'M12 11v6', 'M9 14l3 3 3-3'],
+    login: ['M14 6h4v12h-4', 'M10 8l4 4-4 4', 'M4 12h10'],
+    logout: ['M10 6H6v12h4', 'M14 8l4 4-4 4', 'M8 12h10'],
+    refresh: ['M17 3v5h-5', 'M7 21v-5h5', 'M17 8a7 7 0 00-12 3', 'M7 16a7 7 0 0012-3'],
+    resolve: ['M5 12l4 4L19 6', 'M5 20h14'],
+    run: ['M8 5v14l11-7z'],
+    save: ['M5 4h12l2 2v14H5z', 'M8 4v6h8V4', 'M8 16h8v4', 'M10 7h4'],
+    upload: ['M12 15V4', 'M7 9l5-5 5 5', 'M5 15v4h14v-4'],
+  };
+
+  return (
+    <svg className="button-icon" aria-hidden="true" fill="none" viewBox="0 0 24 24">
+      {(paths[name] ?? paths.add).map((path) => (
+        <path d={path} key={path} />
+      ))}
+    </svg>
+  );
+}
+
+function ButtonContent({ icon, children }) {
+  return (
+    <>
+      <ActionIcon name={icon} />
+      <span>{children}</span>
+    </>
+  );
+}
+
 const themes = [
   { id: 'dark', label: 'Dark' },
   { id: 'light', label: 'Light' },
@@ -163,6 +199,8 @@ function App() {
         isSidebarCollapsed={isSidebarCollapsed}
         setBatchId={setBatchId}
         user={user}
+        showNotice={showNotice}
+        onUserUpdated={setUser}
         onLogout={handleLogout}
         onToggleSidebar={() => setIsSidebarCollapsed((current) => !current)}
       />
@@ -282,7 +320,7 @@ function LoginScreen({ onLogin }) {
             />
           </label>
           <button className="login-button" disabled={submitting} type="submit">
-            {submitting ? 'Signing in...' : 'Sign in'}
+            <ButtonContent icon="login">{submitting ? 'Signing in...' : 'Sign in'}</ButtonContent>
           </button>
         </form>
       </section>
@@ -301,7 +339,9 @@ function FloatingAlert({ notice, onClose }) {
   );
 }
 
-function AppHeader({ batchId, isSidebarCollapsed, setBatchId, user, onLogout, onToggleSidebar }) {
+function AppHeader({ batchId, isSidebarCollapsed, setBatchId, user, showNotice, onUserUpdated, onLogout, onToggleSidebar }) {
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const userName = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.name;
   const initials = userName
     .split(' ')
@@ -340,14 +380,203 @@ function AppHeader({ batchId, isSidebarCollapsed, setBatchId, user, onLogout, on
             onChange={(event) => setBatchId(event.target.value)}
           />
         </label>
-        <div className="user-chip" title={userName}>
-          <span className="avatar">{initials}</span>
-          <button className="link-button" type="button" onClick={onLogout}>
-            Sign out
+        <div className="account-menu-wrap">
+          <button
+            className="account-trigger"
+            type="button"
+            aria-label="Open account menu"
+            aria-expanded={isAccountOpen}
+            onClick={() => setIsAccountOpen((current) => !current)}
+          >
+            <Avatar initials={initials} user={user} />
           </button>
+          {isAccountOpen ? (
+            <div className="account-menu">
+              <div className="account-menu-user">
+                <strong>{userName}</strong>
+                <span>{user.email}</span>
+              </div>
+              <button
+                className="account-menu-item"
+                type="button"
+                onClick={() => {
+                  setIsAccountOpen(false);
+                  setIsProfileOpen(true);
+                }}
+              >
+                Profile
+              </button>
+              <button
+                className="account-menu-item account-menu-logout"
+                type="button"
+                onClick={() => {
+                  setIsAccountOpen(false);
+                  onLogout();
+                }}
+              >
+                <ButtonContent icon="logout">Logout</ButtonContent>
+              </button>
+            </div>
+          ) : null}
+          {isProfileOpen ? (
+            <ProfileModal
+              initials={initials}
+              user={user}
+              showNotice={showNotice}
+              onClose={() => setIsProfileOpen(false)}
+              onUserUpdated={onUserUpdated}
+            />
+          ) : null}
         </div>
       </div>
     </header>
+  );
+}
+
+function Avatar({ initials, user }) {
+  if (user.profile_photo_url) {
+    return <img className="avatar avatar-image" src={user.profile_photo_url} alt="" />;
+  }
+
+  return <span className="avatar">{initials}</span>;
+}
+
+function ProfileModal({ initials, user, showNotice, onClose, onUserUpdated }) {
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(user.profile_photo_url ?? '');
+  const [passwordForm, setPasswordForm] = useState({
+    current_password: '',
+    password: '',
+    password_confirmation: '',
+  });
+  const [isSavingPhoto, setIsSavingPhoto] = useState(false);
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+
+  function handlePhotoChange(event) {
+    const file = event.target.files?.[0] ?? null;
+
+    setPhotoFile(file);
+    setPhotoPreview(file ? URL.createObjectURL(file) : user.profile_photo_url ?? '');
+  }
+
+  async function submitPhoto(event) {
+    event.preventDefault();
+
+    if (!photoFile) {
+      showNotice('error', 'Choose a profile picture first.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('profile_photo', photoFile);
+    setIsSavingPhoto(true);
+
+    try {
+      const response = await axios.post('/api/me/profile-photo', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      onUserUpdated(response.data.data);
+      showNotice('success', 'Profile picture updated.');
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to update profile picture.'));
+    } finally {
+      setIsSavingPhoto(false);
+    }
+  }
+
+  async function submitPassword(event) {
+    event.preventDefault();
+    setIsSavingPassword(true);
+
+    try {
+      await axios.patch('/api/me/password', passwordForm);
+      setPasswordForm({
+        current_password: '',
+        password: '',
+        password_confirmation: '',
+      });
+      showNotice('success', 'Password updated.');
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to update password.'));
+    } finally {
+      setIsSavingPassword(false);
+    }
+  }
+
+  return (
+    <div className="modal-backdrop" role="presentation">
+      <section className="modal-card profile-modal" role="dialog" aria-modal="true" aria-label="Profile settings">
+        <button className="modal-close-button" type="button" aria-label="Close" onClick={onClose}>
+          <ActionIcon name="cancel" />
+        </button>
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Profile</p>
+            <h2>Account Settings</h2>
+          </div>
+        </div>
+
+        <form className="profile-section" onSubmit={submitPhoto}>
+          <div className="profile-picture-row">
+            {photoPreview ? (
+              <img className="profile-picture-preview" src={photoPreview} alt="" />
+            ) : (
+              <span className="profile-picture-preview profile-picture-initials">{initials}</span>
+            )}
+            <label>
+              Profile Picture
+              <input accept="image/*" type="file" onChange={handlePhotoChange} />
+            </label>
+          </div>
+          <button className="primary-button" disabled={isSavingPhoto} type="submit">
+            <ButtonContent icon="upload">{isSavingPhoto ? 'Uploading...' : 'Update Picture'}</ButtonContent>
+          </button>
+        </form>
+
+        <form className="profile-section" onSubmit={submitPassword}>
+          <h3>Change Password</h3>
+          <label>
+            Current Password
+            <input
+              autoComplete="current-password"
+              required
+              type="password"
+              value={passwordForm.current_password}
+              onChange={(event) => setPasswordForm({ ...passwordForm, current_password: event.target.value })}
+            />
+          </label>
+          <div className="form-row">
+            <label>
+              New Password
+              <input
+                autoComplete="new-password"
+                minLength="8"
+                required
+                type="password"
+                value={passwordForm.password}
+                onChange={(event) => setPasswordForm({ ...passwordForm, password: event.target.value })}
+              />
+            </label>
+            <label>
+              Confirm Password
+              <input
+                autoComplete="new-password"
+                minLength="8"
+                required
+                type="password"
+                value={passwordForm.password_confirmation}
+                onChange={(event) => setPasswordForm({ ...passwordForm, password_confirmation: event.target.value })}
+              />
+            </label>
+          </div>
+          <button className="primary-button" disabled={isSavingPassword} type="submit">
+            <ButtonContent icon="save">{isSavingPassword ? 'Saving...' : 'Change Password'}</ButtonContent>
+          </button>
+        </form>
+      </section>
+    </div>
   );
 }
 
@@ -439,7 +668,7 @@ function UploadScreen({ batchId, setBatchId, showNotice }) {
         </div>
         <div className="upload-actions">
           <button className="primary-button" disabled={uploading} type="button" onClick={handleUploadClick}>
-            {uploading ? 'Importing...' : 'Upload / Import Selected Files'}
+            <ButtonContent icon="upload">{uploading ? 'Importing...' : 'Upload / Import Selected Files'}</ButtonContent>
           </button>
         </div>
       </article>
@@ -571,10 +800,10 @@ function MappingRulesScreen({ showNotice }) {
           </div>
           <div className="button-row">
             <button className="secondary-button" type="button" onClick={loadRules}>
-              Refresh
+              <ButtonContent icon="refresh">Refresh</ButtonContent>
             </button>
             <button className="primary-button" type="button" onClick={() => setIsCreateOpen(true)}>
-              Create Rule
+              <ButtonContent icon="add">Create Rule</ButtonContent>
             </button>
           </div>
         </div>
@@ -602,7 +831,7 @@ function MappingRulesScreen({ showNotice }) {
             onSubmit={submitEditRule}
           >
             <button className="danger-button" type="button" onClick={deleteSelectedRule}>
-              Delete Rule
+              <ButtonContent icon="delete">Delete Rule</ButtonContent>
             </button>
           </RuleForm>
         ) : (
@@ -746,7 +975,7 @@ function RuleForm({ categories, children, form, primaryLabel, setForm, onSubmit 
       </label>
       <div className="form-actions">
         <button className="primary-button" type="submit">
-          {primaryLabel}
+          <ButtonContent icon={primaryLabel.startsWith('Update') ? 'save' : 'check'}>{primaryLabel}</ButtonContent>
         </button>
         {children}
       </div>
@@ -758,14 +987,14 @@ function Modal({ children, title, onClose }) {
   return (
     <div className="modal-backdrop" role="presentation">
       <section className="modal-card" role="dialog" aria-modal="true" aria-label={title}>
+        <button className="modal-close-button" type="button" aria-label="Close" onClick={onClose}>
+          <ActionIcon name="cancel" />
+        </button>
         <div className="section-heading">
           <div>
             <p className="eyebrow">Create</p>
             <h2>{title}</h2>
           </div>
-          <button className="secondary-button" type="button" onClick={onClose}>
-            Close
-          </button>
         </div>
         {children}
       </section>
@@ -852,7 +1081,7 @@ function CategoryManager({ categories, loadRules, showNotice }) {
         </div>
         {editingId ? (
           <button className="secondary-button" type="button" onClick={resetCategoryForm}>
-            Cancel Edit
+            <ButtonContent icon="cancel">Cancel Edit</ButtonContent>
           </button>
         ) : null}
       </div>
@@ -910,7 +1139,7 @@ function CategoryManager({ categories, loadRules, showNotice }) {
           Active
         </label>
         <button className="primary-button" type="submit">
-          {editingId ? 'Update Category' : 'Create Category'}
+          <ButtonContent icon={editingId ? 'save' : 'add'}>{editingId ? 'Update Category' : 'Create Category'}</ButtonContent>
         </button>
       </form>
 
@@ -946,10 +1175,10 @@ function CategoryTable({ categories, editCategory, deleteCategory }) {
               <td>
                 <div className="button-row">
                   <button className="secondary-button" type="button" onClick={() => editCategory(category)}>
-                    Edit
+                    <ButtonContent icon="edit">Edit</ButtonContent>
                   </button>
                   <button className="danger-button" type="button" onClick={() => deleteCategory(category)}>
-                    Delete
+                    <ButtonContent icon="delete">Delete</ButtonContent>
                   </button>
                 </div>
               </td>
@@ -1068,10 +1297,10 @@ function ReviewRowsScreen({ batchId, showNotice }) {
           </div>
           <div className="button-row">
             <button className="secondary-button" disabled={!canLoad} type="button" onClick={loadRows}>
-              Refresh
+              <ButtonContent icon="refresh">Refresh</ButtonContent>
             </button>
             <button className="primary-button" disabled={!canLoad} type="button" onClick={classifyBatch}>
-              Run Rules
+              <ButtonContent icon="run">Run Rules</ButtonContent>
             </button>
           </div>
         </div>
@@ -1135,7 +1364,7 @@ function RowsTable({ rows, resolveRow }) {
               <td>{currency(row.amount)}</td>
               <td>
                 <button className="secondary-button" type="button" onClick={() => resolveRow(row)}>
-                  Resolve
+                  <ButtonContent icon="resolve">Resolve</ButtonContent>
                 </button>
               </td>
             </tr>
@@ -1212,7 +1441,7 @@ function ReconciliationScreen({ batchId, showNotice }) {
             <h2>Balance Sales Analysis to Income Statement</h2>
           </div>
           <button className="primary-button" disabled={!canLoad} type="button" onClick={runReconciliation}>
-            Run Reconciliation
+            <ButtonContent icon="run">Run Reconciliation</ButtonContent>
           </button>
         </div>
         {!canLoad ? <p>Enter an active import batch ID to run reconciliation.</p> : null}
@@ -1250,7 +1479,7 @@ function ReconciliationScreen({ batchId, showNotice }) {
             />
           </label>
           <button className="secondary-button" disabled={!canLoad} type="submit">
-            Add Fee
+            <ButtonContent icon="add">Add Fee</ButtonContent>
           </button>
         </form>
         <SimpleList items={fees.map((fee) => `${fee.marketplace}: ${currency(fee.amount)}`)} />
@@ -1329,10 +1558,10 @@ function ExportsScreen({ batchId, showNotice }) {
           </div>
           <div className="button-row">
             <button className="secondary-button" disabled={!canLoad} type="button" onClick={loadReports}>
-              Refresh
+              <ButtonContent icon="refresh">Refresh</ButtonContent>
             </button>
             <button className="primary-button" disabled={!canLoad} type="button" onClick={generateReports}>
-              Generate Reports
+              <ButtonContent icon="export">Generate Reports</ButtonContent>
             </button>
           </div>
         </div>
@@ -1391,7 +1620,7 @@ function ReportsTable({ reports }) {
               <td>
                 {report.status === 'completed' ? (
                   <a className="secondary-button" href={`/api/generated-reports/${report.id}/download`}>
-                    Download
+                    <ButtonContent icon="download">Download</ButtonContent>
                   </a>
                 ) : (
                   'Unavailable'
