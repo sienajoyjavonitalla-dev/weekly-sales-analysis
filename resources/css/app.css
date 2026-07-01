@@ -22,7 +22,13 @@
   --danger-bg: #3f1518;
   --danger-border: #7f1d1d;
   --danger-text: #fecaca;
-  --button-radius: 8px;
+  --button-radius: 6px;
+  --button-height: 34px;
+  --button-padding-y: 6px;
+  --button-padding-x: 12px;
+  --button-font-size: 0.84rem;
+  --button-icon-size: 14px;
+  --icon-button-size: 28px;
   color: var(--text);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -164,10 +170,10 @@ textarea {
 
 .menu-button {
   display: grid;
-  gap: 4px;
-  width: 34px;
-  height: 34px;
-  padding: 8px;
+  gap: 3px;
+  width: var(--icon-button-size);
+  height: var(--icon-button-size);
+  padding: 6px;
   border: 1px solid var(--border-2);
   border-radius: 8px;
   background: var(--surface-2);
@@ -259,14 +265,14 @@ textarea {
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 46px;
-  padding: 0 16px;
+  min-height: var(--button-height);
+  padding: 0 var(--button-padding-x);
   border: 0;
   border-top: 1px solid var(--border);
   background: transparent;
   color: var(--text-strong);
   cursor: pointer;
-  font-size: 0.96rem;
+  font-size: var(--button-font-size);
   font-weight: 400;
   text-align: left;
 }
@@ -330,15 +336,16 @@ textarea {
 .sidebar-link {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  min-height: 42px;
-  padding: 10px 12px;
+  min-height: var(--button-height);
+  padding: var(--button-padding-y) 10px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--button-radius);
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
+  font-size: var(--button-font-size);
   font-weight: 750;
   text-align: left;
 }
@@ -346,7 +353,7 @@ textarea {
 .sidebar-collapsed .sidebar-link {
   justify-content: center;
   gap: 0;
-  padding: 10px;
+  padding: var(--button-padding-y);
 }
 
 .sidebar-link:hover {
@@ -494,13 +501,14 @@ textarea {
 }
 
 .login-button {
-  min-height: 40px;
+  min-height: var(--button-height);
   margin-top: 4px;
   border: 0;
   border-radius: var(--button-radius);
   background: var(--primary);
   color: #ffffff;
   cursor: pointer;
+  font-size: var(--button-font-size);
   font-weight: 600;
 }
 
@@ -744,7 +752,8 @@ input:disabled {
 .tab-button {
   background: var(--surface-2);
   color: var(--text);
-  padding: 11px 16px;
+  padding: var(--button-padding-y) var(--button-padding-x);
+  font-size: var(--button-font-size);
 }
 
 .tab-button-active {
@@ -757,10 +766,11 @@ input:disabled {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
-  min-height: 42px;
-  padding: 10px 16px;
+  gap: 6px;
+  min-height: var(--button-height);
+  padding: var(--button-padding-y) var(--button-padding-x);
   border-radius: var(--button-radius);
+  font-size: var(--button-font-size);
 }
 
 .primary-button {
@@ -778,14 +788,15 @@ input:disabled {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
-  min-height: 42px;
-  padding: 10px 16px;
+  gap: 6px;
+  min-height: var(--button-height);
+  padding: var(--button-padding-y) var(--button-padding-x);
   border: 1px solid var(--danger-border);
   border-radius: var(--button-radius);
   background: var(--danger-bg);
   color: var(--danger-text);
   cursor: pointer;
+  font-size: var(--button-font-size);
   font-weight: 600;
 }
 
@@ -794,13 +805,14 @@ input:disabled {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  font-size: var(--button-font-size);
 }
 
 .button-icon {
   flex: 0 0 auto;
-  width: 16px;
-  height: 16px;
+  width: var(--button-icon-size);
+  height: var(--button-icon-size);
   stroke: currentColor;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -808,8 +820,8 @@ input:disabled {
 }
 
 .link-button .button-icon {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
 }
 
 .form-actions {
@@ -882,8 +894,171 @@ input:disabled {
 }
 
 .batch-select select {
-  min-height: 42px;
-  padding: 9px 12px;
+  min-height: var(--button-height);
+  padding: var(--button-padding-y) var(--button-padding-x);
+  font-size: var(--button-font-size);
+}
+
+.week-range-field {
+  display: grid;
+  grid-template-columns: auto minmax(280px, 1fr);
+  gap: 12px;
+  align-items: center;
+  max-width: 520px;
+  margin-top: 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.date-range-picker {
+  position: relative;
+  width: 100%;
+}
+
+.date-range-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--button-height);
+  padding: var(--button-padding-y) var(--button-padding-x);
+  border: 1px solid var(--border-2);
+  border-radius: var(--button-radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--button-font-size);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.date-range-trigger:hover {
+  border-color: var(--primary);
+}
+
+.date-range-trigger .button-icon {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+}
+
+.date-range-placeholder {
+  color: var(--text-muted);
+}
+
+.date-range-value {
+  color: var(--text);
+}
+
+.date-range-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  width: min(320px, 92vw);
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
+}
+
+.date-range-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: var(--text-strong);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.date-range-nav-button {
+  display: inline-grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid var(--border-2);
+  border-radius: var(--button-radius);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  font-size: var(--button-font-size);
+}
+
+.date-range-nav-button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.date-range-hint {
+  margin: 0 0 10px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.date-range-weekdays,
+.date-range-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.date-range-weekdays span {
+  padding: 4px 0;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.date-range-day {
+  display: inline-grid;
+  width: 100%;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.date-range-day:hover {
+  background: var(--surface-3);
+}
+
+.date-range-day-empty {
+  pointer-events: none;
+}
+
+.date-range-day-today {
+  border: 1px solid var(--border-2);
+}
+
+.date-range-day-in-range {
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  color: var(--text-strong);
+}
+
+.date-range-day-start,
+.date-range-day-end {
+  background: var(--primary);
+  color: #fff;
+}
+
+.date-range-day-start.date-range-day-end {
+  border-radius: 8px;
 }
 
 .file-grid {
@@ -963,6 +1138,34 @@ input:disabled {
   gap: 8px;
 }
 
+.batch-file-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  color: var(--primary);
+  font-size: 0.84rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.batch-file-download:hover {
+  color: var(--primary-strong, var(--primary));
+  text-decoration: underline;
+}
+
+.batch-file-download .button-icon {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+}
+
+.batch-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .batch-cell-status .import-status-missing {
   padding: 0;
   border: 0;
@@ -978,11 +1181,11 @@ input:disabled {
 .batch-upload-button {
   display: inline-grid;
   flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
+  width: var(--icon-button-size);
+  height: var(--icon-button-size);
   place-items: center;
   border: 1px solid var(--border-2);
-  border-radius: 8px;
+  border-radius: var(--button-radius);
   background: var(--surface-2);
   color: var(--text);
   cursor: pointer;
@@ -999,18 +1202,18 @@ input:disabled {
 }
 
 .batch-upload-button .button-icon {
-  width: 15px;
-  height: 15px;
+  width: calc(var(--button-icon-size) - 1px);
+  height: calc(var(--button-icon-size) - 1px);
 }
 
 .batch-delete-button {
   display: inline-grid;
   flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
+  width: var(--icon-button-size);
+  height: var(--icon-button-size);
   place-items: center;
   border: 1px solid var(--border-2);
-  border-radius: 8px;
+  border-radius: var(--button-radius);
   background: var(--surface-2);
   color: var(--text);
   cursor: pointer;
@@ -1022,8 +1225,8 @@ input:disabled {
 }
 
 .batch-delete-button .button-icon {
-  width: 15px;
-  height: 15px;
+  width: calc(var(--button-icon-size) - 1px);
+  height: calc(var(--button-icon-size) - 1px);
 }
 
 .confirm-dialog h2 {
@@ -1116,8 +1319,9 @@ input:disabled {
 }
 
 .status-filter select {
-  min-height: 42px;
-  padding: 9px 12px;
+  min-height: var(--button-height);
+  padding: var(--button-padding-y) var(--button-padding-x);
+  font-size: var(--button-font-size);
 }
 
 .table-wrap {
@@ -1188,11 +1392,11 @@ input:disabled {
 
 .modal-close-button {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 14px;
+  right: 14px;
   display: inline-grid;
-  width: 36px;
-  height: 36px;
+  width: var(--icon-button-size);
+  height: var(--icon-button-size);
   place-items: center;
   border: 1px solid var(--border-2);
   border-radius: var(--button-radius);
@@ -1207,8 +1411,8 @@ input:disabled {
 }
 
 .modal-close-button .button-icon {
-  width: 17px;
-  height: 17px;
+  width: var(--button-icon-size);
+  height: var(--button-icon-size);
 }
 
 .profile-modal {
@@ -1243,7 +1447,7 @@ input:disabled {
 
 .profile-section .primary-button {
   justify-self: center;
-  min-width: 210px;
+  min-width: 180px;
 }
 
 .profile-section input[type="file"] {
@@ -1373,16 +1577,16 @@ td {
 
 .theme-card {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   justify-items: center;
-  min-height: 74px;
-  padding: 8px;
+  min-height: 58px;
+  padding: 6px;
   border: 1px solid var(--border-2);
-  border-radius: 10px;
+  border-radius: var(--button-radius);
   background: var(--surface-2);
   color: var(--text);
   cursor: pointer;
-  font-size: 0.84rem;
+  font-size: 0.78rem;
   font-weight: 650;
 }
 
@@ -1393,10 +1597,10 @@ td {
 
 .theme-preview {
   display: block;
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   border: 1px solid var(--border-2);
-  border-radius: 8px;
+  border-radius: var(--button-radius);
 }
 
 .theme-preview-dark {

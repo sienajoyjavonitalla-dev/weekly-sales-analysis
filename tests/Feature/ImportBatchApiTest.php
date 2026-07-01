@@ -66,6 +66,7 @@ class ImportBatchApiTest extends TestCase
 
         $draftBatch = $this->createBatch($user, '2026-04-10');
         ImportBatch::query()->create([
+            'week_start' => '2026-04-11',
             'week_ending' => '2026-04-17',
             'status' => 'finalized',
             'created_by_user_id' => $user->id,
@@ -222,6 +223,7 @@ class ImportBatchApiTest extends TestCase
     private function createBatch(User $user, string $weekEnding, string $sourceSystem = 'Traverse Global'): ImportBatch
     {
         return ImportBatch::query()->create([
+            'week_start' => date('Y-m-d', strtotime($weekEnding.' -6 days')),
             'week_ending' => $weekEnding,
             'status' => 'draft',
             'created_by_user_id' => $user->id,

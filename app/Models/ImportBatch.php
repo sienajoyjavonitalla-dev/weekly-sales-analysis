@@ -13,6 +13,7 @@ class ImportBatch extends Model
     use HasFactory;
 
     protected $fillable = [
+        'week_start',
         'week_ending',
         'status',
         'created_by_user_id',
@@ -26,6 +27,7 @@ class ImportBatch extends Model
     protected function casts(): array
     {
         return [
+            'week_start' => 'date',
             'week_ending' => 'date',
             'metadata' => 'array',
             'finalized_at' => 'datetime',

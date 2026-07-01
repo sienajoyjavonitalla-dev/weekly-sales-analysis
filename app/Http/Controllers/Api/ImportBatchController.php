@@ -43,6 +43,7 @@ class ImportBatchController
     {
         return [
             'id' => $batch->id,
+            'week_start' => $batch->week_start?->toDateString(),
             'week_ending' => $batch->week_ending?->toDateString(),
             'status' => $batch->status,
             'created_at' => $batch->created_at?->toIso8601String(),

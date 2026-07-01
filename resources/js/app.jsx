@@ -91,6 +91,7 @@ function ActionIcon({ name }) {
   const paths = {
     add: ['M12 5v14', 'M5 12h14'],
     cancel: ['M6 6l12 12', 'M18 6L6 18'],
+    calendar: ['M7 4v2', 'M17 4v2', 'M5 8h14', 'M6 5h12a2 2 0 012 2v13a2 2 0 01-2 2H8a2 2 0 01-2-2V7a2 2 0 012-2z'],
     check: ['M5 13l4 4L19 7'],
     delete: ['M5 7h14', 'M10 11v6', 'M14 11v6', 'M8 7l1-3h6l1 3', 'M7 7l1 13h8l1-13'],
     download: ['M12 4v10', 'M8 10l4 4 4-4', 'M5 20h14'],
@@ -673,15 +674,196 @@ function ProfileModal({ initials, user, showNotice, onClose, onUserUpdated }) {
   );
 }
 
+function toIsoDateString(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function parseIsoDate(isoDate) {
+  return new Date(`${isoDate}T00:00:00`);
+}
+
+function DateRangePicker({ start, end, onChange, placeholder = 'Select week range' }) {
+  const containerRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [viewDate, setViewDate] = useState(() => (start ? parseIsoDate(start) : new Date()));
+  const [draftStart, setDraftStart] = useState(start);
+  const [draftEnd, setDraftEnd] = useState(end);
+
+  useEffect(() => {
+    setDraftStart(start);
+    setDraftEnd(end);
+  }, [start, end]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    function handlePointerDown(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+        setDraftStart(start);
+        setDraftEnd(end);
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown);
+
+    return () => document.removeEventListener('mousedown', handlePointerDown);
+  }, [end, isOpen, start]);
+
+  const monthLabel = viewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const firstWeekday = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const days = [];
+
+  for (let index = 0; index < firstWeekday; index += 1) {
+    days.push(null);
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    days.push(toIsoDateString(new Date(year, month, day)));
+  }
+
+  const displayValue = start && end ? formatWeekRange(start, end) : '';
+  const hint = !draftStart ? 'Choose a start date' : !draftEnd ? 'Choose an end date' : 'Range selected';
+
+  function handleDayClick(isoDate) {
+    if (!draftStart || (draftStart && draftEnd)) {
+      setDraftStart(isoDate);
+      setDraftEnd('');
+      return;
+    }
+
+    let nextStart = draftStart;
+    let nextEnd = isoDate;
+
+    if (nextEnd < nextStart) {
+      [nextStart, nextEnd] = [nextEnd, nextStart];
+    }
+
+    setDraftStart(nextStart);
+    setDraftEnd(nextEnd);
+    onChange({ start: nextStart, end: nextEnd });
+    setIsOpen(false);
+  }
+
+  function shiftMonth(offset) {
+    setViewDate(new Date(year, month + offset, 1));
+  }
+
+  return (
+    <div className="date-range-picker" ref={containerRef}>
+      <button
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
+        className="date-range-trigger"
+        type="button"
+        onClick={() => {
+          setIsOpen((current) => !current);
+          if (start) {
+            setViewDate(parseIsoDate(start));
+          }
+        }}
+      >
+        <ActionIcon name="calendar" />
+        <span className={displayValue ? 'date-range-value' : 'date-range-placeholder'}>
+          {displayValue || placeholder}
+        </span>
+      </button>
+      {isOpen ? (
+        <div aria-label="Choose week range" className="date-range-popover" role="dialog">
+          <div className="date-range-popover-header">
+            <button aria-label="Previous month" className="date-range-nav-button" type="button" onClick={() => shiftMonth(-1)}>
+              ‹
+            </button>
+            <span>{monthLabel}</span>
+            <button aria-label="Next month" className="date-range-nav-button" type="button" onClick={() => shiftMonth(1)}>
+              ›
+            </button>
+          </div>
+          <p className="date-range-hint">{hint}</p>
+          <div className="date-range-weekdays">
+            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((label) => (
+              <span key={label}>{label}</span>
+            ))}
+          </div>
+          <div className="date-range-days">
+            {days.map((isoDate, index) => {
+              if (!isoDate) {
+                return <span className="date-range-day date-range-day-empty" key={`empty-${index}`} />;
+              }
+
+              const inRange = draftStart && draftEnd && isoDate >= draftStart && isoDate <= draftEnd;
+              const isStart = isoDate === draftStart;
+              const isEnd = isoDate === draftEnd;
+              const isToday = isoDate === toIsoDateString(new Date());
+
+              return (
+                <button
+                  className={[
+                    'date-range-day',
+                    inRange ? 'date-range-day-in-range' : '',
+                    isStart ? 'date-range-day-start' : '',
+                    isEnd ? 'date-range-day-end' : '',
+                    isToday ? 'date-range-day-today' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  key={isoDate}
+                  type="button"
+                  onClick={() => handleDayClick(isoDate)}
+                >
+                  {parseIsoDate(isoDate).getDate()}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchId, showNotice }) {
   const [selectedFiles, setSelectedFiles] = useState({});
   const [uploading, setUploading] = useState(false);
+  const [weekRangeStart, setWeekRangeStart] = useState('');
+  const [weekRangeEnd, setWeekRangeEnd] = useState('');
+
+  const selectedBatch = useMemo(
+    () => batches.find((batch) => String(batch.id) === String(batchId)),
+    [batches, batchId],
+  );
+
+  useEffect(() => {
+    if (!weekRangeStart && !weekRangeEnd && selectedBatch) {
+      setWeekRangeStart(selectedBatch.week_start ?? '');
+      setWeekRangeEnd(selectedBatch.week_ending ?? '');
+    }
+  }, [selectedBatch, weekRangeEnd, weekRangeStart]);
 
   const hasFiles = Object.values(selectedFiles).some(Boolean);
 
   async function handleUploadClick() {
     if (!hasFiles) {
       showNotice('error', 'Choose at least one workbook before importing.');
+      return;
+    }
+
+    if (!weekRangeStart || !weekRangeEnd) {
+      showNotice('error', 'Select a week range before importing.');
+      return;
+    }
+
+    if (weekRangeStart > weekRangeEnd) {
+      showNotice('error', 'Week range start date must be on or before the end date.');
       return;
     }
 
@@ -693,9 +875,8 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
       }
     });
 
-    if (batchId) {
-      formData.append('import_batch_id', batchId);
-    }
+    formData.append('week_start', weekRangeStart);
+    formData.append('week_ending', weekRangeEnd);
 
     setUploading(true);
 
@@ -730,9 +911,20 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
           <span className="status-pill status-success">Partial uploads ready</span>
         </div>
         <p>
-          Choose one file, several files, or the full weekly set. The app creates a new batch automatically unless a
-          batch is already selected below.
+          Choose one file, several files, or the full weekly set. Select the week range, then import to create a new
+          batch automatically.
         </p>
+        <div className="week-range-field">
+          <span>Week range</span>
+          <DateRangePicker
+            end={weekRangeEnd}
+            start={weekRangeStart}
+            onChange={({ start, end }) => {
+              setWeekRangeStart(start);
+              setWeekRangeEnd(end);
+            }}
+          />
+        </div>
         <div className="file-grid">
           {workbookTypes.map((type) => (
             <label className="file-card" key={type.key}>
@@ -855,7 +1047,7 @@ function UploadedBatchesTable({ batches, loadBatches, setBatchId, showNotice }) 
         <thead>
           <tr>
             <th>Batch ID</th>
-            <th>Week Ending</th>
+            <th>Week Range</th>
             <th>Status</th>
             {workbookTypes.map((type) => (
               <th key={type.key}>{type.label}</th>
@@ -866,7 +1058,7 @@ function UploadedBatchesTable({ batches, loadBatches, setBatchId, showNotice }) 
           {batches.map((batch) => (
             <tr key={batch.id}>
               <td>#{batch.id}</td>
-              <td>{formatBatchDate(batch.week_ending)}</td>
+              <td>{formatWeekRange(batch.week_start, batch.week_ending)}</td>
               <td className="batch-status-text">{batch.status}</td>
               {workbookTypes.map((type) => {
                 const uploaded = (batch.uploaded_files ?? []).find((file) => file.file_type === type.key);
@@ -882,11 +1074,12 @@ function UploadedBatchesTable({ batches, loadBatches, setBatchId, showNotice }) 
                       {canDownload ? (
                         <>
                           <a
-                            className={`import-status import-status-download ${importStatusClass(status)}`}
+                            className="batch-file-download"
                             href={`/api/uploaded-files/${uploaded.id}/download`}
-                            title={`Download ${type.label}`}
+                            title={`Download ${uploaded.original_name}`}
                           >
-                            {formatImportStatus(status)}
+                            <ActionIcon name="download" />
+                            <span className="batch-file-name">{truncateFileName(uploaded.original_name)}</span>
                           </a>
                           <button
                             aria-label={`Delete ${type.label} from batch ${batch.id}`}
@@ -2101,20 +2294,45 @@ function SimpleList({ items }) {
   );
 }
 
-function formatBatchDate(value) {
-  if (!value) {
-    return 'Unknown date';
-  }
-
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(new Date(`${value}T00:00:00`));
+function formatBatchLabel(batch) {
+  return `${formatWeekRange(batch.week_start, batch.week_ending)} — Batch #${batch.id} (${batch.status})`;
 }
 
-function formatBatchLabel(batch) {
-  return `${formatBatchDate(batch.week_ending)} — Batch #${batch.id} (${batch.status})`;
+function formatWeekRange(weekStart, weekEnding) {
+  if (!weekStart && !weekEnding) {
+    return 'Unknown range';
+  }
+
+  const end = weekEnding ? new Date(`${weekEnding}T00:00:00`) : null;
+  const start = weekStart
+    ? new Date(`${weekStart}T00:00:00`)
+    : end
+      ? new Date(end)
+      : null;
+
+  if (!end || !start) {
+    return 'Unknown range';
+  }
+
+  if (!weekStart) {
+    start.setDate(end.getDate() - 6);
+  }
+
+  const startMonth = start.toLocaleString('en-US', { month: 'short' });
+  const endMonth = end.toLocaleString('en-US', { month: 'short' });
+  const startDay = start.getDate();
+  const endDay = end.getDate();
+  const endYear = end.getFullYear();
+
+  if (start.getFullYear() === endYear && start.getMonth() === end.getMonth()) {
+    return `${startMonth} ${startDay} – ${endDay}, ${endYear}`;
+  }
+
+  if (start.getFullYear() === endYear) {
+    return `${startMonth} ${startDay} – ${endMonth} ${endDay}, ${endYear}`;
+  }
+
+  return `${startMonth} ${startDay}, ${start.getFullYear()} – ${endMonth} ${endDay}, ${endYear}`;
 }
 
 function importStatusClass(status) {
@@ -2131,10 +2349,18 @@ function importStatusClass(status) {
 
 function formatImportStatus(status) {
   if (status === 'missing') {
-    return 'Not uploaded';
+    return 'No File';
   }
 
   return status.replace(/_/g, ' ');
+}
+
+function truncateFileName(filename, maxLength = 10) {
+  if (!filename) {
+    return 'File';
+  }
+
+  return filename.length > maxLength ? filename.slice(0, maxLength) : filename;
 }
 
 function currency(value) {

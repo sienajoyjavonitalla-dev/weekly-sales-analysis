@@ -37,6 +37,7 @@ class WorkbookImportController
         $result = $importService->import(
             files: $files,
             importBatch: $importBatch,
+            weekStart: $request->input('week_start'),
             weekEnding: $request->input('week_ending'),
             userId: $request->user()?->id,
         );

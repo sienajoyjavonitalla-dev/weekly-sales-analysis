@@ -48,11 +48,14 @@ class WorkbookImportService
      * @param  array<string, HttpUploadedFile>  $files
      * @return array{import_batch:ImportBatch, uploaded_files:array<int, UploadedFile>, summary:array<string, mixed>}
      */
-    public function import(array $files, ?ImportBatch $importBatch = null, ?string $weekEnding = null, ?int $userId = null): array
+    public function import(array $files, ?ImportBatch $importBatch = null, ?string $weekStart = null, ?string $weekEnding = null, ?int $userId = null): array
     {
-        return DB::transaction(function () use ($files, $importBatch, $weekEnding, $userId): array {
+        return DB::transaction(function () use ($files, $importBatch, $weekStart, $weekEnding, $userId): array {
+            [$resolvedWeekStart, $resolvedWeekEnding] = $this->resolveWeekRange($weekStart, $weekEnding, $files);
+
             $importBatch ??= ImportBatch::query()->create([
-                'week_ending' => $this->resolveWeekEnding($weekEnding, $files),
+                'week_start' => $resolvedWeekStart,
+                'week_ending' => $resolvedWeekEnding,
                 'created_by_user_id' => $userId,
                 'status' => 'draft',
             ]);
@@ -202,20 +205,34 @@ class WorkbookImportService
 
     /**
      * @param  array<string, HttpUploadedFile>  $files
+     * @return array{0: string, 1: string}
      */
-    private function resolveWeekEnding(?string $weekEnding, array $files): string
+    private function resolveWeekRange(?string $weekStart, ?string $weekEnding, array $files): array
     {
         if ($weekEnding !== null && $weekEnding !== '') {
-            return Carbon::parse($weekEnding)->toDateString();
+            $end = Carbon::parse($weekEnding)->toDateString();
+            $start = $weekStart !== null && $weekStart !== ''
+                ? Carbon::parse($weekStart)->toDateString()
+                : Carbon::parse($end)->subDays(6)->toDateString();
+
+            if (Carbon::parse($start)->gt(Carbon::parse($end))) {
+                return [$end, $start];
+            }
+
+            return [$start, $end];
         }
 
         foreach ($files as $file) {
             if (preg_match('/(\d{2})-(\d{2})-(\d{4})/', $file->getClientOriginalName(), $matches)) {
-                return Carbon::createFromFormat('m-d-Y', "{$matches[1]}-{$matches[2]}-{$matches[3]}")->toDateString();
+                $end = Carbon::createFromFormat('m-d-Y', "{$matches[1]}-{$matches[2]}-{$matches[3]}")->toDateString();
+
+                return [Carbon::parse($end)->subDays(6)->toDateString(), $end];
             }
         }
 
-        return now()->toDateString();
+        $end = now()->toDateString();
+
+        return [Carbon::parse($end)->subDays(6)->toDateString(), $end];
     }
 
     private function dateValue(mixed $value): ?string

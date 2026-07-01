@@ -21,7 +21,8 @@ class UploadWeeklyWorkbookSetRequest extends FormRequest
 
         return [
             'import_batch_id' => ['nullable', 'integer', 'exists:import_batches,id'],
-            'week_ending' => ['nullable', 'date'],
+            'week_start' => ['nullable', 'date'],
+            'week_ending' => ['nullable', 'date', 'after_or_equal:week_start'],
             'sales_analysis' => $fileRule,
             'income_statement' => $fileRule,
             'total_sales_report' => $fileRule,
