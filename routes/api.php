@@ -3,12 +3,14 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BatchClassificationController;
 use App\Http\Controllers\Api\GeneratedReportController;
+use App\Http\Controllers\Api\ImportBatchController;
 use App\Http\Controllers\Api\MappingRuleController;
 use App\Http\Controllers\Api\MarketplaceFeeController;
 use App\Http\Controllers\Api\ProductCategoryController;
 use App\Http\Controllers\Api\ReconciliationController;
 use App\Http\Controllers\Api\ReportTotalController;
 use App\Http\Controllers\Api\UnmatchedSalesRowController;
+use App\Http\Controllers\Api\UploadedFileController;
 use App\Http\Controllers\Api\WorkbookImportController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
@@ -38,6 +40,9 @@ Route::middleware(['web', 'auth', 'throttle:60,1'])->group(function (): void {
         ->parameters(['mapping-rules' => 'mappingRule'])
         ->except(['show']);
 
+    Route::get('/import-batches', [ImportBatchController::class, 'index']);
+    Route::get('/import-batches/{importBatch}', [ImportBatchController::class, 'show']);
+
     Route::post('/import-batches/{importBatch}/classify-sales-rows', BatchClassificationController::class);
     Route::get('/import-batches/{importBatch}/unmatched-sales-rows', [UnmatchedSalesRowController::class, 'index']);
     Route::get('/import-batches/{importBatch}/marketplace-fees', [MarketplaceFeeController::class, 'index']);
@@ -48,6 +53,8 @@ Route::middleware(['web', 'auth', 'throttle:60,1'])->group(function (): void {
     Route::get('/import-batches/{importBatch}/generated-reports', [GeneratedReportController::class, 'index']);
     Route::post('/import-batches/{importBatch}/generated-reports', [GeneratedReportController::class, 'store']);
     Route::delete('/marketplace-fees/{marketplaceFee}', [MarketplaceFeeController::class, 'destroy']);
+    Route::get('/uploaded-files/{uploadedFile}/download', [UploadedFileController::class, 'download']);
+    Route::delete('/uploaded-files/{uploadedFile}', [UploadedFileController::class, 'destroy']);
     Route::get('/generated-reports/{generatedReport}/download', [GeneratedReportController::class, 'download']);
     Route::patch('/sales-rows/{salesRow}/classification', [UnmatchedSalesRowController::class, 'update']);
 });

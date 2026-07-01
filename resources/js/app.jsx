@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
@@ -140,9 +140,20 @@ const workflowTabs = [
   { id: 'exports', label: 'Exports', icon: ExportIcon },
 ];
 
+const workbookTypes = [
+  { key: 'sales_analysis', label: 'Sales Analysis' },
+  { key: 'income_statement', label: 'Income Statement' },
+  { key: 'total_sales_report', label: 'Total Sales Report' },
+  { key: 'weekly_meter_report', label: 'Weekly Meter Report' },
+  { key: 'open_orders', label: 'Open Orders' },
+  { key: 'ptd_orders', label: 'PTD Orders' },
+];
+
 function App() {
   const [activeTab, setActiveTab] = useState('upload');
   const [batchId, setBatchId] = useState('');
+  const [batches, setBatches] = useState([]);
+  const [batchesLoading, setBatchesLoading] = useState(false);
   const [notice, setNotice] = useState(null);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -153,6 +164,28 @@ function App() {
     setNotice({ type, message });
   }, []);
 
+  const loadBatches = useCallback(async () => {
+    setBatchesLoading(true);
+
+    try {
+      const response = await axios.get('/api/import-batches');
+      const nextBatches = response.data.data ?? [];
+
+      setBatches(nextBatches);
+      setBatchId((current) => {
+        if (current && nextBatches.some((batch) => String(batch.id) === String(current))) {
+          return current;
+        }
+
+        return nextBatches[0] ? String(nextBatches[0].id) : '';
+      });
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to load import batches.'));
+    } finally {
+      setBatchesLoading(false);
+    }
+  }, [showNotice]);
+
   useEffect(() => {
     axios
       .get('/api/me')
@@ -160,6 +193,16 @@ function App() {
       .catch(() => setUser(null))
       .finally(() => setAuthLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setBatches([]);
+      setBatchId('');
+      return;
+    }
+
+    loadBatches();
+  }, [user, loadBatches]);
 
   useEffect(() => {
     if (!notice) {
@@ -175,6 +218,8 @@ function App() {
     try {
       await axios.post('/api/logout');
       setUser(null);
+      setBatches([]);
+      setBatchId('');
       setNotice(null);
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to sign out.'));
@@ -207,9 +252,7 @@ function App() {
   return (
     <main className={`app-shell theme-${user.theme ?? 'dark'}`}>
       <AppHeader
-        batchId={batchId}
         isSidebarCollapsed={isSidebarCollapsed}
-        setBatchId={setBatchId}
         user={user}
         showNotice={showNotice}
         onUserUpdated={setUser}
@@ -264,17 +307,44 @@ function App() {
 
         <section className="workspace">
           {activeTab === 'upload' ? (
-            <UploadScreen batchId={batchId} setBatchId={setBatchId} showNotice={showNotice} />
+            <UploadScreen
+              batchId={batchId}
+              batches={batches}
+              batchesLoading={batchesLoading}
+              loadBatches={loadBatches}
+              setBatchId={setBatchId}
+              showNotice={showNotice}
+            />
           ) : null}
           {activeTab === 'rules' ? <MappingRulesScreen showNotice={showNotice} /> : null}
           {activeTab === 'categories' ? <CategoriesScreen showNotice={showNotice} /> : null}
           {activeTab === 'review' ? (
-            <ReviewRowsScreen batchId={batchId} showNotice={showNotice} />
+            <ReviewRowsScreen
+              batchId={batchId}
+              batches={batches}
+              batchesLoading={batchesLoading}
+              setBatchId={setBatchId}
+              showNotice={showNotice}
+            />
           ) : null}
           {activeTab === 'reconcile' ? (
-            <ReconciliationScreen batchId={batchId} showNotice={showNotice} />
+            <ReconciliationScreen
+              batchId={batchId}
+              batches={batches}
+              batchesLoading={batchesLoading}
+              setBatchId={setBatchId}
+              showNotice={showNotice}
+            />
           ) : null}
-          {activeTab === 'exports' ? <ExportsScreen batchId={batchId} showNotice={showNotice} /> : null}
+          {activeTab === 'exports' ? (
+            <ExportsScreen
+              batchId={batchId}
+              batches={batches}
+              batchesLoading={batchesLoading}
+              setBatchId={setBatchId}
+              showNotice={showNotice}
+            />
+          ) : null}
         </section>
       </div>
     </main>
@@ -352,7 +422,27 @@ function FloatingAlert({ notice, onClose }) {
   );
 }
 
-function AppHeader({ batchId, isSidebarCollapsed, setBatchId, user, showNotice, onUserUpdated, onLogout, onToggleSidebar }) {
+function BatchSelect({ batches, batchId, batchesLoading, onChange }) {
+  return (
+    <label className="batch-select">
+      <span>Batch</span>
+      <select
+        disabled={batchesLoading}
+        value={batchId}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        <option value="">Select a batch...</option>
+        {batches.map((batch) => (
+          <option key={batch.id} value={String(batch.id)}>
+            {formatBatchLabel(batch)}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function AppHeader({ isSidebarCollapsed, user, showNotice, onUserUpdated, onLogout, onToggleSidebar }) {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const userName = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.name;
@@ -383,16 +473,6 @@ function AppHeader({ batchId, isSidebarCollapsed, setBatchId, user, showNotice, 
       <img className="top-nav-logo" src="/images/white-logo.png" alt="Wagner Meters" />
 
       <div className="top-nav-right">
-        <label className="batch-field">
-          <span>Batch ID</span>
-          <input
-            min="1"
-            placeholder="1"
-            type="number"
-            value={batchId}
-            onChange={(event) => setBatchId(event.target.value)}
-          />
-        </label>
         <div className="account-menu-wrap">
           <button
             className="account-trigger"
@@ -593,23 +673,15 @@ function ProfileModal({ initials, user, showNotice, onClose, onUserUpdated }) {
   );
 }
 
-function UploadScreen({ batchId, setBatchId, showNotice }) {
+function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchId, showNotice }) {
   const [selectedFiles, setSelectedFiles] = useState({});
-  const [uploadMessage, setUploadMessage] = useState('');
   const [uploading, setUploading] = useState(false);
-  const workbookTypes = [
-    { key: 'sales_analysis', label: 'Sales Analysis' },
-    { key: 'income_statement', label: 'Income Statement' },
-    { key: 'total_sales_report', label: 'Total Sales Report' },
-    { key: 'weekly_meter_report', label: 'Weekly Meter Report' },
-    { key: 'open_orders', label: 'Open Orders' },
-    { key: 'ptd_orders', label: 'PTD Orders' },
-  ];
+
   const hasFiles = Object.values(selectedFiles).some(Boolean);
 
   async function handleUploadClick() {
     if (!hasFiles) {
-      setUploadMessage('Choose at least one workbook before importing.');
+      showNotice('error', 'Choose at least one workbook before importing.');
       return;
     }
 
@@ -626,7 +698,6 @@ function UploadScreen({ batchId, setBatchId, showNotice }) {
     }
 
     setUploading(true);
-    setUploadMessage('');
 
     try {
       const response = await axios.post('/api/workbook-imports', formData, {
@@ -638,10 +709,11 @@ function UploadScreen({ batchId, setBatchId, showNotice }) {
       const nextBatchId = String(result.import_batch.id);
 
       setBatchId(nextBatchId);
-      setUploadMessage(`Imported selected files into batch #${nextBatchId}.`);
-      showNotice('success', `Imported ${Object.keys(result.summary).length} workbook type(s).`);
+      setSelectedFiles({});
+      showNotice('success', `Imported ${Object.keys(result.summary).length} workbook type(s) into batch #${nextBatchId}.`);
+      await loadBatches();
     } catch (error) {
-      setUploadMessage(messageFromError(error, 'Unable to upload and import the selected files.'));
+      showNotice('error', messageFromError(error, 'Unable to upload and import the selected files.'));
     } finally {
       setUploading(false);
     }
@@ -658,10 +730,9 @@ function UploadScreen({ batchId, setBatchId, showNotice }) {
           <span className="status-pill status-success">Partial uploads ready</span>
         </div>
         <p>
-          Choose one file, several files, or the full weekly set. The app will create a new batch automatically
-          unless you enter an existing Active Import Batch ID above.
+          Choose one file, several files, or the full weekly set. The app creates a new batch automatically unless a
+          batch is already selected below.
         </p>
-        {uploadMessage ? <div className="upload-message">{uploadMessage}</div> : null}
         <div className="file-grid">
           {workbookTypes.map((type) => (
             <label className="file-card" key={type.key}>
@@ -685,7 +756,200 @@ function UploadScreen({ batchId, setBatchId, showNotice }) {
           </button>
         </div>
       </article>
+
+      <article className="panel panel-span">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Uploaded Batches</p>
+            <h2>Batch History</h2>
+          </div>
+          <button className="secondary-button" disabled={batchesLoading} type="button" onClick={loadBatches}>
+            <ButtonContent icon="refresh">Refresh</ButtonContent>
+          </button>
+        </div>
+        {batchesLoading ? <p>Loading batches...</p> : null}
+        {!batchesLoading && batches.length === 0 ? <p>No batches uploaded yet.</p> : null}
+        {!batchesLoading && batches.length > 0 ? (
+          <UploadedBatchesTable
+            batches={batches}
+            loadBatches={loadBatches}
+            setBatchId={setBatchId}
+            showNotice={showNotice}
+          />
+        ) : null}
+      </article>
     </section>
+  );
+}
+
+function UploadedBatchesTable({ batches, loadBatches, setBatchId, showNotice }) {
+  const [uploadingCell, setUploadingCell] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const fileInputRefs = useRef({});
+
+  async function uploadForCell(batchId, fileType, fileTypeLabel, file) {
+    const cellKey = `${batchId}-${fileType}`;
+    const formData = new FormData();
+
+    formData.append(fileType, file);
+    formData.append('import_batch_id', String(batchId));
+
+    setUploadingCell(cellKey);
+
+    try {
+      const response = await axios.post('/api/workbook-imports', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      const nextBatchId = String(response.data.data.import_batch.id);
+
+      setBatchId(nextBatchId);
+      showNotice('success', `${fileTypeLabel} imported into batch #${nextBatchId}.`);
+      await loadBatches();
+    } catch (error) {
+      showNotice('error', messageFromError(error, `Unable to upload ${fileTypeLabel}.`));
+    } finally {
+      setUploadingCell('');
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) {
+      return;
+    }
+
+    setDeleting(true);
+
+    try {
+      await axios.delete(`/api/uploaded-files/${deleteTarget.uploadedFileId}`);
+      showNotice('success', `${deleteTarget.fileTypeLabel} deleted from batch #${deleteTarget.batchId}.`);
+      setDeleteTarget(null);
+      await loadBatches();
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to delete uploaded file.'));
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <>
+      {deleteTarget ? (
+        <ConfirmDialog
+          confirmLabel="Delete File"
+          isProcessing={deleting}
+          message={`Delete ${deleteTarget.fileTypeLabel} from batch #${deleteTarget.batchId}? This removes the uploaded workbook and its imported rows.`}
+          title="Delete Uploaded File"
+          onCancel={() => {
+            if (!deleting) {
+              setDeleteTarget(null);
+            }
+          }}
+          onConfirm={confirmDelete}
+        />
+      ) : null}
+      <div className="table-wrap table-section">
+      <table className="upload-table">
+        <thead>
+          <tr>
+            <th>Batch ID</th>
+            <th>Week Ending</th>
+            <th>Status</th>
+            {workbookTypes.map((type) => (
+              <th key={type.key}>{type.label}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {batches.map((batch) => (
+            <tr key={batch.id}>
+              <td>#{batch.id}</td>
+              <td>{formatBatchDate(batch.week_ending)}</td>
+              <td className="batch-status-text">{batch.status}</td>
+              {workbookTypes.map((type) => {
+                const uploaded = (batch.uploaded_files ?? []).find((file) => file.file_type === type.key);
+                const status = uploaded?.status ?? 'missing';
+                const cellKey = `${batch.id}-${type.key}`;
+                const isUploading = uploadingCell === cellKey;
+                const canUpload = status === 'missing' || status === 'validation_failed';
+                const canDownload = status === 'imported' && uploaded?.id;
+
+                return (
+                  <td key={type.key}>
+                    <div className="batch-cell-status">
+                      {canDownload ? (
+                        <>
+                          <a
+                            className={`import-status import-status-download ${importStatusClass(status)}`}
+                            href={`/api/uploaded-files/${uploaded.id}/download`}
+                            title={`Download ${type.label}`}
+                          >
+                            {formatImportStatus(status)}
+                          </a>
+                          <button
+                            aria-label={`Delete ${type.label} from batch ${batch.id}`}
+                            className="batch-delete-button"
+                            title={`Delete ${type.label}`}
+                            type="button"
+                            onClick={() =>
+                              setDeleteTarget({
+                                batchId: batch.id,
+                                fileTypeLabel: type.label,
+                                uploadedFileId: uploaded.id,
+                              })
+                            }
+                          >
+                            <ActionIcon name="delete" />
+                          </button>
+                        </>
+                      ) : (
+                        <span className={`import-status ${importStatusClass(status)}`}>
+                          {formatImportStatus(status)}
+                        </span>
+                      )}
+                      {canUpload ? (
+                        <>
+                          <button
+                            aria-label={`Upload ${type.label} for batch ${batch.id}`}
+                            className="batch-upload-button"
+                            disabled={isUploading}
+                            title={isUploading ? `Uploading ${type.label}...` : `Upload ${type.label}`}
+                            type="button"
+                            onClick={() => fileInputRefs.current[cellKey]?.click()}
+                          >
+                            <ActionIcon name="upload" />
+                          </button>
+                          <input
+                            accept=".xlsx"
+                            className="batch-upload-input"
+                            ref={(element) => {
+                              fileInputRefs.current[cellKey] = element;
+                            }}
+                            type="file"
+                            onChange={(event) => {
+                              const file = event.target.files?.[0];
+
+                              if (file) {
+                                uploadForCell(batch.id, type.key, type.label, file);
+                              }
+
+                              event.target.value = '';
+                            }}
+                          />
+                        </>
+                      ) : null}
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    </>
   );
 }
 
@@ -1017,6 +1281,31 @@ function RuleForm({ categories, children, form, primaryLabel, setForm, onSubmit 
         {children}
       </div>
     </form>
+  );
+}
+
+function ConfirmDialog({ title, message, confirmLabel, isProcessing, onConfirm, onCancel }) {
+  return (
+    <div className="modal-backdrop" role="presentation" onClick={onCancel}>
+      <section
+        aria-labelledby="confirm-dialog-title"
+        aria-modal="true"
+        className="modal-card confirm-dialog"
+        role="alertdialog"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h2 id="confirm-dialog-title">{title}</h2>
+        <p>{message}</p>
+        <div className="confirm-dialog-actions">
+          <button className="secondary-button" disabled={isProcessing} type="button" onClick={onCancel}>
+            Cancel
+          </button>
+          <button className="danger-button" disabled={isProcessing} type="button" onClick={onConfirm}>
+            <ButtonContent icon="delete">{isProcessing ? 'Deleting...' : confirmLabel}</ButtonContent>
+          </button>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -1373,7 +1662,7 @@ function RulesTable({ rules, selectedRule, statusFilter, onSelectRule }) {
   );
 }
 
-function ReviewRowsScreen({ batchId, showNotice }) {
+function ReviewRowsScreen({ batchId, batches, batchesLoading, setBatchId, showNotice }) {
   const [rows, setRows] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -1434,6 +1723,12 @@ function ReviewRowsScreen({ batchId, showNotice }) {
   return (
     <section className="panel-grid">
       <article className="panel panel-span">
+        <BatchSelect
+          batchId={batchId}
+          batches={batches}
+          batchesLoading={batchesLoading}
+          onChange={setBatchId}
+        />
         <div className="section-heading">
           <div>
             <p className="eyebrow">Review</p>
@@ -1448,7 +1743,7 @@ function ReviewRowsScreen({ batchId, showNotice }) {
             </button>
           </div>
         </div>
-        {!canLoad ? <p>Enter an active import batch ID to review unmatched rows.</p> : null}
+        {!canLoad ? <p>Select a batch to continue.</p> : null}
         {loading ? <p>Loading unmatched rows...</p> : null}
         {canLoad && !loading ? (
           <>
@@ -1519,7 +1814,7 @@ function RowsTable({ rows, resolveRow }) {
   );
 }
 
-function ReconciliationScreen({ batchId, showNotice }) {
+function ReconciliationScreen({ batchId, batches, batchesLoading, setBatchId, showNotice }) {
   const [result, setResult] = useState(null);
   const [totals, setTotals] = useState([]);
   const [fees, setFees] = useState([]);
@@ -1579,6 +1874,12 @@ function ReconciliationScreen({ batchId, showNotice }) {
   return (
     <section className="panel-grid">
       <article className="panel panel-span">
+        <BatchSelect
+          batchId={batchId}
+          batches={batches}
+          batchesLoading={batchesLoading}
+          onChange={setBatchId}
+        />
         <div className="section-heading">
           <div>
             <p className="eyebrow">Reconciliation</p>
@@ -1588,7 +1889,7 @@ function ReconciliationScreen({ batchId, showNotice }) {
             <ButtonContent icon="run">Run Reconciliation</ButtonContent>
           </button>
         </div>
-        {!canLoad ? <p>Enter an active import batch ID to run reconciliation.</p> : null}
+        {!canLoad ? <p>Select a batch to continue.</p> : null}
         {result ? <SummaryCards result={result} /> : null}
       </article>
 
@@ -1662,7 +1963,7 @@ function SummaryCards({ result }) {
   );
 }
 
-function ExportsScreen({ batchId, showNotice }) {
+function ExportsScreen({ batchId, batches, batchesLoading, setBatchId, showNotice }) {
   const [reports, setReports] = useState([]);
   const canLoad = Boolean(batchId);
 
@@ -1695,6 +1996,12 @@ function ExportsScreen({ batchId, showNotice }) {
   return (
     <section className="panel-grid">
       <article className="panel panel-span">
+        <BatchSelect
+          batchId={batchId}
+          batches={batches}
+          batchesLoading={batchesLoading}
+          onChange={setBatchId}
+        />
         <div className="section-heading">
           <div>
             <p className="eyebrow">Exports</p>
@@ -1709,7 +2016,7 @@ function ExportsScreen({ batchId, showNotice }) {
             </button>
           </div>
         </div>
-        {!canLoad ? <p>Enter an active import batch ID to generate reports.</p> : null}
+        {!canLoad ? <p>Select a batch to continue.</p> : null}
         <ReportsTable reports={reports} />
       </article>
     </section>
@@ -1792,6 +2099,42 @@ function SimpleList({ items }) {
       ))}
     </ul>
   );
+}
+
+function formatBatchDate(value) {
+  if (!value) {
+    return 'Unknown date';
+  }
+
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(new Date(`${value}T00:00:00`));
+}
+
+function formatBatchLabel(batch) {
+  return `${formatBatchDate(batch.week_ending)} — Batch #${batch.id} (${batch.status})`;
+}
+
+function importStatusClass(status) {
+  if (status === 'imported') {
+    return 'import-status-imported';
+  }
+
+  if (status === 'validation_failed') {
+    return 'import-status-failed';
+  }
+
+  return 'import-status-missing';
+}
+
+function formatImportStatus(status) {
+  if (status === 'missing') {
+    return 'Not uploaded';
+  }
+
+  return status.replace(/_/g, ' ');
 }
 
 function currency(value) {

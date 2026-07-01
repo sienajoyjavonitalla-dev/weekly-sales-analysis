@@ -188,21 +188,6 @@ textarea {
   object-fit: contain;
 }
 
-.batch-field {
-  display: grid;
-  grid-template-columns: auto 76px;
-  gap: 8px;
-  align-items: center;
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.batch-field input {
-  min-height: 34px;
-  padding: 7px 10px;
-}
-
 .user-chip {
   gap: 10px;
   min-height: 36px;
@@ -880,6 +865,27 @@ input:disabled {
   color: var(--success-text);
 }
 
+.batch-select {
+  display: grid;
+  grid-template-columns: auto minmax(220px, 1fr);
+  gap: 12px;
+  align-items: center;
+  max-width: 460px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.batch-select select {
+  min-height: 42px;
+  padding: 9px 12px;
+}
+
 .file-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -894,20 +900,154 @@ input:disabled {
   background: var(--surface-2);
 }
 
-.upload-message {
-  margin-top: 16px;
-  padding: 12px 14px;
-  border: 1px solid var(--warning-border);
-  border-radius: 14px;
-  background: var(--warning-bg);
-  color: var(--warning-text);
-  font-weight: 700;
-}
-
 .upload-actions {
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
+}
+
+.upload-table {
+  font-size: 0.88rem;
+}
+
+.upload-table th {
+  white-space: nowrap;
+}
+
+.batch-status-text {
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.import-status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.import-status-imported {
+  border: 1px solid var(--success-text);
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.import-status-download {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.import-status-download:hover {
+  filter: brightness(1.12);
+}
+
+.import-status-missing {
+  border: 1px solid var(--border-2);
+  background: var(--surface-3);
+  color: var(--text-muted);
+}
+
+.import-status-failed {
+  border: 1px solid var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.batch-cell-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.batch-cell-status .import-status-missing {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  font-style: italic;
+  font-weight: 500;
+  text-transform: none;
+}
+
+.batch-upload-button {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.batch-upload-button:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.batch-upload-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.batch-upload-button .button-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.batch-delete-button {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.batch-delete-button:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.batch-delete-button .button-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.confirm-dialog h2 {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.confirm-dialog p {
+  margin: 14px 0 0;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.batch-upload-input {
+  display: none;
 }
 
 .stacked-form {
@@ -1341,6 +1481,7 @@ td {
 
   .panel-grid,
   .file-grid,
+  .batch-select,
   .category-form,
   .theme-grid,
   .form-row,
