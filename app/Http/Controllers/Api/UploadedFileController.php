@@ -50,6 +50,18 @@ class UploadedFileController
 
         $auditLogger->log('uploaded_file.deleted', $request, $importBatch, $importBatch, $properties);
 
+        if ($importBatch->status === 'draft' && ! $importBatch->uploadedFiles()->exists()) {
+            if (Storage::disk('local')->exists('uploads/'.$importBatch->id)) {
+                Storage::disk('local')->deleteDirectory('uploads/'.$importBatch->id);
+            }
+
+            $auditLogger->log('import_batch.deleted', $request, $importBatch, $importBatch, [
+                'reason' => 'last_uploaded_file_removed',
+            ]);
+
+            $importBatch->delete();
+        }
+
         return response()->json(['message' => 'Uploaded file deleted.']);
     }
 }

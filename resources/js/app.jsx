@@ -93,6 +93,8 @@ function ActionIcon({ name }) {
     cancel: ['M6 6l12 12', 'M18 6L6 18'],
     calendar: ['M7 4v2', 'M17 4v2', 'M5 8h14', 'M6 5h12a2 2 0 012 2v13a2 2 0 01-2 2H8a2 2 0 01-2-2V7a2 2 0 012-2z'],
     check: ['M5 13l4 4L19 7'],
+    chevron: ['M6 9l6 6 6-6'],
+    copy: ['M9 4h8a2 2 0 012 2v12', 'M7 8H5a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2v-2'],
     delete: ['M5 7h14', 'M10 11v6', 'M14 11v6', 'M8 7l1-3h6l1 3', 'M7 7l1 13h8l1-13'],
     download: ['M12 4v10', 'M8 10l4 4 4-4', 'M5 20h14'],
     edit: ['M5 19l4-1 9-9-3-3-9 9-1 4z', 'M14 6l3 3'],
@@ -134,8 +136,8 @@ const themes = [
 
 const workflowTabs = [
   { id: 'upload', label: 'Upload', icon: UploadIcon },
-  { id: 'rules', label: 'Mapping Rules', icon: RulesIcon },
   { id: 'categories', label: 'Categories', icon: CategoriesIcon },
+  { id: 'rules', label: 'Mapping Rules', icon: RulesIcon },
   { id: 'review', label: 'Review Rows', icon: ReviewIcon },
   { id: 'reconcile', label: 'Reconcile', icon: ReconcileIcon },
   { id: 'exports', label: 'Exports', icon: ExportIcon },
@@ -149,6 +151,38 @@ const workbookTypes = [
   { key: 'open_orders', label: 'Open Orders' },
   { key: 'ptd_orders', label: 'PTD Orders' },
 ];
+
+const salesAnalysisBucketOptions = [
+  { value: 'rhp', label: 'RHP' },
+  { value: 'parts_tsd', label: 'Parts & TSD' },
+  { value: 'state', label: 'State' },
+];
+
+function salesAnalysisBucketLabel(bucket) {
+  if (!bucket) {
+    return null;
+  }
+
+  return salesAnalysisBucketOptions.find((option) => option.value === bucket)?.label ?? bucket;
+}
+
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+
+    return;
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'absolute';
+  textarea.style.left = '-9999px';
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+}
 
 function App() {
   const [activeTab, setActiveTab] = useState('upload');
@@ -171,14 +205,15 @@ function App() {
     try {
       const response = await axios.get('/api/import-batches');
       const nextBatches = response.data.data ?? [];
+      const selectableBatches = nextBatches.filter(batchHasUploads);
 
       setBatches(nextBatches);
       setBatchId((current) => {
-        if (current && nextBatches.some((batch) => String(batch.id) === String(current))) {
+        if (current && selectableBatches.some((batch) => String(batch.id) === String(current))) {
           return current;
         }
 
-        return nextBatches[0] ? String(nextBatches[0].id) : '';
+        return selectableBatches[0] ? String(selectableBatches[0].id) : '';
       });
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to load import batches.'));
@@ -186,6 +221,8 @@ function App() {
       setBatchesLoading(false);
     }
   }, [showNotice]);
+
+  const batchesWithUploads = useMemo(() => batches.filter(batchHasUploads), [batches]);
 
   useEffect(() => {
     axios
@@ -204,6 +241,16 @@ function App() {
 
     loadBatches();
   }, [user, loadBatches]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    if (['upload', 'review', 'reconcile', 'exports'].includes(activeTab)) {
+      loadBatches();
+    }
+  }, [activeTab, loadBatches, user]);
 
   useEffect(() => {
     if (!notice) {
@@ -310,7 +357,7 @@ function App() {
           {activeTab === 'upload' ? (
             <UploadScreen
               batchId={batchId}
-              batches={batches}
+              batches={batchesWithUploads}
               batchesLoading={batchesLoading}
               loadBatches={loadBatches}
               setBatchId={setBatchId}
@@ -322,7 +369,7 @@ function App() {
           {activeTab === 'review' ? (
             <ReviewRowsScreen
               batchId={batchId}
-              batches={batches}
+              batches={batchesWithUploads}
               batchesLoading={batchesLoading}
               setBatchId={setBatchId}
               showNotice={showNotice}
@@ -331,7 +378,7 @@ function App() {
           {activeTab === 'reconcile' ? (
             <ReconciliationScreen
               batchId={batchId}
-              batches={batches}
+              batches={batchesWithUploads}
               batchesLoading={batchesLoading}
               setBatchId={setBatchId}
               showNotice={showNotice}
@@ -340,7 +387,7 @@ function App() {
           {activeTab === 'exports' ? (
             <ExportsScreen
               batchId={batchId}
-              batches={batches}
+              batches={batchesWithUploads}
               batchesLoading={batchesLoading}
               setBatchId={setBatchId}
               showNotice={showNotice}
@@ -836,6 +883,7 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
   const [uploading, setUploading] = useState(false);
   const [weekRangeStart, setWeekRangeStart] = useState('');
   const [weekRangeEnd, setWeekRangeEnd] = useState('');
+  const [unmatchedBatchId, setUnmatchedBatchId] = useState('');
 
   const selectedBatch = useMemo(
     () => batches.find((batch) => String(batch.id) === String(batchId)),
@@ -880,6 +928,8 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
 
     setUploading(true);
 
+    const includedSalesAnalysis = Boolean(selectedFiles.sales_analysis);
+
     try {
       const response = await axios.post('/api/workbook-imports', formData, {
         headers: {
@@ -893,6 +943,10 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
       setSelectedFiles({});
       showNotice('success', `Imported ${Object.keys(result.summary).length} workbook type(s) into batch #${nextBatchId}.`);
       await loadBatches();
+
+      if (shouldOpenUnmatchedModal(result, includedSalesAnalysis)) {
+        setUnmatchedBatchId(nextBatchId);
+      }
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to upload and import the selected files.'));
     } finally {
@@ -901,6 +955,15 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
   }
 
   return (
+    <>
+      {unmatchedBatchId ? (
+        <UnmatchedItemsModal
+          batchId={unmatchedBatchId}
+          loadBatches={loadBatches}
+          showNotice={showNotice}
+          onClose={() => setUnmatchedBatchId('')}
+        />
+      ) : null}
     <section className="panel-grid">
       <article className="panel panel-span">
         <div className="section-heading">
@@ -967,18 +1030,21 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
             loadBatches={loadBatches}
             setBatchId={setBatchId}
             showNotice={showNotice}
+            onUnmatchedItems={setUnmatchedBatchId}
           />
         ) : null}
       </article>
     </section>
+    </>
   );
 }
 
-function UploadedBatchesTable({ batches, loadBatches, setBatchId, showNotice }) {
+function UploadedBatchesTable({ batches, loadBatches, onUnmatchedItems, setBatchId, showNotice }) {
   const [uploadingCell, setUploadingCell] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const fileInputRefs = useRef({});
+  const pagination = usePagination(batches);
 
   async function uploadForCell(batchId, fileType, fileTypeLabel, file) {
     const cellKey = `${batchId}-${fileType}`;
@@ -995,11 +1061,16 @@ function UploadedBatchesTable({ batches, loadBatches, setBatchId, showNotice }) 
           'Content-Type': 'multipart/form-data',
         },
       });
-      const nextBatchId = String(response.data.data.import_batch.id);
+      const result = response.data.data;
+      const nextBatchId = String(result.import_batch.id);
 
       setBatchId(nextBatchId);
       showNotice('success', `${fileTypeLabel} imported into batch #${nextBatchId}.`);
       await loadBatches();
+
+      if (fileType === 'sales_analysis' && shouldOpenUnmatchedModal(result, true)) {
+        onUnmatchedItems?.(nextBatchId);
+      }
     } catch (error) {
       showNotice('error', messageFromError(error, `Unable to upload ${fileTypeLabel}.`));
     } finally {
@@ -1055,7 +1126,7 @@ function UploadedBatchesTable({ batches, loadBatches, setBatchId, showNotice }) 
           </tr>
         </thead>
         <tbody>
-          {batches.map((batch) => (
+          {pagination.paginatedItems.map((batch) => (
             <tr key={batch.id}>
               <td>#{batch.id}</td>
               <td>{formatWeekRange(batch.week_start, batch.week_ending)}</td>
@@ -1142,6 +1213,7 @@ function UploadedBatchesTable({ batches, loadBatches, setBatchId, showNotice }) 
         </tbody>
       </table>
     </div>
+    <PaginationControls {...pagination} />
     </>
   );
 }
@@ -1165,15 +1237,37 @@ function MappingRulesScreen({ showNotice }) {
   const [editForm, setEditForm] = useState(emptyRuleForm);
   const [createForm, setCreateForm] = useState(emptyRuleForm);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [statusFilter, setStatusFilter] = useState('active');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const filteredRules = useMemo(() => {
-    if (statusFilter === 'all') {
-      return rules;
-    }
+    const normalizedQuery = searchQuery.trim().toLowerCase();
 
-    return rules.filter((rule) => Boolean(rule.is_active) === (statusFilter === 'active'));
-  }, [rules, statusFilter]);
+    return rules.filter((rule) => {
+      const matchesStatus =
+        statusFilter === 'all' || Boolean(rule.is_active) === (statusFilter === 'active');
+
+      if (!matchesStatus) {
+        return false;
+      }
+
+      if (!normalizedQuery) {
+        return true;
+      }
+
+      return matchesListSearch(normalizedQuery, [
+        rule.name,
+        rule.match_field,
+        rule.match_operator,
+        rule.pattern,
+        rule.source_type,
+        rule.target_bucket,
+        rule.product_category?.name,
+      ]);
+    });
+  }, [rules, searchQuery, statusFilter]);
 
   const loadRules = useCallback(async () => {
     setLoading(true);
@@ -1260,30 +1354,52 @@ function MappingRulesScreen({ showNotice }) {
     }
   }
 
-  async function deleteSelectedRule() {
-    if (!selectedRule || !window.confirm(`Delete rule "${selectedRule.name}"?`)) {
+  async function confirmDeleteRule() {
+    if (!selectedRule) {
       return;
     }
+
+    setDeleting(true);
 
     try {
       await axios.delete(`/api/mapping-rules/${selectedRule.id}`);
       showNotice('success', 'Mapping rule deleted.');
       setSelectedRule(null);
+      setIsDeleteConfirmOpen(false);
       await loadRules();
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to delete mapping rule.'));
+    } finally {
+      setDeleting(false);
     }
   }
 
   return (
+    <>
+      {isDeleteConfirmOpen && selectedRule ? (
+        <ConfirmDialog
+          confirmLabel="Delete Rule"
+          isProcessing={deleting}
+          message={`Delete rule "${selectedRule.name}"? This action cannot be undone.`}
+          title="Delete Mapping Rule"
+          onCancel={() => {
+            if (!deleting) {
+              setIsDeleteConfirmOpen(false);
+            }
+          }}
+          onConfirm={confirmDeleteRule}
+        />
+      ) : null}
     <section className="panel-grid">
       <article className="panel panel-legend panel-transparent">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Rules</p>
-            <h2>Mapping Rules</h2>
-          </div>
+        <p className="eyebrow">Mapping Rules</p>
+        <div className="section-heading section-heading-toolbar">
           <div className="button-row">
+            <ListSearchInput
+              placeholder="Search rules..."
+              value={searchQuery}
+              onChange={setSearchQuery}
+            />
             <label className="status-filter">
               Status
               <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
@@ -1292,16 +1408,17 @@ function MappingRulesScreen({ showNotice }) {
                 <option value="all">All</option>
               </select>
             </label>
-            <button className="primary-button" type="button" onClick={() => setIsCreateOpen(true)}>
-              <ButtonContent icon="add">Create Rule</ButtonContent>
-            </button>
           </div>
+          <button className="primary-button" type="button" onClick={() => setIsCreateOpen(true)}>
+            <ButtonContent icon="add">Create Rule</ButtonContent>
+          </button>
         </div>
         {loading ? (
           <p>Loading rules...</p>
         ) : (
           <RulesTable
             rules={filteredRules}
+            searchQuery={searchQuery}
             selectedRule={selectedRule}
             statusFilter={statusFilter}
             onSelectRule={setSelectedRule}
@@ -1325,7 +1442,7 @@ function MappingRulesScreen({ showNotice }) {
             setForm={setEditForm}
             onSubmit={submitEditRule}
           >
-            <button className="danger-button" type="button" onClick={deleteSelectedRule}>
+            <button className="danger-button" type="button" onClick={() => setIsDeleteConfirmOpen(true)}>
               <ButtonContent icon="delete">Delete Rule</ButtonContent>
             </button>
           </RuleForm>
@@ -1350,6 +1467,7 @@ function MappingRulesScreen({ showNotice }) {
       ) : null}
 
     </section>
+    </>
   );
 }
 
@@ -1444,9 +1562,11 @@ function RuleForm({ categories, children, form, primaryLabel, setForm, onSubmit 
             onChange={(event) => setForm({ ...form, target_bucket: event.target.value })}
           >
             <option value="">None</option>
-            <option value="rhp">RHP</option>
-            <option value="parts_tsd">Parts & TSD</option>
-            <option value="raw">Raw</option>
+            {salesAnalysisBucketOptions.map((bucket) => (
+              <option key={bucket.value} value={bucket.value}>
+                {bucket.label}
+              </option>
+            ))}
           </select>
         </label>
         <label>
@@ -1477,7 +1597,17 @@ function RuleForm({ categories, children, form, primaryLabel, setForm, onSubmit 
   );
 }
 
-function ConfirmDialog({ title, message, confirmLabel, isProcessing, onConfirm, onCancel }) {
+function ConfirmDialog({
+  title,
+  message,
+  confirmLabel,
+  cancelLabel = 'Cancel',
+  confirmIcon = 'delete',
+  confirmButtonClassName = 'danger-button',
+  isProcessing,
+  onConfirm,
+  onCancel,
+}) {
   return (
     <div className="modal-backdrop" role="presentation" onClick={onCancel}>
       <section
@@ -1491,10 +1621,14 @@ function ConfirmDialog({ title, message, confirmLabel, isProcessing, onConfirm, 
         <p>{message}</p>
         <div className="confirm-dialog-actions">
           <button className="secondary-button" disabled={isProcessing} type="button" onClick={onCancel}>
-            Cancel
+            {cancelLabel}
           </button>
-          <button className="danger-button" disabled={isProcessing} type="button" onClick={onConfirm}>
-            <ButtonContent icon="delete">{isProcessing ? 'Deleting...' : confirmLabel}</ButtonContent>
+          <button className={confirmButtonClassName} disabled={isProcessing} type="button" onClick={onConfirm}>
+            {confirmIcon ? (
+              <ButtonContent icon={confirmIcon}>{isProcessing ? 'Processing...' : confirmLabel}</ButtonContent>
+            ) : (
+              isProcessing ? 'Processing...' : confirmLabel
+            )}
           </button>
         </div>
       </section>
@@ -1521,12 +1655,351 @@ function Modal({ children, title, onClose }) {
   );
 }
 
+function shouldOpenUnmatchedModal(result, salesAnalysisIncluded) {
+  return Boolean(salesAnalysisIncluded && (result?.summary?.classification?.unmatched ?? 0) > 0);
+}
+
+function UnmatchedItemsModal({ batchId, loadBatches, onClose, showNotice }) {
+  const emptyCategoryForm = {
+    name: '',
+    sales_analysis_bucket: 'rhp',
+    sort_order: 100,
+    is_active: true,
+  };
+  const [itemGroups, setItemGroups] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [resolutions, setResolutions] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [isCreateCategoryOpen, setIsCreateCategoryOpen] = useState(false);
+  const [createCategoryForm, setCreateCategoryForm] = useState(emptyCategoryForm);
+  const [createCategoryForItemId, setCreateCategoryForItemId] = useState('');
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const [salesAnalysisFileId, setSalesAnalysisFileId] = useState(null);
+  const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
+  const [discardingUpload, setDiscardingUpload] = useState(false);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+
+    try {
+      const [groupsResponse, categoriesResponse, batchResponse] = await Promise.all([
+        axios.get(`/api/import-batches/${batchId}/unmatched-item-groups`),
+        axios.get('/api/product-categories'),
+        axios.get(`/api/import-batches/${batchId}`),
+      ]);
+
+      setItemGroups(groupsResponse.data.data ?? []);
+      setCategories(categoriesResponse.data.data ?? []);
+
+      const salesAnalysisFile = (batchResponse.data.data?.uploaded_files ?? []).find(
+        (file) => file.file_type === 'sales_analysis',
+      );
+      setSalesAnalysisFileId(salesAnalysisFile?.id ?? null);
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to load unmatched items.'));
+      onClose();
+    } finally {
+      setLoading(false);
+    }
+  }, [batchId, onClose, showNotice]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const allResolved = useMemo(
+    () => itemGroups.length > 0 && itemGroups.every((group) => resolutions[group.item_id]),
+    [itemGroups, resolutions],
+  );
+
+  function openCreateCategory(itemId) {
+    setCreateCategoryForItemId(itemId);
+    setCreateCategoryForm(emptyCategoryForm);
+    setIsCreateCategoryOpen(true);
+  }
+
+  async function copyItemId(itemId) {
+    try {
+      await copyTextToClipboard(itemId);
+      showNotice('success', 'Item ID copied to clipboard.');
+    } catch {
+      showNotice('error', 'Unable to copy item ID.');
+    }
+  }
+
+  async function submitCreateCategory(event) {
+    event.preventDefault();
+    setCreatingCategory(true);
+
+    try {
+      const response = await axios.post('/api/product-categories', {
+        name: createCategoryForm.name,
+        sort_order: Number(createCategoryForm.sort_order),
+        sales_analysis_bucket: createCategoryForm.sales_analysis_bucket || null,
+        is_active: Boolean(createCategoryForm.is_active),
+      });
+      const category = response.data.data;
+
+      setCategories((current) => [...current, category]);
+
+      if (createCategoryForItemId) {
+        setResolutions((current) => ({
+          ...current,
+          [createCategoryForItemId]: String(category.id),
+        }));
+      }
+
+      setIsCreateCategoryOpen(false);
+      setCreateCategoryForItemId('');
+      showNotice('success', 'Category created.');
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to create category.'));
+    } finally {
+      setCreatingCategory(false);
+    }
+  }
+
+  async function saveResolutions() {
+    if (!allResolved) {
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const payload = {
+        resolutions: itemGroups.map((group) => ({
+          item_id: group.item_id,
+          product_category_id: Number(resolutions[group.item_id]),
+        })),
+      };
+      const response = await axios.post(`/api/import-batches/${batchId}/resolve-unmatched-items`, payload);
+      const summary = response.data.data;
+
+      showNotice(
+        'success',
+        `Resolved ${summary.resolved_item_count} item(s), updated ${summary.updated_row_count} row(s), and created ${summary.created_or_updated_rule_count} mapping rule(s).`,
+      );
+      onClose();
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to save unmatched item resolutions.'));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function requestClose() {
+    if (saving || discardingUpload) {
+      return;
+    }
+
+    setIsCloseConfirmOpen(true);
+  }
+
+  async function confirmDiscardUpload() {
+    if (!salesAnalysisFileId) {
+      showNotice('error', 'Unable to discard upload because the Sales Analysis file was not found.');
+      setIsCloseConfirmOpen(false);
+      return;
+    }
+
+    setDiscardingUpload(true);
+
+    try {
+      await axios.delete(`/api/uploaded-files/${salesAnalysisFileId}`);
+      await loadBatches?.();
+      showNotice('success', 'Sales Analysis upload discarded.');
+      setIsCloseConfirmOpen(false);
+      onClose();
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to discard uploaded file.'));
+    } finally {
+      setDiscardingUpload(false);
+    }
+  }
+
+  return (
+  <>
+    <div className="modal-backdrop" role="presentation">
+      <section
+        aria-labelledby="unmatched-items-title"
+        aria-modal="true"
+        className="modal-card modal-card-wide"
+        role="dialog"
+      >
+        <button aria-label="Close" className="modal-close-button" type="button" onClick={requestClose}>
+          <ActionIcon name="cancel" />
+        </button>
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Reconcile</p>
+            <h2 id="unmatched-items-title">Resolve Unmatched Items</h2>
+          </div>
+        </div>
+        <p className="unmatched-modal-intro">
+          Assign a category to every unmatched item ID before saving. A mapping rule will be created for each item.
+        </p>
+
+        {loading ? <p>Loading unmatched items...</p> : null}
+
+        {!loading && itemGroups.length === 0 ? <p>No unmatched items found.</p> : null}
+
+        {!loading && itemGroups.length > 0 ? (
+          <>
+            <div className="table-wrap">
+              <table className="unmatched-items-table">
+                <thead>
+                  <tr>
+                    <th>Item ID</th>
+                    <th>Description</th>
+                    <th>Details</th>
+                    <th>Category</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {itemGroups.map((group) => (
+                    <tr key={group.item_id}>
+                      <td>
+                        <div className="unmatched-item-id-cell">
+                          <span>{group.item_id}</span>
+                          <button
+                            aria-label={`Copy item ID ${group.item_id}`}
+                            className="copy-item-id-button"
+                            title="Copy item ID"
+                            type="button"
+                            onClick={() => copyItemId(group.item_id)}
+                          >
+                            <ActionIcon name="copy" />
+                          </button>
+                        </div>
+                      </td>
+                      <td>{group.description ?? '—'}</td>
+                      <td>
+                        <div className="unmatched-details-trigger">
+                          <button className="secondary-button" type="button">
+                            Details ({group.row_count})
+                          </button>
+                          <div className="unmatched-details-popover">
+                            {group.rows.map((row, index) => (
+                              <div className="unmatched-details-row" key={`${group.item_id}-${index}`}>
+                                <strong>Row {index + 1}</strong>
+                                <span>Customer ID: {row.customer_id ?? '—'}</span>
+                                <span>Customer: {row.customer_name ?? '—'}</span>
+                                <span>Invoice: {row.invoice_number ?? '—'}</span>
+                                <span>Sales Rep: {row.sales_rep_id ?? '—'}</span>
+                                <span>Country: {row.country ?? '—'}</span>
+                                <span>State: {row.bill_to_state ?? '—'}</span>
+                                <span>Invoice Date: {row.invoice_date ?? '—'}</span>
+                                <span>Qty: {row.quantity_ordered ?? '—'}</span>
+                                <span>Amount: {row.amount != null ? currency(row.amount) : '—'}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="unmatched-category-cell">
+                          <SearchableCategorySelect
+                            categories={categories}
+                            value={resolutions[group.item_id] ?? ''}
+                            onChange={(categoryId) =>
+                              setResolutions((current) => ({
+                                ...current,
+                                [group.item_id]: categoryId,
+                              }))
+                            }
+                          />
+                          <button
+                            className="secondary-button"
+                            type="button"
+                            onClick={() => openCreateCategory(group.item_id)}
+                          >
+                            <ButtonContent icon="add">Add</ButtonContent>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {!allResolved ? <p className="unmatched-modal-hint">Resolve all items to enable Save.</p> : null}
+
+            <div className="unmatched-modal-actions">
+              <button className="secondary-button" disabled={saving} type="button" onClick={requestClose}>
+                Cancel
+              </button>
+              <button
+                className="primary-button"
+                disabled={!allResolved || saving}
+                type="button"
+                onClick={saveResolutions}
+              >
+                <ButtonContent icon="save">{saving ? 'Saving...' : 'Save'}</ButtonContent>
+              </button>
+            </div>
+          </>
+        ) : null}
+
+      </section>
+    </div>
+    {isCreateCategoryOpen ? (
+      <Modal
+        title="Add Category"
+        onClose={() => {
+          if (!creatingCategory) {
+            setIsCreateCategoryOpen(false);
+            setCreateCategoryForItemId('');
+          }
+        }}
+      >
+        <CategoryForm
+          form={createCategoryForm}
+          primaryLabel={creatingCategory ? 'Creating...' : 'Create Category'}
+          setForm={setCreateCategoryForm}
+          onSubmit={submitCreateCategory}
+        >
+          <button
+            className="secondary-button"
+            disabled={creatingCategory}
+            type="button"
+            onClick={() => {
+              setIsCreateCategoryOpen(false);
+              setCreateCategoryForItemId('');
+            }}
+          >
+            Cancel
+          </button>
+        </CategoryForm>
+      </Modal>
+    ) : null}
+    {isCloseConfirmOpen ? (
+      <ConfirmDialog
+        cancelLabel="Go back"
+        confirmButtonClassName="primary-button"
+        confirmIcon={null}
+        confirmLabel="Yes"
+        isProcessing={discardingUpload}
+        message="The file uploaded will not be saved, continue?"
+        title="Discard Upload"
+        onCancel={() => {
+          if (!discardingUpload) {
+            setIsCloseConfirmOpen(false);
+          }
+        }}
+        onConfirm={confirmDiscardUpload}
+      />
+    ) : null}
+  </>
+  );
+}
+
 function CategoriesScreen({ showNotice }) {
   const emptyForm = {
     name: '',
     sales_analysis_bucket: 'rhp',
-    total_sales_row_label: '',
-    weekly_meter_row_label: '',
     sort_order: 100,
     is_active: true,
   };
@@ -1536,15 +2009,34 @@ function CategoriesScreen({ showNotice }) {
   const [editForm, setEditForm] = useState(emptyForm);
   const [createForm, setCreateForm] = useState(emptyForm);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [statusFilter, setStatusFilter] = useState('active');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const filteredCategories = useMemo(() => {
-    if (statusFilter === 'all') {
-      return categories;
-    }
+    const normalizedQuery = searchQuery.trim().toLowerCase();
 
-    return categories.filter((category) => Boolean(category.is_active) === (statusFilter === 'active'));
-  }, [categories, statusFilter]);
+    return categories.filter((category) => {
+      const matchesStatus =
+        statusFilter === 'all' || Boolean(category.is_active) === (statusFilter === 'active');
+
+      if (!matchesStatus) {
+        return false;
+      }
+
+      if (!normalizedQuery) {
+        return true;
+      }
+
+      return matchesListSearch(normalizedQuery, [
+        category.name,
+        category.code,
+        category.sales_analysis_bucket,
+        category.report_family,
+      ]);
+    });
+  }, [categories, searchQuery, statusFilter]);
 
   const loadCategories = useCallback(async () => {
     setLoading(true);
@@ -1586,11 +2078,9 @@ function CategoriesScreen({ showNotice }) {
 
   function categoryPayload(form) {
     return {
-      ...form,
+      name: form.name,
       sort_order: Number(form.sort_order),
       sales_analysis_bucket: form.sales_analysis_bucket || null,
-      total_sales_row_label: form.total_sales_row_label || null,
-      weekly_meter_row_label: form.weekly_meter_row_label || null,
       is_active: Boolean(form.is_active),
     };
   }
@@ -1629,30 +2119,52 @@ function CategoriesScreen({ showNotice }) {
     }
   }
 
-  async function deleteSelectedCategory() {
-    if (!selectedCategory || !window.confirm(`Delete category "${selectedCategory.name}"?`)) {
+  async function confirmDeleteCategory() {
+    if (!selectedCategory) {
       return;
     }
+
+    setDeleting(true);
 
     try {
       await axios.delete(`/api/product-categories/${selectedCategory.id}`);
       showNotice('success', 'Category deleted.');
       setSelectedCategory(null);
+      setIsDeleteConfirmOpen(false);
       await loadCategories();
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to delete category.'));
+    } finally {
+      setDeleting(false);
     }
   }
 
   return (
+    <>
+      {isDeleteConfirmOpen && selectedCategory ? (
+        <ConfirmDialog
+          confirmLabel="Delete Category"
+          isProcessing={deleting}
+          message={`Delete category "${selectedCategory.name}"? This action cannot be undone.`}
+          title="Delete Category"
+          onCancel={() => {
+            if (!deleting) {
+              setIsDeleteConfirmOpen(false);
+            }
+          }}
+          onConfirm={confirmDeleteCategory}
+        />
+      ) : null}
     <section className="panel-grid">
       <article className="panel panel-legend panel-transparent">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">List</p>
-            <h2>Categories</h2>
-          </div>
+        <p className="eyebrow">Categories</p>
+        <div className="section-heading section-heading-toolbar">
           <div className="button-row">
+            <ListSearchInput
+              placeholder="Search categories..."
+              value={searchQuery}
+              onChange={setSearchQuery}
+            />
             <label className="status-filter">
               Status
               <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
@@ -1661,16 +2173,17 @@ function CategoriesScreen({ showNotice }) {
                 <option value="all">All</option>
               </select>
             </label>
-            <button className="primary-button" type="button" onClick={() => setIsCreateOpen(true)}>
-              <ButtonContent icon="add">Create Category</ButtonContent>
-            </button>
           </div>
+          <button className="primary-button" type="button" onClick={() => setIsCreateOpen(true)}>
+            <ButtonContent icon="add">Create Category</ButtonContent>
+          </button>
         </div>
         {loading ? (
           <p>Loading categories...</p>
         ) : (
           <CategoryTable
             categories={filteredCategories}
+            searchQuery={searchQuery}
             selectedCategory={selectedCategory}
             statusFilter={statusFilter}
             onSelectCategory={setSelectedCategory}
@@ -1688,7 +2201,7 @@ function CategoriesScreen({ showNotice }) {
 
         {selectedCategory ? (
           <CategoryForm form={editForm} primaryLabel="Update Category" setForm={setEditForm} onSubmit={submitEditCategory}>
-            <button className="danger-button" type="button" onClick={deleteSelectedCategory}>
+            <button className="danger-button" type="button" onClick={() => setIsDeleteConfirmOpen(true)}>
               <ButtonContent icon="delete">Delete Category</ButtonContent>
             </button>
           </CategoryForm>
@@ -1711,6 +2224,7 @@ function CategoriesScreen({ showNotice }) {
         </Modal>
       ) : null}
     </section>
+    </>
   );
 }
 
@@ -1718,8 +2232,6 @@ function categoryToForm(category) {
   return {
     name: category.name ?? '',
     sales_analysis_bucket: category.sales_analysis_bucket ?? '',
-    total_sales_row_label: category.total_sales_row_label ?? '',
-    weekly_meter_row_label: category.weekly_meter_row_label ?? '',
     sort_order: category.sort_order ?? 100,
     is_active: Boolean(category.is_active),
   };
@@ -1743,27 +2255,13 @@ function CategoryForm({ children, form, primaryLabel, setForm, onSubmit }) {
           onChange={(event) => setForm({ ...form, sales_analysis_bucket: event.target.value })}
         >
           <option value="">None</option>
-          <option value="rhp">RHP</option>
-          <option value="parts_tsd">Parts & TSD</option>
-          <option value="raw">Raw</option>
+          {salesAnalysisBucketOptions.map((bucket) => (
+            <option key={bucket.value} value={bucket.value}>
+              {bucket.label}
+            </option>
+          ))}
         </select>
       </label>
-      <div className="form-row">
-        <label>
-          Total Sales Label
-          <input
-            value={form.total_sales_row_label}
-            onChange={(event) => setForm({ ...form, total_sales_row_label: event.target.value })}
-          />
-        </label>
-        <label>
-          Weekly Meter Label
-          <input
-            value={form.weekly_meter_row_label}
-            onChange={(event) => setForm({ ...form, weekly_meter_row_label: event.target.value })}
-          />
-        </label>
-      </div>
       <label>
         Sort Order
         <input
@@ -1791,12 +2289,250 @@ function CategoryForm({ children, form, primaryLabel, setForm, onSubmit }) {
   );
 }
 
-function CategoryTable({ categories, selectedCategory, statusFilter, onSelectCategory }) {
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+const DEFAULT_PAGE_SIZE = 10;
+
+function matchesListSearch(normalizedQuery, values) {
+  return values.some((value) => String(value ?? '').toLowerCase().includes(normalizedQuery));
+}
+
+function ListSearchInput({ placeholder, value, onChange }) {
+  return (
+    <label className="list-search">
+      Search
+      <input
+        placeholder={placeholder}
+        type="search"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
+  );
+}
+
+function SearchableCategorySelect({ categories, value, onChange, placeholder = 'Select category' }) {
+  const containerRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const selectedCategory = useMemo(
+    () => categories.find((category) => String(category.id) === String(value)),
+    [categories, value],
+  );
+
+  const filteredCategories = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return categories;
+    }
+
+    return categories.filter((category) =>
+      matchesListSearch(normalizedQuery, [
+        category.name,
+        category.code,
+        category.sales_analysis_bucket,
+        category.report_family,
+      ]),
+    );
+  }, [categories, searchQuery]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    const handlePointerDown = (event) => {
+      if (!containerRef.current?.contains(event.target)) {
+        setIsOpen(false);
+        setSearchQuery('');
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+        setSearchQuery('');
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
+    searchInputRef.current?.focus();
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen]);
+
+  function selectCategory(categoryId) {
+    onChange(String(categoryId));
+    setIsOpen(false);
+    setSearchQuery('');
+  }
+
+  return (
+    <div className="searchable-select-wrap">
+      <div className="searchable-select" ref={containerRef}>
+        <button
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+          className="searchable-select-trigger"
+          type="button"
+          onClick={() => {
+            setIsOpen((current) => !current);
+            if (isOpen) {
+              setSearchQuery('');
+            }
+          }}
+        >
+          <span
+            className={selectedCategory ? 'searchable-select-value' : 'searchable-select-placeholder'}
+            title={selectedCategory?.name ?? placeholder}
+          >
+            {selectedCategory?.name ?? placeholder}
+          </span>
+          <ActionIcon name="chevron" />
+        </button>
+        {isOpen ? (
+          <div className="searchable-select-menu">
+            <div className="searchable-select-search">
+              <input
+                ref={searchInputRef}
+                placeholder="Search categories..."
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+              />
+            </div>
+            <ul className="searchable-select-options" role="listbox">
+              {filteredCategories.length === 0 ? (
+                <li className="searchable-select-empty">No categories found.</li>
+              ) : (
+                filteredCategories.map((category) => (
+                  <li key={category.id} role="none">
+                    <button
+                      className={
+                        String(category.id) === String(value)
+                          ? 'searchable-select-option searchable-select-option-active'
+                          : 'searchable-select-option'
+                      }
+                      role="option"
+                      aria-selected={String(category.id) === String(value)}
+                      title={category.name}
+                      type="button"
+                      onClick={() => selectCategory(category.id)}
+                    >
+                      {category.name}
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+        ) : null}
+      </div>
+      {selectedCategory?.sales_analysis_bucket ? (
+        <span className="searchable-select-bucket">
+          {salesAnalysisBucketLabel(selectedCategory.sales_analysis_bucket)}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function usePagination(items, defaultPageSize = DEFAULT_PAGE_SIZE) {
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(defaultPageSize);
+  const totalItems = items.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / perPage));
+
+  useEffect(() => {
+    setPage(1);
+  }, [perPage, totalItems]);
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, totalPages));
+  }, [totalPages]);
+
+  const paginatedItems = useMemo(() => {
+    const startIndex = (page - 1) * perPage;
+
+    return items.slice(startIndex, startIndex + perPage);
+  }, [items, page, perPage]);
+
+  const rangeStart = totalItems === 0 ? 0 : (page - 1) * perPage + 1;
+  const rangeEnd = Math.min(page * perPage, totalItems);
+
+  return {
+    page,
+    setPage,
+    perPage,
+    setPerPage,
+    paginatedItems,
+    totalItems,
+    totalPages,
+    rangeStart,
+    rangeEnd,
+  };
+}
+
+function PaginationControls({ page, setPage, perPage, setPerPage, totalItems, totalPages, rangeStart, rangeEnd }) {
+  return (
+    <div className="pagination-bar">
+      <label className="pagination-per-page">
+        Show
+        <select value={perPage} onChange={(event) => setPerPage(Number(event.target.value))}>
+          {PAGE_SIZE_OPTIONS.map((size) => (
+            <option key={size} value={size}>
+              {size}
+            </option>
+          ))}
+        </select>
+      </label>
+      <span className="pagination-summary">
+        {totalItems === 0 ? 'No rows' : `Showing ${rangeStart}-${rangeEnd} of ${totalItems}`}
+      </span>
+      <div className="pagination-actions">
+        <button
+          className="secondary-button"
+          disabled={page <= 1}
+          type="button"
+          onClick={() => setPage(page - 1)}
+        >
+          Previous
+        </button>
+        <span className="pagination-page">
+          Page {page} of {totalPages}
+        </span>
+        <button
+          className="secondary-button"
+          disabled={page >= totalPages}
+          type="button"
+          onClick={() => setPage(page + 1)}
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CategoryTable({ categories, selectedCategory, statusFilter, searchQuery, onSelectCategory }) {
+  const pagination = usePagination(categories);
+
   if (categories.length === 0) {
+    if (searchQuery.trim()) {
+      return <p>No categories match your search.</p>;
+    }
+
     return <p>No {statusFilter === 'all' ? '' : `${statusFilter} `}categories found.</p>;
   }
 
   return (
+    <>
     <div className="table-wrap">
       <table>
         <thead>
@@ -1806,7 +2542,7 @@ function CategoryTable({ categories, selectedCategory, statusFilter, onSelectCat
           </tr>
         </thead>
         <tbody>
-          {categories.map((category) => (
+          {pagination.paginatedItems.map((category) => (
             <tr
               className={selectedCategory?.id === category.id ? 'clickable-row selected-row' : 'clickable-row'}
               key={category.id}
@@ -1819,15 +2555,24 @@ function CategoryTable({ categories, selectedCategory, statusFilter, onSelectCat
         </tbody>
       </table>
     </div>
+    <PaginationControls {...pagination} />
+    </>
   );
 }
 
-function RulesTable({ rules, selectedRule, statusFilter, onSelectRule }) {
+function RulesTable({ rules, selectedRule, statusFilter, searchQuery, onSelectRule }) {
+  const pagination = usePagination(rules);
+
   if (rules.length === 0) {
+    if (searchQuery.trim()) {
+      return <p>No mapping rules match your search.</p>;
+    }
+
     return <p>No {statusFilter === 'all' ? '' : `${statusFilter} `}mapping rules found.</p>;
   }
 
   return (
+    <>
     <div className="table-wrap">
       <table>
         <thead>
@@ -1837,7 +2582,7 @@ function RulesTable({ rules, selectedRule, statusFilter, onSelectRule }) {
           </tr>
         </thead>
         <tbody>
-          {rules.map((rule) => (
+          {pagination.paginatedItems.map((rule) => (
             <tr
               className={selectedRule?.id === rule.id ? 'clickable-row selected-row' : 'clickable-row'}
               key={rule.id}
@@ -1852,6 +2597,8 @@ function RulesTable({ rules, selectedRule, statusFilter, onSelectRule }) {
         </tbody>
       </table>
     </div>
+    <PaginationControls {...pagination} />
+    </>
   );
 }
 
@@ -1954,9 +2701,11 @@ function ReviewRowsScreen({ batchId, batches, batchesLoading, setBatchId, showNo
               <label>
                 Bucket
                 <select value={selectedBucket} onChange={(event) => setSelectedBucket(event.target.value)}>
-                  <option value="rhp">RHP</option>
-                  <option value="parts_tsd">Parts & TSD</option>
-                  <option value="raw">Raw</option>
+                  {salesAnalysisBucketOptions.map((bucket) => (
+                    <option key={bucket.value} value={bucket.value}>
+                      {bucket.label}
+                    </option>
+                  ))}
                 </select>
               </label>
             </div>
@@ -1969,11 +2718,14 @@ function ReviewRowsScreen({ batchId, batches, batchesLoading, setBatchId, showNo
 }
 
 function RowsTable({ rows, resolveRow }) {
+  const pagination = usePagination(rows);
+
   if (rows.length === 0) {
     return <p>No unmatched rows found.</p>;
   }
 
   return (
+    <>
     <div className="table-wrap">
       <table>
         <thead>
@@ -1987,7 +2739,7 @@ function RowsTable({ rows, resolveRow }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
+          {pagination.paginatedItems.map((row) => (
             <tr key={row.id}>
               <td>{row.source_row_number}</td>
               <td>{row.item_id}</td>
@@ -2004,6 +2756,8 @@ function RowsTable({ rows, resolveRow }) {
         </tbody>
       </table>
     </div>
+    <PaginationControls {...pagination} />
+    </>
   );
 }
 
@@ -2240,11 +2994,14 @@ function SettingsPopup({ selectedTheme, onThemeChange }) {
 }
 
 function ReportsTable({ reports }) {
+  const pagination = usePagination(reports);
+
   if (reports.length === 0) {
     return <p>No generated reports yet.</p>;
   }
 
   return (
+    <>
     <div className="table-wrap">
       <table>
         <thead>
@@ -2256,7 +3013,7 @@ function ReportsTable({ reports }) {
           </tr>
         </thead>
         <tbody>
-          {reports.map((report) => (
+          {pagination.paginatedItems.map((report) => (
             <tr key={report.id ?? report.report_type}>
               <td>{report.report_type}</td>
               <td>{report.status}</td>
@@ -2275,23 +3032,33 @@ function ReportsTable({ reports }) {
         </tbody>
       </table>
     </div>
+    <PaginationControls {...pagination} />
+    </>
   );
 }
 
 function SimpleList({ items }) {
   const normalizedItems = useMemo(() => items.filter(Boolean), [items]);
+  const pagination = usePagination(normalizedItems);
 
   if (normalizedItems.length === 0) {
     return <p>No records yet.</p>;
   }
 
   return (
-    <ul className="simple-list">
-      {normalizedItems.map((item) => (
-        <li key={item}>{item}</li>
-      ))}
-    </ul>
+    <>
+      <ul className="simple-list">
+        {pagination.paginatedItems.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+      <PaginationControls {...pagination} />
+    </>
   );
+}
+
+function batchHasUploads(batch) {
+  return (batch.uploaded_file_count ?? batch.uploaded_files?.length ?? 0) > 0;
 }
 
 function formatBatchLabel(batch) {

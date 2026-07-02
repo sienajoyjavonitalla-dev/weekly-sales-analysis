@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\WeeklyAnalysis\Classification\Services\BulkUnmatchedItemResolver;
 use App\Domain\WeeklyAnalysis\Security\Services\AuditLogger;
+use App\Http\Requests\BulkResolveUnmatchedItemsRequest;
 use App\Http\Requests\ResolveSalesRowClassificationRequest;
 use App\Models\ImportBatch;
 use App\Models\SalesRow;
@@ -36,6 +38,40 @@ class UnmatchedSalesRowController
             ->paginate((int) $request->integer('per_page', 50));
 
         return response()->json($rows);
+    }
+
+    public function itemGroups(ImportBatch $importBatch, BulkUnmatchedItemResolver $resolver): JsonResponse
+    {
+        Gate::authorize('view', $importBatch);
+
+        return response()->json([
+            'data' => $resolver->itemGroups($importBatch),
+        ]);
+    }
+
+    public function bulkResolve(
+        BulkResolveUnmatchedItemsRequest $request,
+        ImportBatch $importBatch,
+        BulkUnmatchedItemResolver $resolver,
+        AuditLogger $auditLogger,
+    ): JsonResponse {
+        Gate::authorize('update', $importBatch);
+
+        $result = $resolver->resolve(
+            importBatch: $importBatch,
+            resolutions: $request->validated('resolutions'),
+            userId: $request->user()?->id,
+        );
+
+        $auditLogger->log(
+            action: 'import_batch.unmatched_items_resolved',
+            request: $request,
+            auditable: $importBatch,
+            importBatch: $importBatch,
+            properties: $result,
+        );
+
+        return response()->json(['data' => $result]);
     }
 
     public function update(

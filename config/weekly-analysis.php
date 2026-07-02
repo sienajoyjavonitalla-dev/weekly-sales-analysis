@@ -17,4 +17,9 @@ return [
             'ptd_orders',
         ],
     ],
+    'sales_analysis_buckets' => [
+        'rhp',
+        'parts_tsd',
+        'state',
+    ],
 ];

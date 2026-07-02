@@ -45,6 +45,8 @@ Route::middleware(['web', 'auth', 'throttle:60,1'])->group(function (): void {
 
     Route::post('/import-batches/{importBatch}/classify-sales-rows', BatchClassificationController::class);
     Route::get('/import-batches/{importBatch}/unmatched-sales-rows', [UnmatchedSalesRowController::class, 'index']);
+    Route::get('/import-batches/{importBatch}/unmatched-item-groups', [UnmatchedSalesRowController::class, 'itemGroups']);
+    Route::post('/import-batches/{importBatch}/resolve-unmatched-items', [UnmatchedSalesRowController::class, 'bulkResolve']);
     Route::get('/import-batches/{importBatch}/marketplace-fees', [MarketplaceFeeController::class, 'index']);
     Route::post('/import-batches/{importBatch}/marketplace-fees', [MarketplaceFeeController::class, 'store']);
     Route::get('/import-batches/{importBatch}/reconciliation', [ReconciliationController::class, 'show']);

@@ -164,6 +164,7 @@ class ImportBatchApiTest extends TestCase
             ->assertJsonPath('message', 'Uploaded file deleted.');
 
         $this->assertDatabaseMissing('uploaded_files', ['id' => $uploadedFile->id]);
+        $this->assertDatabaseMissing('import_batches', ['id' => $batch->id]);
     }
 
     public function test_analyst_cannot_delete_uploaded_file_from_finalized_batch(): void

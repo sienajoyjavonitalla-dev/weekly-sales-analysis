@@ -40,6 +40,7 @@ class SalesAnalysisWorkbookExporter
 
         $this->writeSalesSheet($spreadsheet->getActiveSheet(), $importBatch, 'RHP', 'rhp');
         $this->writeSalesSheet($spreadsheet->createSheet(), $importBatch, 'Parts & TSD', 'parts_tsd');
+        $this->writeSalesSheet($spreadsheet->createSheet(), $importBatch, 'State', 'state');
         $this->writeSalesSheet($spreadsheet->createSheet(), $importBatch, 'Sheet', null);
 
         return $this->recorder->save(
@@ -50,6 +51,7 @@ class SalesAnalysisWorkbookExporter
             summary: [
                 'rhp_rows' => $this->rowCount($importBatch, 'rhp'),
                 'parts_tsd_rows' => $this->rowCount($importBatch, 'parts_tsd'),
+                'state_rows' => $this->rowCount($importBatch, 'state'),
                 'raw_rows' => $this->rowCount($importBatch, null),
             ],
         );
