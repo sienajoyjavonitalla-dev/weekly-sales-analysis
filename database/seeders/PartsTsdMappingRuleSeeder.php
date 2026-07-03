@@ -9,25 +9,84 @@ use RuntimeException;
 
 class PartsTsdMappingRuleSeeder extends Seeder
 {
-    private const TEMPLATE_PATH = __DIR__.'/../data/parts-tsd-sales-analysis-mapping-template.csv';
+    private const LEGACY_TEMPLATE_PATH = __DIR__.'/../data/parts-tsd-legacy-sales-analysis-mapping-template.csv';
+
+    private const ORGANIZED_TEMPLATE_PATH = __DIR__.'/../data/parts-tsd-sales-analysis-mapping-template.csv';
+
+    private const LEGACY_METADATA_SOURCE = 'parts_tsd_legacy_sales_analysis_template';
+
+    private const ORGANIZED_METADATA_SOURCE = 'parts_tsd_sales_analysis_template';
 
     /**
-     * @var array<string, string|null>
+     * @var array<string, string>
      */
-    private const CATEGORY_CODE_BY_NAME = [
+    private const LEGACY_CATEGORY_CODE_BY_NAME = [
         'Misc (on Total Sales Report)' => 'misc_on_total_sales_report',
         'TSD Parts' => 'tsd_parts',
         'TSD Repairs' => 'tsd_repairs',
     ];
 
+    /**
+     * @var array<string, string|array{0: string, 1: string}>
+     */
+    private const ORGANIZED_CATEGORY_CODE_BY_NAME = [
+        'RHP MISCELLANEOUS' => 'parts_tsd_rhp_miscellaneous',
+        'PACK, 5 ,RAPID RH L6, SMART SENSOR' => ['parts_tsd_pack_5_rapid_rh_l6_smart_sensor', 'parts_tsd_pack_5_rapid_rh_l6_smart_sensor_reader'],
+        'TRUE REMOTE' => 'parts_tsd_true_remote',
+        'KIT,UPGRADE' => 'parts_tsd_kit_upgrade',
+        'Floor Sentry' => 'parts_tsd_floor_sentry',
+        'KIT, RAPID RH L6 STARTER KIT PLUS-FAHRENHEIT' => 'parts_tsd_kit_rapid_rh_l6_starter_kit_plus_fahrenheit',
+        'VALUE PACK, 25PC, RHP L6 SMART SENSOR' => 'parts_tsd_value_pack_25pc_rhp_l6_smart_sensor',
+        'VALUE PACK, 50PC, RHP L6 SMART SENSOR' => 'parts_tsd_value_pack_50pc_rhp_l6_smart_sensor',
+        'SUPER VALUE PACK,RAPID RH L6, SMART SENSOR' => 'parts_tsd_super_value_pack_rapid_rh_l6_smart_sensor',
+        'WFP350+ Rapid RH® L6 Adv. Concrete Kit + DataGrabbers w/BT' => 'parts_tsd_wfp350_rapid_rh_l6_adv_concrete_kit_datagrabbers_w_bt',
+        '5.0 MISCELLANEOUS' => 'parts_tsd_five_0_miscellaneous',
+        'TOP ASSY,ORION C555, CONCRETE ,KIT, TESTED' => 'parts_tsd_top_assy_orion_c555_concrete_kit_tested',
+        'TOP ASSY,ORION 910 KIT, TESTED' => 'parts_tsd_top_assy_orion_910_kit_tested',
+        'TOP ASSY,ORION 920 KIT, TESTED' => 'parts_tsd_top_assy_orion_920_kit_tested',
+        'TOP ASSY,ORION 930 KIT, TESTED' => 'parts_tsd_top_assy_orion_930_kit_tested',
+        'TOP ASSY,ORION 940 KIT, TESTED' => 'parts_tsd_top_assy_orion_940_kit_tested',
+        'TOP ASSY,ORION 950 KIT, TESTED' => 'parts_tsd_top_assy_orion_950_kit_tested',
+        'METER REACH EXTENDER' => 'parts_tsd_meter_reach_extender',
+        'TOP ASSY, L5300' => 'parts_tsd_top_assy_l5300',
+        'TOP ASSY.,L601-3 (DF),TSTD' => 'parts_tsd_top_assy_l601_3_df_tstd',
+        'TOP ASSY,L722 LONG STACK PROBE,TESTED' => 'parts_tsd_top_assy_l722_long_stack_probe_tested',
+        'TOP ASSY,L722 SHORT STACK PROBE,TESTED' => 'parts_tsd_top_assy_l722_short_stack_probe_tested',
+        'KIT, L5300+L722 LONG STACK PROBE' => 'parts_tsd_kit_l5300_l722_long_stack_probe',
+    ];
+
     public function run(): void
     {
-        if (! is_readable(self::TEMPLATE_PATH)) {
-            throw new RuntimeException('Parts & TSD mapping template CSV was not found at '.self::TEMPLATE_PATH);
+        $this->seedRulesFromTemplate(
+            self::LEGACY_TEMPLATE_PATH,
+            self::LEGACY_METADATA_SOURCE,
+            fn (string $header, int &$packOccurrence) => self::LEGACY_CATEGORY_CODE_BY_NAME[$header] ?? null,
+            fn (?string $current) => false,
+            100,
+        );
+
+        $this->seedRulesFromTemplate(
+            self::ORGANIZED_TEMPLATE_PATH,
+            self::ORGANIZED_METADATA_SOURCE,
+            fn (string $header, int &$packOccurrence) => $this->resolveOrganizedCategoryCode($header, $packOccurrence),
+            fn (?string $current) => $current === 'parts_tsd_rhp_miscellaneous',
+            200,
+        );
+    }
+
+    private function seedRulesFromTemplate(
+        string $templatePath,
+        string $metadataSource,
+        callable $resolveCategoryCode,
+        callable $shouldClearCategoryOnMiscSubtotal,
+        int $startingPriority,
+    ): void {
+        if (! is_readable($templatePath)) {
+            throw new RuntimeException('Parts & TSD mapping template CSV was not found at '.$templatePath);
         }
 
         $categoryIds = ProductCategory::query()->pluck('id', 'code');
-        $rules = $this->buildRulesFromTemplate();
+        $rules = $this->buildRulesFromTemplate($templatePath, $resolveCategoryCode, $shouldClearCategoryOnMiscSubtotal, $startingPriority);
         $ruleNames = [];
 
         foreach ($rules as $rule) {
@@ -47,7 +106,7 @@ class PartsTsdMappingRuleSeeder extends Seeder
                     'priority' => $rule['priority'],
                     'is_active' => true,
                     'metadata' => [
-                        'source' => 'parts_tsd_sales_analysis_template',
+                        'source' => $metadataSource,
                         'category_code' => $rule['category_code'],
                         'unique_identifier' => $rule['unique_identifier'],
                     ],
@@ -56,7 +115,7 @@ class PartsTsdMappingRuleSeeder extends Seeder
         }
 
         MappingRule::query()
-            ->where('metadata->source', 'parts_tsd_sales_analysis_template')
+            ->where('metadata->source', $metadataSource)
             ->whereNotIn('name', $ruleNames)
             ->update(['is_active' => false]);
     }
@@ -64,12 +123,17 @@ class PartsTsdMappingRuleSeeder extends Seeder
     /**
      * @return array<int, array{name: string, category_code: string|null, match_operator: string, pattern: string, priority: int, unique_identifier: string}>
      */
-    private function buildRulesFromTemplate(): array
-    {
-        $handle = fopen(self::TEMPLATE_PATH, 'r');
+    private function buildRulesFromTemplate(
+        string $templatePath,
+        callable $resolveCategoryCode,
+        callable $shouldClearCategoryOnMiscSubtotal,
+        int $startingPriority,
+    ): array {
+        $handle = fopen($templatePath, 'r');
         fgetcsv($handle);
 
         $currentCategoryCode = null;
+        $packCategoryOccurrence = 0;
         /** @var array<string, list<string>> $itemsByCategory */
         $itemsByCategory = [];
 
@@ -77,6 +141,12 @@ class PartsTsdMappingRuleSeeder extends Seeder
             $itemId = trim($row[0] ?? '');
 
             if ($itemId === '') {
+                $amount = trim($row[9] ?? '');
+
+                if (strtolower($amount) === 'n/a' && $shouldClearCategoryOnMiscSubtotal($currentCategoryCode)) {
+                    $currentCategoryCode = null;
+                }
+
                 continue;
             }
 
@@ -94,12 +164,12 @@ class PartsTsdMappingRuleSeeder extends Seeder
                 continue;
             }
 
-            $currentCategoryCode = self::CATEGORY_CODE_BY_NAME[$itemId] ?? null;
+            $currentCategoryCode = $resolveCategoryCode($itemId, $packCategoryOccurrence);
         }
 
         fclose($handle);
 
-        return $this->buildRulesFromGroupedItems($itemsByCategory, 100);
+        return $this->buildRulesFromGroupedItems($itemsByCategory, $startingPriority);
     }
 
     /**
@@ -140,6 +210,22 @@ class PartsTsdMappingRuleSeeder extends Seeder
         }
 
         return $rules;
+    }
+
+    private function resolveOrganizedCategoryCode(string $categoryName, int &$packCategoryOccurrence): ?string
+    {
+        if ($categoryName === 'PACK, 5 ,RAPID RH L6, SMART SENSOR') {
+            $code = $packCategoryOccurrence === 0
+                ? 'parts_tsd_pack_5_rapid_rh_l6_smart_sensor'
+                : 'parts_tsd_pack_5_rapid_rh_l6_smart_sensor_reader';
+            $packCategoryOccurrence++;
+
+            return $code;
+        }
+
+        $mapped = self::ORGANIZED_CATEGORY_CODE_BY_NAME[$categoryName] ?? null;
+
+        return is_array($mapped) ? $mapped[0] : $mapped;
     }
 
     private function isProductItemId(string $itemId): bool

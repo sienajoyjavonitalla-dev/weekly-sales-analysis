@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\WeeklyAnalysis\Imports\Services\UploadedFileDeletionService;
 use App\Models\ImportBatch;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -9,6 +10,11 @@ use Illuminate\Support\Facades\Gate;
 
 class ImportBatchController
 {
+    public function __construct(
+        private readonly UploadedFileDeletionService $deletionService,
+    ) {
+    }
+
     public function index(Request $request): JsonResponse
     {
         Gate::authorize('viewAny', ImportBatch::class);
@@ -33,6 +39,22 @@ class ImportBatchController
 
         return response()->json([
             'data' => $this->batchPayload($importBatch),
+        ]);
+    }
+
+    public function discardPendingReconciles(Request $request): JsonResponse
+    {
+        Gate::authorize('viewAny', ImportBatch::class);
+
+        $discardedCount = $this->deletionService->discardPendingSalesAnalysisReconciles(
+            $request,
+            $request->user(),
+        );
+
+        return response()->json([
+            'data' => [
+                'discarded_count' => $discardedCount,
+            ],
         ]);
     }
 

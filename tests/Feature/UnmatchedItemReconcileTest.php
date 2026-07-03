@@ -105,6 +105,52 @@ class UnmatchedItemReconcileTest extends TestCase
         ]);
     }
 
+    public function test_bulk_resolve_supports_raw_sheet_only_items_without_category(): void
+    {
+        $user = $this->createAnalyst();
+        $batch = $this->createBatch($user, '2026-04-17');
+        $category = $this->createCategory();
+
+        $this->createUnmatchedRow($batch, 'SHIP_UPS_GROUND', 'UPS Ground shipping');
+        $this->createUnmatchedRow($batch, 'Intl Duties & Taxes', 'International duties');
+
+        $response = $this->actingAs($user)->postJson("/api/import-batches/{$batch->id}/resolve-unmatched-items", [
+            'resolutions' => [
+                ['item_id' => 'Intl Duties & Taxes', 'no_category_assignment' => true],
+                ['item_id' => 'SHIP_UPS_GROUND', 'product_category_id' => $category->id],
+            ],
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.resolved_item_count', 2)
+            ->assertJsonPath('data.updated_row_count', 2)
+            ->assertJsonPath('data.created_or_updated_rule_count', 2);
+
+        $this->assertDatabaseHas('sales_rows', [
+            'import_batch_id' => $batch->id,
+            'item_id' => 'Intl Duties & Taxes',
+            'classification_status' => 'manual',
+            'product_category_id' => null,
+            'source_bucket' => 'raw',
+        ]);
+
+        $this->assertDatabaseHas('mapping_rules', [
+            'name' => 'resolved → Intl Duties & Taxes',
+            'pattern' => 'Intl Duties & Taxes',
+            'product_category_id' => null,
+            'target_bucket' => 'raw',
+        ]);
+
+        $this->assertDatabaseHas('sales_rows', [
+            'import_batch_id' => $batch->id,
+            'item_id' => 'SHIP_UPS_GROUND',
+            'classification_status' => 'manual',
+            'product_category_id' => $category->id,
+            'source_bucket' => 'rhp',
+        ]);
+    }
+
     private function createAnalyst(): User
     {
         return User::query()->create([

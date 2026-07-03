@@ -41,6 +41,7 @@ Route::middleware(['web', 'auth', 'throttle:60,1'])->group(function (): void {
         ->except(['show']);
 
     Route::get('/import-batches', [ImportBatchController::class, 'index']);
+    Route::post('/import-batches/discard-pending-reconciles', [ImportBatchController::class, 'discardPendingReconciles']);
     Route::get('/import-batches/{importBatch}', [ImportBatchController::class, 'show']);
 
     Route::post('/import-batches/{importBatch}/classify-sales-rows', BatchClassificationController::class);

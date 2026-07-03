@@ -63,6 +63,7 @@ class WorkbookImportService
             $uploadedFiles = [];
             $summary = [];
             $classifiedSalesRows = false;
+            $salesAnalysisUploadedFile = null;
 
             foreach ($files as $type => $file) {
                 $parsed = $this->parsers[$type]->parse($file->getRealPath());
@@ -73,6 +74,7 @@ class WorkbookImportService
 
                 if ($type === WorkbookType::SalesAnalysis->value && $parsed->isValid()) {
                     $classifiedSalesRows = true;
+                    $salesAnalysisUploadedFile = $uploadedFile;
                 }
 
                 $uploadedFiles[] = $uploadedFile->refresh();
@@ -80,10 +82,15 @@ class WorkbookImportService
 
             if ($classifiedSalesRows) {
                 $summary['classification'] = $this->salesRowClassifier->classifyBatch($importBatch);
+
+                if (($summary['classification']['unmatched'] ?? 0) > 0 && $salesAnalysisUploadedFile !== null) {
+                    $salesAnalysisUploadedFile->update(['status' => 'pending_reconcile']);
+                    $salesAnalysisUploadedFile->refresh();
+                }
             }
 
             return [
-                'import_batch' => $importBatch->refresh(),
+                'import_batch' => $importBatch->refresh()->load('uploadedFiles'),
                 'uploaded_files' => $uploadedFiles,
                 'summary' => $summary,
             ];

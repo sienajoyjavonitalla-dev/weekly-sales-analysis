@@ -1,5 +1,6 @@
 import axios from 'axios';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
@@ -94,7 +95,7 @@ function ActionIcon({ name }) {
     calendar: ['M7 4v2', 'M17 4v2', 'M5 8h14', 'M6 5h12a2 2 0 012 2v13a2 2 0 01-2 2H8a2 2 0 01-2-2V7a2 2 0 012-2z'],
     check: ['M5 13l4 4L19 7'],
     chevron: ['M6 9l6 6 6-6'],
-    copy: ['M9 4h8a2 2 0 012 2v12', 'M7 8H5a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2v-2'],
+    copy: ['M8 7v10a2 2 0 002 2h8a2 2 0 002-2V9a2 2 0 00-2-2h-2', 'M16 3H10a2 2 0 00-2 2v2'],
     delete: ['M5 7h14', 'M10 11v6', 'M14 11v6', 'M8 7l1-3h6l1 3', 'M7 7l1 13h8l1-13'],
     download: ['M12 4v10', 'M8 10l4 4 4-4', 'M5 20h14'],
     edit: ['M5 19l4-1 9-9-3-3-9 9-1 4z', 'M14 6l3 3'],
@@ -157,6 +158,32 @@ const salesAnalysisBucketOptions = [
   { value: 'parts_tsd', label: 'Parts & TSD' },
   { value: 'state', label: 'State' },
 ];
+
+const RECONCILE_SESSION_KEY = 'weeklySalesAnalysisReconcileSession';
+
+function markReconcileSessionActive() {
+  sessionStorage.setItem(RECONCILE_SESSION_KEY, '1');
+}
+
+function clearReconcileSession() {
+  sessionStorage.removeItem(RECONCILE_SESSION_KEY);
+}
+
+function isReconcileSessionActive() {
+  return sessionStorage.getItem(RECONCILE_SESSION_KEY) === '1';
+}
+
+async function discardAbandonedPendingReconciles() {
+  if (!isReconcileSessionActive()) {
+    return 0;
+  }
+
+  clearReconcileSession();
+
+  const response = await axios.post('/api/import-batches/discard-pending-reconciles');
+
+  return response.data.data?.discarded_count ?? 0;
+}
 
 function salesAnalysisBucketLabel(bucket) {
   if (!bucket) {
@@ -239,8 +266,32 @@ function App() {
       return;
     }
 
-    loadBatches();
-  }, [user, loadBatches]);
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const discardedCount = await discardAbandonedPendingReconciles();
+
+        if (cancelled) {
+          return;
+        }
+
+        await loadBatches();
+
+        if (discardedCount > 0) {
+          showNotice('success', 'Unreconciled Sales Analysis upload was discarded.');
+        }
+      } catch (error) {
+        if (!cancelled) {
+          showNotice('error', messageFromError(error, 'Unable to load import batches.'));
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, loadBatches, showNotice]);
 
   useEffect(() => {
     if (!user) {
@@ -883,7 +934,29 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
   const [uploading, setUploading] = useState(false);
   const [weekRangeStart, setWeekRangeStart] = useState('');
   const [weekRangeEnd, setWeekRangeEnd] = useState('');
-  const [unmatchedBatchId, setUnmatchedBatchId] = useState('');
+  const [unmatchedModal, setUnmatchedModal] = useState(null);
+  const [preparingUnmatched, setPreparingUnmatched] = useState(false);
+
+  const closeUnmatchedModal = useCallback(() => {
+    setUnmatchedModal(null);
+  }, []);
+
+  const openUnmatchedModal = useCallback(async (nextBatchId) => {
+    setPreparingUnmatched(true);
+
+    try {
+      const data = await fetchUnmatchedModalData(nextBatchId);
+      markReconcileSessionActive();
+      setUnmatchedModal({
+        batchId: nextBatchId,
+        ...data,
+      });
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to load unmatched items.'));
+    } finally {
+      setPreparingUnmatched(false);
+    }
+  }, [showNotice]);
 
   const selectedBatch = useMemo(
     () => batches.find((batch) => String(batch.id) === String(batchId)),
@@ -945,7 +1018,7 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
       await loadBatches();
 
       if (shouldOpenUnmatchedModal(result, includedSalesAnalysis)) {
-        setUnmatchedBatchId(nextBatchId);
+        await openUnmatchedModal(nextBatchId);
       }
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to upload and import the selected files.'));
@@ -956,12 +1029,15 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
 
   return (
     <>
-      {unmatchedBatchId ? (
+      {unmatchedModal ? (
         <UnmatchedItemsModal
-          batchId={unmatchedBatchId}
+          batchId={unmatchedModal.batchId}
+          categories={unmatchedModal.categories}
+          itemGroups={unmatchedModal.itemGroups}
           loadBatches={loadBatches}
+          salesAnalysisFileId={unmatchedModal.salesAnalysisFileId}
           showNotice={showNotice}
-          onClose={() => setUnmatchedBatchId('')}
+          onClose={closeUnmatchedModal}
         />
       ) : null}
     <section className="panel-grid">
@@ -1006,8 +1082,10 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
           ))}
         </div>
         <div className="upload-actions">
-          <button className="primary-button" disabled={uploading} type="button" onClick={handleUploadClick}>
-            <ButtonContent icon="upload">{uploading ? 'Importing...' : 'Upload / Import Selected Files'}</ButtonContent>
+          <button className="primary-button" disabled={uploading || preparingUnmatched} type="button" onClick={handleUploadClick}>
+            <ButtonContent icon="upload">
+              {uploading ? 'Importing...' : preparingUnmatched ? 'Preparing reconcile...' : 'Upload / Import Selected Files'}
+            </ButtonContent>
           </button>
         </div>
       </article>
@@ -1030,7 +1108,7 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
             loadBatches={loadBatches}
             setBatchId={setBatchId}
             showNotice={showNotice}
-            onUnmatchedItems={setUnmatchedBatchId}
+            onUnmatchedItems={openUnmatchedModal}
           />
         ) : null}
       </article>
@@ -1069,7 +1147,7 @@ function UploadedBatchesTable({ batches, loadBatches, onUnmatchedItems, setBatch
       await loadBatches();
 
       if (fileType === 'sales_analysis' && shouldOpenUnmatchedModal(result, true)) {
-        onUnmatchedItems?.(nextBatchId);
+        await onUnmatchedItems?.(nextBatchId);
       }
     } catch (error) {
       showNotice('error', messageFromError(error, `Unable to upload ${fileTypeLabel}.`));
@@ -1136,7 +1214,7 @@ function UploadedBatchesTable({ batches, loadBatches, onUnmatchedItems, setBatch
                 const status = uploaded?.status ?? 'missing';
                 const cellKey = `${batch.id}-${type.key}`;
                 const isUploading = uploadingCell === cellKey;
-                const canUpload = status === 'missing' || status === 'validation_failed';
+                const canUpload = status === 'missing' || status === 'validation_failed' || status === 'pending_reconcile';
                 const canDownload = status === 'imported' && uploaded?.id;
 
                 return (
@@ -1659,59 +1737,172 @@ function shouldOpenUnmatchedModal(result, salesAnalysisIncluded) {
   return Boolean(salesAnalysisIncluded && (result?.summary?.classification?.unmatched ?? 0) > 0);
 }
 
-function UnmatchedItemsModal({ batchId, loadBatches, onClose, showNotice }) {
+async function fetchUnmatchedModalData(batchId) {
+  const [groupsResponse, categoriesResponse, batchResponse] = await Promise.all([
+    axios.get(`/api/import-batches/${batchId}/unmatched-item-groups`),
+    axios.get('/api/product-categories'),
+    axios.get(`/api/import-batches/${batchId}`),
+  ]);
+
+  const salesAnalysisFile = (batchResponse.data.data?.uploaded_files ?? []).find(
+    (file) => file.file_type === 'sales_analysis',
+  );
+
+  return {
+    itemGroups: groupsResponse.data.data ?? [],
+    categories: categoriesResponse.data.data ?? [],
+    salesAnalysisFileId: salesAnalysisFile?.id ?? null,
+  };
+}
+
+function UnmatchedDetailsTrigger({ group }) {
+  const triggerRef = useRef(null);
+  const closeTimerRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [position, setPosition] = useState(null);
+
+  function clearCloseTimer() {
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }
+
+  function scheduleClose() {
+    clearCloseTimer();
+    closeTimerRef.current = window.setTimeout(() => {
+      setIsOpen(false);
+      setPosition(null);
+    }, 120);
+  }
+
+  function openPopover() {
+    clearCloseTimer();
+
+    const trigger = triggerRef.current;
+
+    if (!trigger) {
+      return;
+    }
+
+    const rect = trigger.getBoundingClientRect();
+    const popoverWidth = Math.min(320, window.innerWidth * 0.8);
+    const spaceBelow = window.innerHeight - rect.bottom - 16;
+    const spaceAbove = rect.top - 16;
+    const openAbove = spaceBelow < 180 && spaceAbove > spaceBelow;
+    const left = Math.min(Math.max(16, rect.left), window.innerWidth - popoverWidth - 16);
+
+    setPosition({
+      left,
+      top: openAbove ? rect.top - 8 : rect.bottom + 8,
+      openAbove,
+      width: popoverWidth,
+    });
+    setIsOpen(true);
+  }
+
+  useEffect(() => () => clearCloseTimer(), []);
+
+  return (
+    <div
+      className="unmatched-details-trigger"
+      onMouseEnter={openPopover}
+      onMouseLeave={scheduleClose}
+    >
+      <button ref={triggerRef} className="secondary-button" type="button">
+        Details ({group.row_count})
+      </button>
+      {isOpen && position
+        ? createPortal(
+            <div
+              className="unmatched-details-popover unmatched-details-popover-fixed"
+              style={{
+                left: position.left,
+                top: position.openAbove ? undefined : position.top,
+                bottom: position.openAbove ? window.innerHeight - position.top : undefined,
+                width: position.width,
+                transform: position.openAbove ? 'translateY(-100%)' : undefined,
+              }}
+              onMouseEnter={clearCloseTimer}
+              onMouseLeave={scheduleClose}
+            >
+              {group.rows.map((row, index) => (
+                <div className="unmatched-details-row" key={`${group.item_id}-${index}`}>
+                  <strong>Row {index + 1}</strong>
+                  <span>Customer ID: {row.customer_id ?? '—'}</span>
+                  <span>Customer: {row.customer_name ?? '—'}</span>
+                  <span>Invoice: {row.invoice_number ?? '—'}</span>
+                  <span>Sales Rep: {row.sales_rep_id ?? '—'}</span>
+                  <span>Country: {row.country ?? '—'}</span>
+                  <span>State: {row.bill_to_state ?? '—'}</span>
+                  <span>Invoice Date: {row.invoice_date ?? '—'}</span>
+                  <span>Qty: {row.quantity_ordered ?? '—'}</span>
+                  <span>Amount: {row.amount != null ? currency(row.amount) : '—'}</span>
+                </div>
+              ))}
+            </div>,
+            document.body,
+          )
+        : null}
+    </div>
+  );
+}
+
+function UnmatchedItemsModal({
+  batchId,
+  categories: initialCategories,
+  itemGroups: initialItemGroups,
+  loadBatches,
+  onClose,
+  salesAnalysisFileId: initialSalesAnalysisFileId,
+  showNotice,
+}) {
   const emptyCategoryForm = {
     name: '',
     sales_analysis_bucket: 'rhp',
     sort_order: 100,
     is_active: true,
   };
-  const [itemGroups, setItemGroups] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const showNoticeRef = useRef(showNotice);
+
+  useEffect(() => {
+    showNoticeRef.current = showNotice;
+  }, [showNotice]);
+
+  const [itemGroups] = useState(initialItemGroups);
+  const [categories, setCategories] = useState(initialCategories);
   const [resolutions, setResolutions] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [noCategoryAssignments, setNoCategoryAssignments] = useState({});
   const [saving, setSaving] = useState(false);
   const [isCreateCategoryOpen, setIsCreateCategoryOpen] = useState(false);
   const [createCategoryForm, setCreateCategoryForm] = useState(emptyCategoryForm);
   const [createCategoryForItemId, setCreateCategoryForItemId] = useState('');
   const [creatingCategory, setCreatingCategory] = useState(false);
-  const [salesAnalysisFileId, setSalesAnalysisFileId] = useState(null);
+  const [salesAnalysisFileId] = useState(initialSalesAnalysisFileId);
   const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
   const [discardingUpload, setDiscardingUpload] = useState(false);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-
-    try {
-      const [groupsResponse, categoriesResponse, batchResponse] = await Promise.all([
-        axios.get(`/api/import-batches/${batchId}/unmatched-item-groups`),
-        axios.get('/api/product-categories'),
-        axios.get(`/api/import-batches/${batchId}`),
-      ]);
-
-      setItemGroups(groupsResponse.data.data ?? []);
-      setCategories(categoriesResponse.data.data ?? []);
-
-      const salesAnalysisFile = (batchResponse.data.data?.uploaded_files ?? []).find(
-        (file) => file.file_type === 'sales_analysis',
-      );
-      setSalesAnalysisFileId(salesAnalysisFile?.id ?? null);
-    } catch (error) {
-      showNotice('error', messageFromError(error, 'Unable to load unmatched items.'));
-      onClose();
-    } finally {
-      setLoading(false);
-    }
-  }, [batchId, onClose, showNotice]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
   const allResolved = useMemo(
-    () => itemGroups.length > 0 && itemGroups.every((group) => resolutions[group.item_id]),
-    [itemGroups, resolutions],
+    () =>
+      itemGroups.length > 0 &&
+      itemGroups.every((group) => noCategoryAssignments[group.item_id] || resolutions[group.item_id]),
+    [itemGroups, resolutions, noCategoryAssignments],
   );
+
+  function toggleNoCategoryAssignment(itemId, checked) {
+    setNoCategoryAssignments((current) => ({
+      ...current,
+      [itemId]: checked,
+    }));
+
+    if (checked) {
+      setResolutions((current) => {
+        const next = { ...current };
+        delete next[itemId];
+        return next;
+      });
+    }
+  }
 
   function openCreateCategory(itemId) {
     setCreateCategoryForItemId(itemId);
@@ -1722,9 +1913,9 @@ function UnmatchedItemsModal({ batchId, loadBatches, onClose, showNotice }) {
   async function copyItemId(itemId) {
     try {
       await copyTextToClipboard(itemId);
-      showNotice('success', 'Item ID copied to clipboard.');
+      showNoticeRef.current('success', 'Item ID copied to clipboard.');
     } catch {
-      showNotice('error', 'Unable to copy item ID.');
+      showNoticeRef.current('error', 'Unable to copy item ID.');
     }
   }
 
@@ -1748,13 +1939,17 @@ function UnmatchedItemsModal({ batchId, loadBatches, onClose, showNotice }) {
           ...current,
           [createCategoryForItemId]: String(category.id),
         }));
+        setNoCategoryAssignments((current) => ({
+          ...current,
+          [createCategoryForItemId]: false,
+        }));
       }
 
       setIsCreateCategoryOpen(false);
       setCreateCategoryForItemId('');
-      showNotice('success', 'Category created.');
+      showNoticeRef.current('success', 'Category created.');
     } catch (error) {
-      showNotice('error', messageFromError(error, 'Unable to create category.'));
+      showNoticeRef.current('error', messageFromError(error, 'Unable to create category.'));
     } finally {
       setCreatingCategory(false);
     }
@@ -1769,21 +1964,31 @@ function UnmatchedItemsModal({ batchId, loadBatches, onClose, showNotice }) {
 
     try {
       const payload = {
-        resolutions: itemGroups.map((group) => ({
-          item_id: group.item_id,
-          product_category_id: Number(resolutions[group.item_id]),
-        })),
+        resolutions: itemGroups.map((group) => {
+          if (noCategoryAssignments[group.item_id]) {
+            return {
+              item_id: group.item_id,
+              no_category_assignment: true,
+            };
+          }
+
+          return {
+            item_id: group.item_id,
+            product_category_id: Number(resolutions[group.item_id]),
+          };
+        }),
       };
       const response = await axios.post(`/api/import-batches/${batchId}/resolve-unmatched-items`, payload);
       const summary = response.data.data;
 
-      showNotice(
+      showNoticeRef.current(
         'success',
         `Resolved ${summary.resolved_item_count} item(s), updated ${summary.updated_row_count} row(s), and created ${summary.created_or_updated_rule_count} mapping rule(s).`,
       );
+      clearReconcileSession();
       onClose();
     } catch (error) {
-      showNotice('error', messageFromError(error, 'Unable to save unmatched item resolutions.'));
+      showNoticeRef.current('error', messageFromError(error, 'Unable to save unmatched item resolutions.'));
     } finally {
       setSaving(false);
     }
@@ -1799,7 +2004,7 @@ function UnmatchedItemsModal({ batchId, loadBatches, onClose, showNotice }) {
 
   async function confirmDiscardUpload() {
     if (!salesAnalysisFileId) {
-      showNotice('error', 'Unable to discard upload because the Sales Analysis file was not found.');
+      showNoticeRef.current('error', 'Unable to discard upload because the Sales Analysis file was not found.');
       setIsCloseConfirmOpen(false);
       return;
     }
@@ -1809,11 +2014,12 @@ function UnmatchedItemsModal({ batchId, loadBatches, onClose, showNotice }) {
     try {
       await axios.delete(`/api/uploaded-files/${salesAnalysisFileId}`);
       await loadBatches?.();
-      showNotice('success', 'Sales Analysis upload discarded.');
+      clearReconcileSession();
+      showNoticeRef.current('success', 'Sales Analysis upload discarded.');
       setIsCloseConfirmOpen(false);
       onClose();
     } catch (error) {
-      showNotice('error', messageFromError(error, 'Unable to discard uploaded file.'));
+      showNoticeRef.current('error', messageFromError(error, 'Unable to discard uploaded file.'));
     } finally {
       setDiscardingUpload(false);
     }
@@ -1825,7 +2031,7 @@ function UnmatchedItemsModal({ batchId, loadBatches, onClose, showNotice }) {
       <section
         aria-labelledby="unmatched-items-title"
         aria-modal="true"
-        className="modal-card modal-card-wide"
+        className="modal-card modal-card-wide modal-card-unmatched"
         role="dialog"
       >
         <button aria-label="Close" className="modal-close-button" type="button" onClick={requestClose}>
@@ -1838,16 +2044,15 @@ function UnmatchedItemsModal({ batchId, loadBatches, onClose, showNotice }) {
           </div>
         </div>
         <p className="unmatched-modal-intro">
-          Assign a category to every unmatched item ID before saving. A mapping rule will be created for each item.
+          Assign a category to each item, or mark items that should stay on the raw sheet only with no category
+          assignment. A mapping rule will be created for each resolved item.
         </p>
 
-        {loading ? <p>Loading unmatched items...</p> : null}
+        {itemGroups.length === 0 ? <p>No unmatched items found.</p> : null}
 
-        {!loading && itemGroups.length === 0 ? <p>No unmatched items found.</p> : null}
-
-        {!loading && itemGroups.length > 0 ? (
+        {itemGroups.length > 0 ? (
           <>
-            <div className="table-wrap">
+            <div className="unmatched-items-scroll table-wrap">
               <table className="unmatched-items-table">
                 <thead>
                   <tr>
@@ -1876,47 +2081,45 @@ function UnmatchedItemsModal({ batchId, loadBatches, onClose, showNotice }) {
                       </td>
                       <td>{group.description ?? '—'}</td>
                       <td>
-                        <div className="unmatched-details-trigger">
-                          <button className="secondary-button" type="button">
-                            Details ({group.row_count})
-                          </button>
-                          <div className="unmatched-details-popover">
-                            {group.rows.map((row, index) => (
-                              <div className="unmatched-details-row" key={`${group.item_id}-${index}`}>
-                                <strong>Row {index + 1}</strong>
-                                <span>Customer ID: {row.customer_id ?? '—'}</span>
-                                <span>Customer: {row.customer_name ?? '—'}</span>
-                                <span>Invoice: {row.invoice_number ?? '—'}</span>
-                                <span>Sales Rep: {row.sales_rep_id ?? '—'}</span>
-                                <span>Country: {row.country ?? '—'}</span>
-                                <span>State: {row.bill_to_state ?? '—'}</span>
-                                <span>Invoice Date: {row.invoice_date ?? '—'}</span>
-                                <span>Qty: {row.quantity_ordered ?? '—'}</span>
-                                <span>Amount: {row.amount != null ? currency(row.amount) : '—'}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
+                        <UnmatchedDetailsTrigger group={group} />
                       </td>
                       <td>
                         <div className="unmatched-category-cell">
-                          <SearchableCategorySelect
-                            categories={categories}
-                            value={resolutions[group.item_id] ?? ''}
-                            onChange={(categoryId) =>
-                              setResolutions((current) => ({
-                                ...current,
-                                [group.item_id]: categoryId,
-                              }))
-                            }
-                          />
-                          <button
-                            className="secondary-button"
-                            type="button"
-                            onClick={() => openCreateCategory(group.item_id)}
-                          >
-                            <ButtonContent icon="add">Add</ButtonContent>
-                          </button>
+                          <div className="unmatched-category-controls">
+                            <SearchableCategorySelect
+                              categories={categories}
+                              disabled={Boolean(noCategoryAssignments[group.item_id])}
+                              value={resolutions[group.item_id] ?? ''}
+                              onChange={(categoryId) => {
+                                setNoCategoryAssignments((current) => ({
+                                  ...current,
+                                  [group.item_id]: false,
+                                }));
+                                setResolutions((current) => ({
+                                  ...current,
+                                  [group.item_id]: categoryId,
+                                }));
+                              }}
+                            />
+                            <button
+                              className="secondary-button"
+                              disabled={Boolean(noCategoryAssignments[group.item_id])}
+                              type="button"
+                              onClick={() => openCreateCategory(group.item_id)}
+                            >
+                              <ButtonContent icon="add">Add</ButtonContent>
+                            </button>
+                          </div>
+                          <label className="checkbox-label unmatched-no-category-label">
+                            <input
+                              checked={Boolean(noCategoryAssignments[group.item_id])}
+                              type="checkbox"
+                              onChange={(event) =>
+                                toggleNoCategoryAssignment(group.item_id, event.target.checked)
+                              }
+                            />
+                            <span>No category assignment</span>
+                          </label>
                         </div>
                       </td>
                     </tr>
@@ -2310,7 +2513,7 @@ function ListSearchInput({ placeholder, value, onChange }) {
   );
 }
 
-function SearchableCategorySelect({ categories, value, onChange, placeholder = 'Select category' }) {
+function SearchableCategorySelect({ categories, value, onChange, placeholder = 'Select category', disabled = false }) {
   const containerRef = useRef(null);
   const searchInputRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -2380,8 +2583,13 @@ function SearchableCategorySelect({ categories, value, onChange, placeholder = '
           aria-expanded={isOpen}
           aria-haspopup="listbox"
           className="searchable-select-trigger"
+          disabled={disabled}
           type="button"
           onClick={() => {
+            if (disabled) {
+              return;
+            }
+
             setIsOpen((current) => !current);
             if (isOpen) {
               setSearchQuery('');
@@ -3107,6 +3315,10 @@ function importStatusClass(status) {
     return 'import-status-imported';
   }
 
+  if (status === 'pending_reconcile') {
+    return 'import-status-pending';
+  }
+
   if (status === 'validation_failed') {
     return 'import-status-failed';
   }
@@ -3117,6 +3329,10 @@ function importStatusClass(status) {
 function formatImportStatus(status) {
   if (status === 'missing') {
     return 'No File';
+  }
+
+  if (status === 'pending_reconcile') {
+    return 'pending reconcile';
   }
 
   return status.replace(/_/g, ' ');

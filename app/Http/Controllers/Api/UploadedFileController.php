@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\WeeklyAnalysis\Imports\Services\UploadedFileDeletionService;
 use App\Domain\WeeklyAnalysis\Security\Services\AuditLogger;
 use App\Models\UploadedFile;
 use Illuminate\Http\JsonResponse;
@@ -12,9 +13,20 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class UploadedFileController
 {
+    public function __construct(
+        private readonly UploadedFileDeletionService $deletionService,
+    ) {
+    }
+
     public function download(UploadedFile $uploadedFile): BinaryFileResponse|JsonResponse
     {
         Gate::authorize('view', $uploadedFile);
+
+        if ($uploadedFile->status === 'pending_reconcile') {
+            return response()->json([
+                'message' => 'Resolve unmatched items before downloading this Sales Analysis upload.',
+            ], 422);
+        }
 
         if (! Storage::disk('local')->exists($uploadedFile->storage_path)) {
             return response()->json(['message' => 'Uploaded file was not found.'], 404);
@@ -29,38 +41,10 @@ class UploadedFileController
     public function destroy(
         Request $request,
         UploadedFile $uploadedFile,
-        AuditLogger $auditLogger,
     ): JsonResponse {
         Gate::authorize('delete', $uploadedFile);
 
-        $importBatch = $uploadedFile->importBatch;
-        $properties = [
-            'file_type' => $uploadedFile->file_type,
-            'original_name' => $uploadedFile->original_name,
-        ];
-
-        if (Storage::disk('local')->exists($uploadedFile->storage_path)) {
-            Storage::disk('local')->delete($uploadedFile->storage_path);
-        }
-
-        $uploadedFile->salesRows()->delete();
-        $uploadedFile->orderRows()->delete();
-        $uploadedFile->incomeStatementLines()->delete();
-        $uploadedFile->delete();
-
-        $auditLogger->log('uploaded_file.deleted', $request, $importBatch, $importBatch, $properties);
-
-        if ($importBatch->status === 'draft' && ! $importBatch->uploadedFiles()->exists()) {
-            if (Storage::disk('local')->exists('uploads/'.$importBatch->id)) {
-                Storage::disk('local')->deleteDirectory('uploads/'.$importBatch->id);
-            }
-
-            $auditLogger->log('import_batch.deleted', $request, $importBatch, $importBatch, [
-                'reason' => 'last_uploaded_file_removed',
-            ]);
-
-            $importBatch->delete();
-        }
+        $this->deletionService->delete($request, $uploadedFile);
 
         return response()->json(['message' => 'Uploaded file deleted.']);
     }

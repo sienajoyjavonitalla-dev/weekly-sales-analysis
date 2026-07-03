@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Domain\WeeklyAnalysis\Classification\Services\BulkUnmatchedItemResolver;
+use App\Domain\WeeklyAnalysis\Imports\Services\UploadedFileDeletionService;
 use App\Domain\WeeklyAnalysis\Security\Services\AuditLogger;
 use App\Http\Requests\BulkResolveUnmatchedItemsRequest;
 use App\Http\Requests\ResolveSalesRowClassificationRequest;
@@ -53,6 +54,7 @@ class UnmatchedSalesRowController
         BulkResolveUnmatchedItemsRequest $request,
         ImportBatch $importBatch,
         BulkUnmatchedItemResolver $resolver,
+        UploadedFileDeletionService $deletionService,
         AuditLogger $auditLogger,
     ): JsonResponse {
         Gate::authorize('update', $importBatch);
@@ -62,6 +64,8 @@ class UnmatchedSalesRowController
             resolutions: $request->validated('resolutions'),
             userId: $request->user()?->id,
         );
+
+        $deletionService->confirmSalesAnalysisReconcile($importBatch);
 
         $auditLogger->log(
             action: 'import_batch.unmatched_items_resolved',

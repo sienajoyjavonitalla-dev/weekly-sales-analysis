@@ -14,7 +14,7 @@ class BulkUnmatchedItemResolver
     private const RULE_PRIORITY = 500;
 
     /**
-     * @param  array<int, array{item_id: string, product_category_id: int}>  $resolutions
+     * @param  array<int, array{item_id: string, product_category_id?: int|null, no_category_assignment?: bool}>  $resolutions
      * @return array{resolved_item_count: int, updated_row_count: int, created_or_updated_rule_count: int}
      */
     public function resolve(ImportBatch $importBatch, array $resolutions, ?int $userId): array
@@ -51,7 +51,12 @@ class BulkUnmatchedItemResolver
             ]);
         }
 
-        $categoryIds = collect($resolutions)->pluck('product_category_id')->unique()->all();
+        $categoryIds = collect($resolutions)
+            ->reject(fn (array $resolution): bool => $this->isNoCategoryAssignment($resolution))
+            ->pluck('product_category_id')
+            ->unique()
+            ->all();
+
         $categories = ProductCategory::query()
             ->whereIn('id', $categoryIds)
             ->get()
@@ -63,6 +68,46 @@ class BulkUnmatchedItemResolver
 
             foreach ($resolutions as $resolution) {
                 $itemId = $resolution['item_id'];
+
+                if ($this->isNoCategoryAssignment($resolution)) {
+                    $updatedRowCount += SalesRow::query()
+                        ->where('import_batch_id', $importBatch->id)
+                        ->where('classification_status', 'unmatched')
+                        ->where('item_id', $itemId)
+                        ->update([
+                            'product_category_id' => null,
+                            'mapping_rule_id' => null,
+                            'source_bucket' => 'raw',
+                            'classification_status' => 'manual',
+                            'classified_by_user_id' => $userId,
+                            'classified_at' => now(),
+                            'classification_notes' => 'Resolved as raw-sheet only item from upload reconcile modal.',
+                        ]);
+
+                    MappingRule::query()->updateOrCreate(
+                        ['name' => 'resolved → '.$itemId],
+                        [
+                            'product_category_id' => null,
+                            'source_type' => 'sales_analysis',
+                            'match_field' => 'item_id',
+                            'match_operator' => 'exact',
+                            'pattern' => $itemId,
+                            'target_bucket' => 'raw',
+                            'priority' => self::RULE_PRIORITY,
+                            'is_active' => true,
+                            'metadata' => [
+                                'source' => 'upload_reconcile_modal',
+                                'item_id' => $itemId,
+                                'raw_sheet_only' => true,
+                            ],
+                        ],
+                    );
+
+                    $ruleCount++;
+
+                    continue;
+                }
+
                 $category = $categories->get($resolution['product_category_id']);
 
                 if ($category === null) {
@@ -115,6 +160,14 @@ class BulkUnmatchedItemResolver
                 'created_or_updated_rule_count' => $ruleCount,
             ];
         });
+    }
+
+    /**
+     * @param  array{item_id: string, product_category_id?: int|null, no_category_assignment?: bool}  $resolution
+     */
+    private function isNoCategoryAssignment(array $resolution): bool
+    {
+        return filter_var($resolution['no_category_assignment'] ?? false, FILTER_VALIDATE_BOOLEAN);
     }
 
     /**
