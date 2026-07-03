@@ -1504,25 +1504,35 @@ input:disabled {
 }
 
 .unmatched-category-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: stretch;
+  min-width: 0;
 }
 
 .unmatched-category-controls {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  column-gap: 8px;
+  row-gap: 10px;
+  align-items: start;
 }
 
 .unmatched-category-controls .searchable-select-wrap {
-  flex: 1;
+  grid-column: 1;
+  grid-row: 1;
   min-width: 220px;
 }
 
+.unmatched-category-controls > .secondary-button {
+  grid-column: 2;
+  grid-row: 1;
+}
+
 .unmatched-no-category-label {
+  grid-column: 1;
+  grid-row: 2;
   margin: 0;
+  align-self: start;
+  justify-self: start;
+  width: max-content;
   color: var(--text-muted);
   font-size: 0.84rem;
 }
@@ -1573,9 +1583,9 @@ input:disabled {
 }
 
 .copy-item-id-button .button-icon {
-  width: 13px;
-  height: 13px;
-  stroke-width: 1.75;
+  width: 14px;
+  height: 14px;
+  stroke-width: 2;
 }
 
 .searchable-select-wrap {

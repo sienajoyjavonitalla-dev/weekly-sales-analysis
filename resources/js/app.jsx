@@ -95,7 +95,10 @@ function ActionIcon({ name }) {
     calendar: ['M7 4v2', 'M17 4v2', 'M5 8h14', 'M6 5h12a2 2 0 012 2v13a2 2 0 01-2 2H8a2 2 0 01-2-2V7a2 2 0 012-2z'],
     check: ['M5 13l4 4L19 7'],
     chevron: ['M6 9l6 6 6-6'],
-    copy: ['M8 7v10a2 2 0 002 2h8a2 2 0 002-2V9a2 2 0 00-2-2h-2', 'M16 3H10a2 2 0 00-2 2v2'],
+    copy: [
+      'M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1',
+      'M11 9h9a2 2 0 012 2v9a2 2 0 01-2 2h-9a2 2 0 01-2-2v-9a2 2 0 012-2z',
+    ],
     delete: ['M5 7h14', 'M10 11v6', 'M14 11v6', 'M8 7l1-3h6l1 3', 'M7 7l1 13h8l1-13'],
     download: ['M12 4v10', 'M8 10l4 4 4-4', 'M5 20h14'],
     edit: ['M5 19l4-1 9-9-3-3-9 9-1 4z', 'M14 6l3 3'],
@@ -2109,17 +2112,17 @@ function UnmatchedItemsModal({
                             >
                               <ButtonContent icon="add">Add</ButtonContent>
                             </button>
+                            <label className="checkbox-label unmatched-no-category-label">
+                              <input
+                                checked={Boolean(noCategoryAssignments[group.item_id])}
+                                type="checkbox"
+                                onChange={(event) =>
+                                  toggleNoCategoryAssignment(group.item_id, event.target.checked)
+                                }
+                              />
+                              <span>No category assignment</span>
+                            </label>
                           </div>
-                          <label className="checkbox-label unmatched-no-category-label">
-                            <input
-                              checked={Boolean(noCategoryAssignments[group.item_id])}
-                              type="checkbox"
-                              onChange={(event) =>
-                                toggleNoCategoryAssignment(group.item_id, event.target.checked)
-                              }
-                            />
-                            <span>No category assignment</span>
-                          </label>
                         </div>
                       </td>
                     </tr>
