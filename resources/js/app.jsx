@@ -37,17 +37,6 @@ function CategoriesIcon() {
   );
 }
 
-function ReviewIcon() {
-  return (
-    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
-      <path d="M6 4h9l3 3v13H6z" />
-      <path d="M14 4v4h4" />
-      <path d="M9 12h6" />
-      <path d="M9 16h4" />
-    </svg>
-  );
-}
-
 function ReconcileIcon() {
   return (
     <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
@@ -142,7 +131,6 @@ const workflowTabs = [
   { id: 'upload', label: 'Upload', icon: UploadIcon },
   { id: 'categories', label: 'Categories', icon: CategoriesIcon },
   { id: 'rules', label: 'Mapping Rules', icon: RulesIcon },
-  { id: 'review', label: 'Review Rows', icon: ReviewIcon },
   { id: 'reconcile', label: 'Reconcile', icon: ReconcileIcon },
   { id: 'exports', label: 'Exports', icon: ExportIcon },
 ];
@@ -158,8 +146,8 @@ const workbookTypes = [
 
 const salesAnalysisBucketOptions = [
   { value: 'rhp', label: 'RHP' },
-  { value: 'parts_tsd', label: 'Parts & TSD' },
-  { value: 'state', label: 'State' },
+  { value: 'parts_tsd', label: 'PARTS & TSD' },
+  { value: 'state', label: 'STATE' },
 ];
 
 const RECONCILE_SESSION_KEY = 'weeklySalesAnalysisReconcileSession';
@@ -301,7 +289,7 @@ function App() {
       return;
     }
 
-    if (['upload', 'review', 'reconcile', 'exports'].includes(activeTab)) {
+    if (['upload', 'reconcile', 'exports'].includes(activeTab)) {
       loadBatches();
     }
   }, [activeTab, loadBatches, user]);
@@ -420,15 +408,6 @@ function App() {
           ) : null}
           {activeTab === 'rules' ? <MappingRulesScreen showNotice={showNotice} /> : null}
           {activeTab === 'categories' ? <CategoriesScreen showNotice={showNotice} /> : null}
-          {activeTab === 'review' ? (
-            <ReviewRowsScreen
-              batchId={batchId}
-              batches={batchesWithUploads}
-              batchesLoading={batchesLoading}
-              setBatchId={setBatchId}
-              showNotice={showNotice}
-            />
-          ) : null}
           {activeTab === 'reconcile' ? (
             <ReconciliationScreen
               batchId={batchId}
@@ -2760,7 +2739,7 @@ function CategoryTable({ categories, selectedCategory, statusFilter, searchQuery
               onClick={() => onSelectCategory(category)}
             >
               <td>{category.name}</td>
-              <td>{category.sales_analysis_bucket ?? 'None'}</td>
+              <td>{category.sales_analysis_bucket ? salesAnalysisBucketLabel(category.sales_analysis_bucket) : 'None'}</td>
             </tr>
           ))}
         </tbody>
@@ -2803,165 +2782,6 @@ function RulesTable({ rules, selectedRule, statusFilter, searchQuery, onSelectRu
                 {rule.match_field} {rule.match_operator} {rule.pattern}
               </td>
               <td>{rule.product_category?.name ?? 'Unassigned'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-    <PaginationControls {...pagination} />
-    </>
-  );
-}
-
-function ReviewRowsScreen({ batchId, batches, batchesLoading, setBatchId, showNotice }) {
-  const [rows, setRows] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedBucket, setSelectedBucket] = useState('rhp');
-
-  const canLoad = Boolean(batchId);
-
-  const loadRows = useCallback(async () => {
-    if (!canLoad) {
-      return;
-    }
-    setLoading(true);
-    try {
-      const [rowsResponse, categoriesResponse] = await Promise.all([
-        axios.get(`/api/import-batches/${batchId}/unmatched-sales-rows`),
-        axios.get('/api/product-categories'),
-      ]);
-      setRows(rowsResponse.data.data ?? []);
-      setCategories(categoriesResponse.data.data ?? []);
-      setSelectedCategory((current) => current || String((categoriesResponse.data.data ?? [])[0]?.id ?? ''));
-    } catch (error) {
-      showNotice('error', messageFromError(error, 'Unable to load unmatched rows.'));
-    } finally {
-      setLoading(false);
-    }
-  }, [batchId, canLoad, showNotice]);
-
-  useEffect(() => {
-    loadRows();
-  }, [loadRows]);
-
-  async function classifyBatch() {
-    try {
-      const response = await axios.post(`/api/import-batches/${batchId}/classify-sales-rows`);
-      const summary = response.data.data;
-      showNotice('success', `Classified ${summary.total} rows: ${summary.matched} matched, ${summary.unmatched} unmatched.`);
-      await loadRows();
-    } catch (error) {
-      showNotice('error', messageFromError(error, 'Unable to classify rows.'));
-    }
-  }
-
-  async function resolveRow(row) {
-    try {
-      await axios.patch(`/api/sales-rows/${row.id}/classification`, {
-        product_category_id: Number(selectedCategory),
-        source_bucket: selectedBucket,
-        notes: 'Resolved from weekly analysis UI.',
-      });
-      showNotice('success', `Resolved row ${row.source_row_number}.`);
-      await loadRows();
-    } catch (error) {
-      showNotice('error', messageFromError(error, 'Unable to resolve row.'));
-    }
-  }
-
-  return (
-    <section className="panel-grid">
-      <article className="panel panel-span">
-        <BatchSelect
-          batchId={batchId}
-          batches={batches}
-          batchesLoading={batchesLoading}
-          onChange={setBatchId}
-        />
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Review</p>
-            <h2>Unmatched Sales Rows</h2>
-          </div>
-          <div className="button-row">
-            <button className="secondary-button" disabled={!canLoad} type="button" onClick={loadRows}>
-              <ButtonContent icon="refresh">Refresh</ButtonContent>
-            </button>
-            <button className="primary-button" disabled={!canLoad} type="button" onClick={classifyBatch}>
-              <ButtonContent icon="run">Run Rules</ButtonContent>
-            </button>
-          </div>
-        </div>
-        {!canLoad ? <p>Select a batch to continue.</p> : null}
-        {loading ? <p>Loading unmatched rows...</p> : null}
-        {canLoad && !loading ? (
-          <>
-            <div className="review-controls">
-              <label>
-                Resolve As
-                <select value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)}>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Bucket
-                <select value={selectedBucket} onChange={(event) => setSelectedBucket(event.target.value)}>
-                  {salesAnalysisBucketOptions.map((bucket) => (
-                    <option key={bucket.value} value={bucket.value}>
-                      {bucket.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <RowsTable rows={rows} resolveRow={resolveRow} />
-          </>
-        ) : null}
-      </article>
-    </section>
-  );
-}
-
-function RowsTable({ rows, resolveRow }) {
-  const pagination = usePagination(rows);
-
-  if (rows.length === 0) {
-    return <p>No unmatched rows found.</p>;
-  }
-
-  return (
-    <>
-    <div className="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Row</th>
-            <th>Item</th>
-            <th>Description</th>
-            <th>Customer</th>
-            <th>Amount</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pagination.paginatedItems.map((row) => (
-            <tr key={row.id}>
-              <td>{row.source_row_number}</td>
-              <td>{row.item_id}</td>
-              <td>{row.description}</td>
-              <td>{row.customer_name}</td>
-              <td>{currency(row.amount)}</td>
-              <td>
-                <button className="secondary-button" type="button" onClick={() => resolveRow(row)}>
-                  <ButtonContent icon="resolve">Resolve</ButtonContent>
-                </button>
-              </td>
             </tr>
           ))}
         </tbody>
