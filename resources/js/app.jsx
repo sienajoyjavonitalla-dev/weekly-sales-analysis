@@ -928,6 +928,13 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
 
     try {
       const data = await fetchUnmatchedModalData(nextBatchId);
+
+      if ((data.itemGroups ?? []).length === 0) {
+        showNotice('success', 'Sales Analysis uploaded successfully with no unmatched rows.');
+
+        return;
+      }
+
       markReconcileSessionActive();
       setUnmatchedModal({
         batchId: nextBatchId,
@@ -996,7 +1003,7 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
 
       setBatchId(nextBatchId);
       setSelectedFiles({});
-      showNotice('success', `Imported ${Object.keys(result.summary).length} workbook type(s) into batch #${nextBatchId}.`);
+      showNotice('success', uploadSuccessMessage(result, nextBatchId, includedSalesAnalysis));
       await loadBatches();
 
       if (shouldOpenUnmatchedModal(result, includedSalesAnalysis)) {
@@ -1101,6 +1108,7 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
 
 function UploadedBatchesTable({ batches, loadBatches, onUnmatchedItems, setBatchId, showNotice }) {
   const [uploadingCell, setUploadingCell] = useState('');
+  const [reclassifyingBatchId, setReclassifyingBatchId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const fileInputRefs = useRef({});
@@ -1125,7 +1133,10 @@ function UploadedBatchesTable({ batches, loadBatches, onUnmatchedItems, setBatch
       const nextBatchId = String(result.import_batch.id);
 
       setBatchId(nextBatchId);
-      showNotice('success', `${fileTypeLabel} imported into batch #${nextBatchId}.`);
+      const successMessage = fileType === 'sales_analysis'
+        ? uploadSuccessMessage(result, nextBatchId, true)
+        : `${fileTypeLabel} imported into batch #${nextBatchId}.`;
+      showNotice('success', successMessage);
       await loadBatches();
 
       if (fileType === 'sales_analysis' && shouldOpenUnmatchedModal(result, true)) {
@@ -1135,6 +1146,29 @@ function UploadedBatchesTable({ batches, loadBatches, onUnmatchedItems, setBatch
       showNotice('error', messageFromError(error, `Unable to upload ${fileTypeLabel}.`));
     } finally {
       setUploadingCell('');
+    }
+  }
+
+  async function reclassifyBatch(batchId) {
+    setReclassifyingBatchId(batchId);
+
+    try {
+      const response = await axios.post(`/api/import-batches/${batchId}/classify-sales-rows`);
+      const summary = response.data.data ?? {};
+
+      showNotice(
+        'success',
+        `Batch #${batchId} reclassified: ${summary.matched ?? 0} matched, ${summary.unmatched ?? 0} unmatched.`,
+      );
+      await loadBatches();
+
+      if ((summary.reconcilable_unmatched ?? 0) > 0) {
+        await onUnmatchedItems?.(String(batchId));
+      }
+    } catch (error) {
+      showNotice('error', messageFromError(error, `Unable to reclassify batch #${batchId}.`));
+    } finally {
+      setReclassifyingBatchId(null);
     }
   }
 
@@ -1183,6 +1217,7 @@ function UploadedBatchesTable({ batches, loadBatches, onUnmatchedItems, setBatch
             {workbookTypes.map((type) => (
               <th key={type.key}>{type.label}</th>
             ))}
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -1268,6 +1303,21 @@ function UploadedBatchesTable({ batches, loadBatches, onUnmatchedItems, setBatch
                   </td>
                 );
               })}
+              <td>
+                <button
+                  className="secondary-button batch-reclassify-button"
+                  disabled={!batchHasImportedSalesAnalysis(batch) || reclassifyingBatchId === batch.id}
+                  title={
+                    batchHasImportedSalesAnalysis(batch)
+                      ? 'Re-run sales row classification for this batch'
+                      : 'Import Sales Analysis before reclassifying'
+                  }
+                  type="button"
+                  onClick={() => reclassifyBatch(batch.id)}
+                >
+                  {reclassifyingBatchId === batch.id ? 'Reclassifying…' : 'Reclassify'}
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -1546,6 +1596,14 @@ function ruleToForm(rule) {
 }
 
 function RuleForm({ categories, children, form, primaryLabel, setForm, onSubmit }) {
+  const visibleCategories = useMemo(() => {
+    if (! form.target_bucket) {
+      return categories;
+    }
+
+    return categories.filter((category) => category.sales_analysis_bucket === form.target_bucket);
+  }, [categories, form.target_bucket]);
+
   return (
     <form className="stacked-form" onSubmit={onSubmit}>
       <label>
@@ -1558,17 +1616,14 @@ function RuleForm({ categories, children, form, primaryLabel, setForm, onSubmit 
       </label>
       <label>
         Category
-        <select
+        <SearchableCategorySelect
+          allowEmpty
+          categories={visibleCategories}
+          emptyLabel="No category"
+          showBucketInLabel
           value={form.product_category_id}
-          onChange={(event) => setForm({ ...form, product_category_id: event.target.value })}
-        >
-          <option value="">No category</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+          onChange={(categoryId) => setForm({ ...form, product_category_id: categoryId })}
+        />
       </label>
       <label>
         Source Type
@@ -1619,7 +1674,17 @@ function RuleForm({ categories, children, form, primaryLabel, setForm, onSubmit 
           Bucket
           <select
             value={form.target_bucket}
-            onChange={(event) => setForm({ ...form, target_bucket: event.target.value })}
+            onChange={(event) => {
+              const target_bucket = event.target.value;
+              const selectedCategory = categories.find(
+                (category) => String(category.id) === String(form.product_category_id),
+              );
+              const product_category_id = selectedCategory?.sales_analysis_bucket === target_bucket
+                ? form.product_category_id
+                : '';
+
+              setForm({ ...form, target_bucket, product_category_id });
+            }}
           >
             <option value="">None</option>
             {salesAnalysisBucketOptions.map((bucket) => (
@@ -1716,7 +1781,28 @@ function Modal({ children, title, onClose }) {
 }
 
 function shouldOpenUnmatchedModal(result, salesAnalysisIncluded) {
+  const reconcilableUnmatched = result?.summary?.classification?.reconcilable_unmatched;
+
+  if (typeof reconcilableUnmatched === 'number') {
+    return Boolean(salesAnalysisIncluded && reconcilableUnmatched > 0);
+  }
+
   return Boolean(salesAnalysisIncluded && (result?.summary?.classification?.unmatched ?? 0) > 0);
+}
+
+function uploadSuccessMessage(result, batchId, salesAnalysisIncluded = false) {
+  const workbookCount = Object.keys(result?.summary ?? {}).filter((key) => key !== 'classification').length;
+  let message = `Imported ${workbookCount} workbook type(s) into batch #${batchId}.`;
+
+  if (salesAnalysisIncluded) {
+    const reconcilableUnmatched = result?.summary?.classification?.reconcilable_unmatched ?? 0;
+
+    if (reconcilableUnmatched === 0) {
+      message += ' Sales Analysis uploaded successfully with no unmatched rows.';
+    }
+  }
+
+  return message;
 }
 
 async function fetchUnmatchedModalData(batchId) {
@@ -1968,6 +2054,7 @@ function UnmatchedItemsModal({
         `Resolved ${summary.resolved_item_count} item(s), updated ${summary.updated_row_count} row(s), and created ${summary.created_or_updated_rule_count} mapping rule(s).`,
       );
       clearReconcileSession();
+      await loadBatches?.();
       onClose();
     } catch (error) {
       showNoticeRef.current('error', messageFromError(error, 'Unable to save unmatched item resolutions.'));
@@ -2071,6 +2158,7 @@ function UnmatchedItemsModal({
                             <SearchableCategorySelect
                               categories={categories}
                               disabled={Boolean(noCategoryAssignments[group.item_id])}
+                              showBucketInLabel
                               value={resolutions[group.item_id] ?? ''}
                               onChange={(categoryId) => {
                                 setNoCategoryAssignments((current) => ({
@@ -2495,7 +2583,24 @@ function ListSearchInput({ placeholder, value, onChange }) {
   );
 }
 
-function SearchableCategorySelect({ categories, value, onChange, placeholder = 'Select category', disabled = false }) {
+function categoryOptionLabel(category, showBucketInLabel = false) {
+  if (!showBucketInLabel || !category.sales_analysis_bucket) {
+    return category.name;
+  }
+
+  return `${category.name} (${salesAnalysisBucketLabel(category.sales_analysis_bucket)})`;
+}
+
+function SearchableCategorySelect({
+  categories,
+  value,
+  onChange,
+  placeholder = 'Select category',
+  disabled = false,
+  allowEmpty = false,
+  emptyLabel = 'No category',
+  showBucketInLabel = false,
+}) {
   const containerRef = useRef(null);
   const searchInputRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -2505,6 +2610,18 @@ function SearchableCategorySelect({ categories, value, onChange, placeholder = '
     () => categories.find((category) => String(category.id) === String(value)),
     [categories, value],
   );
+
+  const triggerLabel = useMemo(() => {
+    if (!value && allowEmpty) {
+      return emptyLabel;
+    }
+
+    if (selectedCategory) {
+      return categoryOptionLabel(selectedCategory, showBucketInLabel);
+    }
+
+    return null;
+  }, [allowEmpty, emptyLabel, selectedCategory, showBucketInLabel, value]);
 
   const filteredCategories = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -2519,6 +2636,7 @@ function SearchableCategorySelect({ categories, value, onChange, placeholder = '
         category.code,
         category.sales_analysis_bucket,
         category.report_family,
+        category.sales_analysis_bucket ? salesAnalysisBucketLabel(category.sales_analysis_bucket) : '',
       ]),
     );
   }, [categories, searchQuery]);
@@ -2553,7 +2671,7 @@ function SearchableCategorySelect({ categories, value, onChange, placeholder = '
   }, [isOpen]);
 
   function selectCategory(categoryId) {
-    onChange(String(categoryId));
+    onChange(categoryId === '' ? '' : String(categoryId));
     setIsOpen(false);
     setSearchQuery('');
   }
@@ -2579,10 +2697,14 @@ function SearchableCategorySelect({ categories, value, onChange, placeholder = '
           }}
         >
           <span
-            className={selectedCategory ? 'searchable-select-value' : 'searchable-select-placeholder'}
-            title={selectedCategory?.name ?? placeholder}
+            className={
+              triggerLabel && (value || !allowEmpty)
+                ? 'searchable-select-value'
+                : 'searchable-select-placeholder'
+            }
+            title={triggerLabel ?? placeholder}
           >
-            {selectedCategory?.name ?? placeholder}
+            {triggerLabel ?? placeholder}
           </span>
           <ActionIcon name="chevron" />
         </button>
@@ -2598,6 +2720,23 @@ function SearchableCategorySelect({ categories, value, onChange, placeholder = '
               />
             </div>
             <ul className="searchable-select-options" role="listbox">
+              {allowEmpty ? (
+                <li role="none">
+                  <button
+                    className={
+                      !value
+                        ? 'searchable-select-option searchable-select-option-active searchable-select-option-empty'
+                        : 'searchable-select-option searchable-select-option-empty'
+                    }
+                    role="option"
+                    aria-selected={!value}
+                    type="button"
+                    onClick={() => selectCategory('')}
+                  >
+                    {emptyLabel}
+                  </button>
+                </li>
+              ) : null}
               {filteredCategories.length === 0 ? (
                 <li className="searchable-select-empty">No categories found.</li>
               ) : (
@@ -2611,11 +2750,11 @@ function SearchableCategorySelect({ categories, value, onChange, placeholder = '
                       }
                       role="option"
                       aria-selected={String(category.id) === String(value)}
-                      title={category.name}
+                      title={categoryOptionLabel(category, showBucketInLabel)}
                       type="button"
                       onClick={() => selectCategory(category.id)}
                     >
-                      {category.name}
+                      {categoryOptionLabel(category, showBucketInLabel)}
                     </button>
                   </li>
                 ))
@@ -2624,7 +2763,7 @@ function SearchableCategorySelect({ categories, value, onChange, placeholder = '
           </div>
         ) : null}
       </div>
-      {selectedCategory?.sales_analysis_bucket ? (
+      {selectedCategory?.sales_analysis_bucket && !showBucketInLabel ? (
         <span className="searchable-select-bucket">
           {salesAnalysisBucketLabel(selectedCategory.sales_analysis_bucket)}
         </span>
@@ -3090,6 +3229,12 @@ function SimpleList({ items }) {
 
 function batchHasUploads(batch) {
   return (batch.uploaded_file_count ?? batch.uploaded_files?.length ?? 0) > 0;
+}
+
+function batchHasImportedSalesAnalysis(batch) {
+  return (batch.uploaded_files ?? []).some(
+    (file) => file.file_type === 'sales_analysis' && file.status === 'imported',
+  );
 }
 
 function formatBatchLabel(batch) {

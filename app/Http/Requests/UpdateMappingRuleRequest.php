@@ -3,8 +3,11 @@
 namespace App\Http\Requests;
 
 use App\Models\MappingRule;
+use App\Rules\MappingRuleCategoryMatchesBucket;
+use App\Rules\UniqueMappingRuleSignature;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateMappingRuleRequest extends FormRequest
 {
@@ -22,7 +25,13 @@ class UpdateMappingRuleRequest extends FormRequest
         $mappingRule = $this->route('mappingRule');
 
         return [
-            'product_category_id' => ['sometimes', 'nullable', 'integer', 'exists:product_categories,id'],
+            'product_category_id' => [
+                'sometimes',
+                'nullable',
+                'integer',
+                'exists:product_categories,id',
+                new MappingRuleCategoryMatchesBucket($this->input('target_bucket', $mappingRule?->target_bucket)),
+            ],
             'name' => [
                 'sometimes',
                 'required',
@@ -48,5 +57,35 @@ class UpdateMappingRuleRequest extends FormRequest
             'is_active' => ['sometimes', 'boolean'],
             'metadata' => ['sometimes', 'nullable', 'array'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            /** @var MappingRule|null $mappingRule */
+            $mappingRule = $this->route('mappingRule');
+
+            if ($mappingRule === null) {
+                return;
+            }
+
+            $willBeActive = $this->boolean('is_active', $mappingRule->is_active);
+
+            if (! $willBeActive) {
+                return;
+            }
+
+            $signatureRule = new UniqueMappingRuleSignature(
+                ignoreRuleId: $mappingRule->id,
+                sourceType: $this->input('source_type', $mappingRule->source_type),
+                matchField: $this->input('match_field', $mappingRule->match_field),
+                matchOperator: $this->input('match_operator', $mappingRule->match_operator),
+                pattern: $this->input('pattern', $mappingRule->pattern),
+            );
+
+            $signatureRule->validate('pattern', $this->input('pattern', $mappingRule->pattern), function (string $message) use ($validator): void {
+                $validator->errors()->add('pattern', $message);
+            });
+        });
     }
 }

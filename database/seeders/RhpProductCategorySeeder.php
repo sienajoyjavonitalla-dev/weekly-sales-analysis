@@ -16,6 +16,7 @@ class RhpProductCategorySeeder extends Seeder
      */
     private const RHP_CATEGORIES = [
         ['code' => 'rhp_miscellaneous', 'name' => 'RHP MISCELLANEOUS', 'report_family' => 'rhp'],
+        ['code' => 'rhp_unassigned', 'name' => 'RHP Unassigned', 'report_family' => 'rhp', 'sort_order' => 11],
         ['code' => 'pack_5_rapid_rh_l6_smart_sensor', 'name' => 'PACK, 5 ,RAPID RH L6, SMART SENSOR', 'report_family' => 'rhp'],
         ['code' => 'floor_sentry', 'name' => 'Floor Sentry', 'report_family' => 'rhp'],
         ['code' => 'kit_upgrade', 'name' => 'KIT,UPGRADE', 'report_family' => 'rhp'],
@@ -43,7 +44,8 @@ class RhpProductCategorySeeder extends Seeder
         $codes = [];
 
         foreach (self::RHP_CATEGORIES as $index => $category) {
-            $sortOrder = 10 + ($index * 4);
+            $sortOrder = $category['sort_order']
+                ?? ($index === 0 ? 10 : 10 + (($index - 1) * 4));
             $codes[] = $category['code'];
 
             ProductCategory::updateOrCreate(

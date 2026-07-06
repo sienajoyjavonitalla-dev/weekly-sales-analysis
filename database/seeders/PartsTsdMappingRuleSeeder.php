@@ -18,6 +18,12 @@ class PartsTsdMappingRuleSeeder extends Seeder
     private const ORGANIZED_METADATA_SOURCE = 'parts_tsd_sales_analysis_template';
 
     /**
+     * The organized workbook begins with an RHP-style layout used for export reference only.
+     * Mapping rules for that section are owned by RhpMappingRuleSeeder.
+     */
+    private const ORGANIZED_SECTION_START_HEADER = 'TRUE REMOTE';
+
+    /**
      * @var array<string, string>
      */
     private const LEGACY_CATEGORY_CODE_BY_NAME = [
@@ -71,6 +77,7 @@ class PartsTsdMappingRuleSeeder extends Seeder
             fn (string $header, int &$packOccurrence) => $this->resolveOrganizedCategoryCode($header, $packOccurrence),
             fn (?string $current) => $current === 'parts_tsd_rhp_miscellaneous',
             200,
+            self::ORGANIZED_SECTION_START_HEADER,
         );
     }
 
@@ -80,13 +87,20 @@ class PartsTsdMappingRuleSeeder extends Seeder
         callable $resolveCategoryCode,
         callable $shouldClearCategoryOnMiscSubtotal,
         int $startingPriority,
+        ?string $sectionStartHeader = null,
     ): void {
         if (! is_readable($templatePath)) {
             throw new RuntimeException('Parts & TSD mapping template CSV was not found at '.$templatePath);
         }
 
         $categoryIds = ProductCategory::query()->pluck('id', 'code');
-        $rules = $this->buildRulesFromTemplate($templatePath, $resolveCategoryCode, $shouldClearCategoryOnMiscSubtotal, $startingPriority);
+        $rules = $this->buildRulesFromTemplate(
+            $templatePath,
+            $resolveCategoryCode,
+            $shouldClearCategoryOnMiscSubtotal,
+            $startingPriority,
+            $sectionStartHeader,
+        );
         $ruleNames = [];
 
         foreach ($rules as $rule) {
@@ -128,17 +142,30 @@ class PartsTsdMappingRuleSeeder extends Seeder
         callable $resolveCategoryCode,
         callable $shouldClearCategoryOnMiscSubtotal,
         int $startingPriority,
+        ?string $sectionStartHeader = null,
     ): array {
         $handle = fopen($templatePath, 'r');
         fgetcsv($handle);
 
         $currentCategoryCode = null;
         $packCategoryOccurrence = 0;
+        $inTargetSection = $sectionStartHeader === null;
         /** @var array<string, list<string>> $itemsByCategory */
         $itemsByCategory = [];
 
         while (($row = fgetcsv($handle)) !== false) {
             $itemId = trim($row[0] ?? '');
+            $description = trim($row[1] ?? '');
+            $customerId = trim($row[2] ?? '');
+
+            if (! $inTargetSection) {
+                if ($itemId === $sectionStartHeader && $customerId === '' && $description === '') {
+                    $inTargetSection = true;
+                    $currentCategoryCode = $resolveCategoryCode($itemId, $packCategoryOccurrence);
+                }
+
+                continue;
+            }
 
             if ($itemId === '') {
                 $amount = trim($row[9] ?? '');
@@ -149,9 +176,6 @@ class PartsTsdMappingRuleSeeder extends Seeder
 
                 continue;
             }
-
-            $description = trim($row[1] ?? '');
-            $customerId = trim($row[2] ?? '');
 
             if ($this->isProductItemId($itemId)) {
                 $bucketKey = $currentCategoryCode ?? '';

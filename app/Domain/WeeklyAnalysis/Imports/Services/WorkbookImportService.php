@@ -2,6 +2,8 @@
 
 namespace App\Domain\WeeklyAnalysis\Imports\Services;
 
+use App\Domain\WeeklyAnalysis\Imports\Support\NumericValueParser;
+
 use App\Domain\WeeklyAnalysis\Classification\Services\SalesRowClassifier;
 use App\Domain\WeeklyAnalysis\Imports\Contracts\WorkbookParser;
 use App\Domain\WeeklyAnalysis\Imports\Data\ParsedWorkbook;
@@ -83,7 +85,7 @@ class WorkbookImportService
             if ($classifiedSalesRows) {
                 $summary['classification'] = $this->salesRowClassifier->classifyBatch($importBatch);
 
-                if (($summary['classification']['unmatched'] ?? 0) > 0 && $salesAnalysisUploadedFile !== null) {
+                if (($summary['classification']['reconcilable_unmatched'] ?? 0) > 0 && $salesAnalysisUploadedFile !== null) {
                     $salesAnalysisUploadedFile->update(['status' => 'pending_reconcile']);
                     $salesAnalysisUploadedFile->refresh();
                 }
@@ -165,8 +167,8 @@ class WorkbookImportService
                 'import_batch_id' => $importBatch->id,
                 'uploaded_file_id' => $uploadedFile->id,
                 'invoice_date' => $this->dateValue($row['invoice_date'] ?? null),
-                'quantity_ordered' => $this->decimalValue($row['quantity_ordered'] ?? 0),
-                'amount' => $this->decimalValue($row['amount'] ?? 0),
+                'quantity_ordered' => $this->decimalValue($row['quantity_ordered'] ?? 0) ?? 0,
+                'amount' => $this->decimalValue($row['amount'] ?? 0) ?? 0,
                 'classification_status' => 'unmatched',
                 'raw_values' => $row,
             ]);
@@ -184,7 +186,7 @@ class WorkbookImportService
                 'uploaded_file_id' => $uploadedFile->id,
                 'transaction_date' => $this->dateValue($row['transaction_date'] ?? null),
                 'quantity_ordered' => $this->decimalValue($row['quantity_ordered'] ?? null),
-                'amount' => $this->decimalValue($row['amount'] ?? 0),
+                'amount' => $this->decimalValue($row['amount'] ?? 0) ?? 0,
                 'raw_values' => $row,
             ]);
         }
@@ -199,9 +201,9 @@ class WorkbookImportService
                 ...$row,
                 'import_batch_id' => $importBatch->id,
                 'uploaded_file_id' => $uploadedFile->id,
-                'current_period_amount' => $this->decimalValue($row['current_period_amount'] ?? 0),
+                'current_period_amount' => $this->decimalValue($row['current_period_amount'] ?? 0) ?? 0,
                 'current_period_percent' => $this->decimalValue($row['current_period_percent'] ?? null),
-                'year_to_date_amount' => $this->decimalValue($row['year_to_date_amount'] ?? 0),
+                'year_to_date_amount' => $this->decimalValue($row['year_to_date_amount'] ?? 0) ?? 0,
                 'year_to_date_percent' => $this->decimalValue($row['year_to_date_percent'] ?? null),
                 'raw_values' => $row,
             ]);
@@ -261,16 +263,7 @@ class WorkbookImportService
 
     private function decimalValue(mixed $value): ?float
     {
-        if ($value === null || $value === '') {
-            return null;
-        }
-
-        $value = trim((string) $value);
-        $isTrailingNegative = str_ends_with($value, '-');
-        $normalized = str_replace([',', '$', '%', '-'], '', $value);
-        $number = (float) $normalized;
-
-        return $isTrailingNegative || str_starts_with($value, '-') ? -$number : $number;
+        return NumericValueParser::parse($value);
     }
 
     /**

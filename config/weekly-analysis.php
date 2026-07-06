@@ -22,4 +22,8 @@ return [
         'parts_tsd',
         'state',
     ],
+    'exclusive_sales_analysis_buckets' => [
+        'rhp',
+        'parts_tsd',
+    ],
 ];

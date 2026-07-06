@@ -210,6 +210,49 @@ class ImportBatchApiTest extends TestCase
         $this->deleteJson('/api/uploaded-files/'.$uploadedFile->id)->assertUnauthorized();
     }
 
+    public function test_analyst_can_reclassify_own_draft_batch_with_imported_sales_analysis(): void
+    {
+        $user = $this->createAnalyst();
+        $batch = $this->createBatch($user, '2026-04-17');
+
+        UploadedFile::query()->create([
+            'import_batch_id' => $batch->id,
+            'file_type' => 'sales_analysis',
+            'original_name' => '04-17-2026 Sales Analysis.xlsx',
+            'storage_path' => 'uploads/'.$batch->id.'/sales_analysis.xlsx',
+            'sha256_checksum' => str_repeat('a', 64),
+            'status' => 'imported',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/api/import-batches/'.$batch->id.'/classify-sales-rows')
+            ->assertOk()
+            ->assertJsonStructure([
+                'data' => [
+                    'import_batch_id',
+                    'matched',
+                    'unmatched',
+                    'reconcilable_unmatched',
+                    'total',
+                ],
+            ]);
+    }
+
+    public function test_analyst_cannot_reclassify_finalized_batch(): void
+    {
+        $user = $this->createAnalyst();
+        $batch = ImportBatch::query()->create([
+            'week_ending' => '2026-04-17',
+            'status' => 'finalized',
+            'created_by_user_id' => $user->id,
+            'source_system' => 'Traverse Global',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/api/import-batches/'.$batch->id.'/classify-sales-rows')
+            ->assertForbidden();
+    }
+
     private function createAnalyst(): User
     {
         return User::query()->create([

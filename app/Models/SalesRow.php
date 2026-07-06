@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SalesRow extends Model
 {
@@ -66,6 +67,11 @@ class SalesRow extends Model
     public function mappingRule(): BelongsTo
     {
         return $this->belongsTo(MappingRule::class);
+    }
+
+    public function statePlacement(): HasOne
+    {
+        return $this->hasOne(SalesRowStatePlacement::class);
     }
 
     public function classifier(): BelongsTo

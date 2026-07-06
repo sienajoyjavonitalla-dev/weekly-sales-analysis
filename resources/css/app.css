@@ -304,6 +304,7 @@ textarea {
 .sidebar {
   position: sticky;
   top: 58px;
+  z-index: 30;
   align-self: start;
   min-height: calc(100vh - 58px);
   padding: 22px 14px;
@@ -1263,6 +1264,12 @@ input:disabled {
   display: none;
 }
 
+.batch-reclassify-button {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
 .stacked-form {
   display: grid;
   gap: 16px;
@@ -1579,6 +1586,16 @@ input:disabled {
   width: 14px;
   height: 14px;
   stroke-width: 2;
+}
+
+.stacked-form .searchable-select-wrap,
+.stacked-form label .searchable-select-wrap {
+  width: 100%;
+}
+
+.searchable-select-option-empty {
+  color: var(--muted);
+  font-style: italic;
 }
 
 .searchable-select-wrap {
@@ -1909,7 +1926,7 @@ td {
   position: absolute;
   top: 0;
   left: calc(100% + 8px);
-  z-index: 30;
+  z-index: 40;
   width: 288px;
   padding: 14px;
   border: 1px solid var(--border);

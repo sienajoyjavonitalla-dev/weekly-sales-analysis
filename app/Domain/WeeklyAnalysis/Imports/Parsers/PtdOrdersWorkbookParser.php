@@ -4,6 +4,7 @@ namespace App\Domain\WeeklyAnalysis\Imports\Parsers;
 
 use App\Domain\WeeklyAnalysis\Imports\Data\ParsedWorkbook;
 use App\Domain\WeeklyAnalysis\Imports\Enums\WorkbookType;
+use App\Domain\WeeklyAnalysis\Imports\Support\NumericValueParser;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class PtdOrdersWorkbookParser extends AbstractWorkbookParser
@@ -42,7 +43,7 @@ class PtdOrdersWorkbookParser extends AbstractWorkbookParser
                 }
 
                 $amount = $this->cell($sheet, 'E', $row);
-                $total += (float) str_replace(',', '', (string) $amount);
+                $total += NumericValueParser::parse($amount) ?? 0.0;
 
                 $rows[] = [
                     'source_type' => $this->type()->value,

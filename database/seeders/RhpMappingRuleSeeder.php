@@ -53,9 +53,11 @@ class RhpMappingRuleSeeder extends Seeder
             MappingRule::updateOrCreate(
                 ['name' => $rule['name']],
                 [
-                    'product_category_id' => $rule['category_code']
-                        ? ($categoryIds[$rule['category_code']] ?? null)
-                        : null,
+                    'product_category_id' => $rule['category_code'] === 'rhp_unassigned'
+                        ? null
+                        : ($rule['category_code']
+                            ? ($categoryIds[$rule['category_code']] ?? null)
+                            : null),
                     'source_type' => 'sales_analysis',
                     'match_field' => 'item_id',
                     'match_operator' => $rule['match_operator'],
@@ -111,11 +113,7 @@ class RhpMappingRuleSeeder extends Seeder
                 continue;
             }
 
-            if (preg_match('/^\d+$/', $itemId) && $description !== '') {
-                continue;
-            }
-
-            if (preg_match('/^\d{3}-/', $itemId)) {
+            if ($this->isProductItemId($itemId)) {
                 $bucketKey = $currentCategoryCode ?? '';
                 $itemsByCategory[$bucketKey][] = $itemId;
 
@@ -147,11 +145,11 @@ class RhpMappingRuleSeeder extends Seeder
                 $usesDerivedIdentifier = $uniqueIdentifier !== $variants[0];
                 $matchOperator = $hasMultipleVariants || $usesDerivedIdentifier ? 'starts_with' : 'exact';
                 $pattern = $matchOperator === 'starts_with' ? $uniqueIdentifier : $variants[0];
-                $label = $categoryCode === '' ? 'no category' : $categoryCode;
+                $label = $categoryCode === '' ? 'rhp_unassigned' : $categoryCode;
 
                 $rules[] = [
                     'name' => $label.' → '.$pattern,
-                    'category_code' => $categoryCode === '' ? null : $categoryCode,
+                    'category_code' => $categoryCode === '' ? 'rhp_unassigned' : $categoryCode,
                     'match_operator' => $matchOperator,
                     'pattern' => $pattern,
                     'priority' => $priority,
@@ -179,6 +177,24 @@ class RhpMappingRuleSeeder extends Seeder
         $mapped = self::CATEGORY_CODE_BY_NAME[$categoryName] ?? null;
 
         return is_array($mapped) ? $mapped[0] : $mapped;
+    }
+
+    private function isProductItemId(string $itemId): bool
+    {
+        if (strtolower($itemId) === 'n/a') {
+            return false;
+        }
+
+        if (preg_match('/^[\d,]+(\.\d+)?$/', $itemId)) {
+            return false;
+        }
+
+        if (preg_match('/^\d+$/', $itemId)) {
+            return false;
+        }
+
+        return (bool) preg_match('/^\d{3}-/', $itemId)
+            || $itemId === 'MISCELLANEOUS';
     }
 
     private function uniqueIdentifier(string $itemId): string

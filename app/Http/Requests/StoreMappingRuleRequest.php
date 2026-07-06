@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\MappingRuleCategoryMatchesBucket;
+use App\Rules\UniqueMappingRuleSignature;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,7 +20,7 @@ class StoreMappingRuleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_category_id' => ['nullable', 'integer', 'exists:product_categories,id'],
+            'product_category_id' => ['nullable', 'integer', 'exists:product_categories,id', new MappingRuleCategoryMatchesBucket()],
             'name' => ['required', 'string', 'max:255', 'unique:mapping_rules,name'],
             'source_type' => ['required', 'string', 'max:100'],
             'match_field' => ['required', Rule::in([
@@ -32,7 +34,7 @@ class StoreMappingRuleRequest extends FormRequest
                 'bill_to_state',
             ])],
             'match_operator' => ['required', Rule::in(['exact', 'starts_with', 'ends_with', 'contains', 'regex'])],
-            'pattern' => ['required', 'string', 'max:500'],
+            'pattern' => ['required', 'string', 'max:500', new UniqueMappingRuleSignature()],
             'target_bucket' => ['nullable', 'string', 'max:100'],
             'priority' => ['required', 'integer', 'min:1', 'max:65535'],
             'is_active' => ['sometimes', 'boolean'],
