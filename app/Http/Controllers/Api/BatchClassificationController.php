@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Domain\WeeklyAnalysis\Classification\Services\SalesRowClassifier;
+use App\Domain\WeeklyAnalysis\Imports\Services\UploadedFileDeletionService;
 use App\Domain\WeeklyAnalysis\Security\Services\AuditLogger;
 use App\Models\ImportBatch;
 use Illuminate\Http\JsonResponse;
@@ -15,11 +16,17 @@ class BatchClassificationController
         Request $request,
         ImportBatch $importBatch,
         SalesRowClassifier $classifier,
+        UploadedFileDeletionService $deletionService,
         AuditLogger $auditLogger,
     ): JsonResponse {
         Gate::authorize('update', $importBatch);
 
         $summary = $classifier->classifyBatch($importBatch);
+
+        if (($summary['reconcilable_unmatched'] ?? 0) === 0) {
+            $deletionService->confirmSalesAnalysisReconcile($importBatch);
+        }
+
         $auditLogger->log('sales_rows.classified', $request, $importBatch, $importBatch, $summary);
 
         return response()->json([

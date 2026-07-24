@@ -340,8 +340,10 @@ class SalesAnalysisWorkbookExporter
     private function writeCategoryHeaderRow(Worksheet $sheet, int $rowNumber, string $categoryName): void
     {
         $sheet->setCellValue('A'.$rowNumber, $categoryName);
+        $sheet->setCellValue('B'.$rowNumber, $categoryName);
+        $sheet->mergeCells('B'.$rowNumber.':K'.$rowNumber);
 
-        $sheet->getStyle('A'.$rowNumber)
+        $sheet->getStyle('A'.$rowNumber.':K'.$rowNumber)
             ->getFont()
             ->setBold(true)
             ->setItalic(true)

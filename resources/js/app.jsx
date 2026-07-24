@@ -80,6 +80,7 @@ function SettingsIcon() {
 function ActionIcon({ name }) {
   const paths = {
     add: ['M12 5v14', 'M5 12h14'],
+    back: ['M15 6l-6 6 6 6', 'M9 12h10'],
     cancel: ['M6 6l12 12', 'M18 6L6 18'],
     calendar: ['M7 4v2', 'M17 4v2', 'M5 8h14', 'M6 5h12a2 2 0 012 2v13a2 2 0 01-2 2H8a2 2 0 01-2-2V7a2 2 0 012-2z'],
     check: ['M5 13l4 4L19 7'],
@@ -110,10 +111,19 @@ function ActionIcon({ name }) {
   );
 }
 
-function ButtonContent({ icon, children }) {
+function LoadingSpinner({ className = 'button-spinner' }) {
+  return (
+    <svg aria-hidden="true" className={className} fill="none" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />
+    </svg>
+  );
+}
+
+function ButtonContent({ icon, loading = false, children }) {
   return (
     <>
-      <ActionIcon name={icon} />
+      {loading ? <LoadingSpinner /> : icon ? <ActionIcon name={icon} /> : null}
       <span>{children}</span>
     </>
   );
@@ -217,6 +227,8 @@ function App() {
     setNotice({ type, message });
   }, []);
 
+  const hasBootstrappedBatchesRef = useRef(false);
+
   const loadBatches = useCallback(async () => {
     setBatchesLoading(true);
 
@@ -254,8 +266,15 @@ function App() {
     if (!user) {
       setBatches([]);
       setBatchId('');
+      hasBootstrappedBatchesRef.current = false;
       return;
     }
+
+    if (hasBootstrappedBatchesRef.current) {
+      return;
+    }
+
+    hasBootstrappedBatchesRef.current = true;
 
     let cancelled = false;
 
@@ -484,7 +503,7 @@ function LoginScreen({ onLogin }) {
             />
           </label>
           <button className="login-button" disabled={submitting} type="submit">
-            <ButtonContent icon="login">{submitting ? 'Signing in...' : 'Sign in'}</ButtonContent>
+            <ButtonContent icon="login" loading={submitting}>{submitting ? 'Signing in...' : 'Sign in'}</ButtonContent>
           </button>
         </form>
       </section>
@@ -705,7 +724,7 @@ function ProfileModal({ initials, user, showNotice, onClose, onUserUpdated }) {
             </label>
           </div>
           <button className="primary-button" disabled={isSavingPhoto} type="submit">
-            <ButtonContent icon="upload">{isSavingPhoto ? 'Uploading...' : 'Update Picture'}</ButtonContent>
+            <ButtonContent icon="upload" loading={isSavingPhoto}>{isSavingPhoto ? 'Uploading...' : 'Update Picture'}</ButtonContent>
           </button>
         </form>
 
@@ -746,7 +765,7 @@ function ProfileModal({ initials, user, showNotice, onClose, onUserUpdated }) {
             </label>
           </div>
           <button className="primary-button" disabled={isSavingPassword} type="submit">
-            <ButtonContent icon="save">{isSavingPassword ? 'Saving...' : 'Change Password'}</ButtonContent>
+            <ButtonContent icon="save" loading={isSavingPassword}>{isSavingPassword ? 'Saving...' : 'Change Password'}</ButtonContent>
           </button>
         </form>
       </section>
@@ -1072,7 +1091,7 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
         </div>
         <div className="upload-actions">
           <button className="primary-button" disabled={uploading || preparingUnmatched} type="button" onClick={handleUploadClick}>
-            <ButtonContent icon="upload">
+            <ButtonContent icon="upload" loading={uploading || preparingUnmatched}>
               {uploading ? 'Importing...' : preparingUnmatched ? 'Preparing reconcile...' : 'Upload / Import Selected Files'}
             </ButtonContent>
           </button>
@@ -1278,7 +1297,7 @@ function UploadedBatchesTable({ batches, loadBatches, onUnmatchedItems, setBatch
                             type="button"
                             onClick={() => fileInputRefs.current[cellKey]?.click()}
                           >
-                            <ActionIcon name="upload" />
+                            {isUploading ? <LoadingSpinner /> : <ActionIcon name="upload" />}
                           </button>
                           <input
                             accept=".xlsx"
@@ -1315,7 +1334,11 @@ function UploadedBatchesTable({ batches, loadBatches, onUnmatchedItems, setBatch
                   type="button"
                   onClick={() => reclassifyBatch(batch.id)}
                 >
-                  {reclassifyingBatchId === batch.id ? 'Reclassifying…' : 'Reclassify'}
+                  {reclassifyingBatchId === batch.id ? (
+                    <ButtonContent loading>Reclassifying...</ButtonContent>
+                  ) : (
+                    'Reclassify'
+                  )}
                 </button>
               </td>
             </tr>
@@ -1329,25 +1352,16 @@ function UploadedBatchesTable({ batches, loadBatches, onUnmatchedItems, setBatch
 }
 
 function MappingRulesScreen({ showNotice }) {
-  const emptyRuleForm = {
-    name: '',
-    product_category_id: '',
-    source_type: 'sales_analysis',
-    match_field: 'item_id',
-    match_operator: 'starts_with',
-    pattern: '',
-    target_bucket: 'rhp',
-    priority: 100,
-    is_active: true,
-  };
   const [rules, setRules] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRule, setSelectedRule] = useState(null);
-  const [editForm, setEditForm] = useState(emptyRuleForm);
-  const [createForm, setCreateForm] = useState(emptyRuleForm);
+  const [editForm, setEditForm] = useState(emptyMappingRuleForm());
+  const [createForm, setCreateForm] = useState(emptyMappingRuleForm());
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [statusFilter, setStatusFilter] = useState('active');
   const [searchQuery, setSearchQuery] = useState('');
@@ -1374,6 +1388,7 @@ function MappingRulesScreen({ showNotice }) {
         rule.pattern,
         rule.source_type,
         rule.target_bucket,
+        salesAnalysisBucketLabel(rule.target_bucket),
         rule.product_category?.name,
       ]);
     });
@@ -1421,28 +1436,25 @@ function MappingRulesScreen({ showNotice }) {
   }, [filteredRules, selectedRule]);
 
   function rulePayload(form) {
-    return {
-      ...form,
-      product_category_id: form.product_category_id || null,
-      target_bucket: form.target_bucket || null,
-      priority: Number(form.priority),
-      is_active: Boolean(form.is_active),
-    };
+    return mappingRulePayload(form);
   }
 
   async function submitCreateRule(event) {
     event.preventDefault();
+    setCreating(true);
 
     try {
       const response = await axios.post('/api/mapping-rules', rulePayload(createForm));
 
       showNotice('success', 'Mapping rule created.');
-      setCreateForm(emptyRuleForm);
+      setCreateForm(emptyMappingRuleForm());
       setIsCreateOpen(false);
       await loadRules();
       setSelectedRule(response.data.data);
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to create mapping rule.'));
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -1453,6 +1465,8 @@ function MappingRulesScreen({ showNotice }) {
       return;
     }
 
+    setEditing(true);
+
     try {
       const response = await axios.patch(`/api/mapping-rules/${selectedRule.id}`, rulePayload(editForm));
 
@@ -1461,6 +1475,8 @@ function MappingRulesScreen({ showNotice }) {
       setSelectedRule(response.data.data);
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to update mapping rule.'));
+    } finally {
+      setEditing(false);
     }
   }
 
@@ -1548,11 +1564,12 @@ function MappingRulesScreen({ showNotice }) {
           <RuleForm
             categories={categories}
             form={editForm}
+            isSubmitting={editing}
             primaryLabel="Update Rule"
             setForm={setEditForm}
             onSubmit={submitEditRule}
           >
-            <button className="danger-button" type="button" onClick={() => setIsDeleteConfirmOpen(true)}>
+            <button className="danger-button" disabled={editing} type="button" onClick={() => setIsDeleteConfirmOpen(true)}>
               <ButtonContent icon="delete">Delete Rule</ButtonContent>
             </button>
           </RuleForm>
@@ -1565,10 +1582,20 @@ function MappingRulesScreen({ showNotice }) {
       </article>
 
       {isCreateOpen ? (
-        <Modal title="Create Mapping Rule" onClose={() => setIsCreateOpen(false)}>
+        <Modal
+          className="modal-card-rule"
+          isBusy={creating}
+          title="Create Mapping Rule"
+          onClose={() => {
+            if (!creating) {
+              setIsCreateOpen(false);
+            }
+          }}
+        >
           <RuleForm
             categories={categories}
             form={createForm}
+            isSubmitting={creating}
             primaryLabel="Create Rule"
             setForm={setCreateForm}
             onSubmit={submitCreateRule}
@@ -1581,6 +1608,30 @@ function MappingRulesScreen({ showNotice }) {
   );
 }
 
+function emptyMappingRuleForm() {
+  return {
+    name: '',
+    product_category_id: '',
+    source_type: 'sales_analysis',
+    match_field: 'item_id',
+    match_operator: 'starts_with',
+    pattern: '',
+    target_bucket: '',
+    priority: 100,
+    is_active: true,
+  };
+}
+
+function mappingRulePayload(form) {
+  return {
+    ...form,
+    product_category_id: form.product_category_id || null,
+    target_bucket: form.target_bucket || null,
+    priority: Number(form.priority),
+    is_active: Boolean(form.is_active),
+  };
+}
+
 function ruleToForm(rule) {
   return {
     name: rule.name ?? '',
@@ -1589,13 +1640,13 @@ function ruleToForm(rule) {
     match_field: rule.match_field ?? 'item_id',
     match_operator: rule.match_operator ?? 'starts_with',
     pattern: rule.pattern ?? '',
-    target_bucket: rule.target_bucket ?? 'rhp',
+    target_bucket: rule.target_bucket ?? '',
     priority: rule.priority ?? 100,
     is_active: Boolean(rule.is_active),
   };
 }
 
-function RuleForm({ categories, children, form, primaryLabel, setForm, onSubmit }) {
+function RuleForm({ categories, children, form, isSubmitting = false, primaryLabel, setForm, onSubmit }) {
   const visibleCategories = useMemo(() => {
     if (! form.target_bucket) {
       return categories;
@@ -1604,8 +1655,13 @@ function RuleForm({ categories, children, form, primaryLabel, setForm, onSubmit 
     return categories.filter((category) => category.sales_analysis_bucket === form.target_bucket);
   }, [categories, form.target_bucket]);
 
+  const submitLabel = isSubmitting
+    ? (primaryLabel.startsWith('Update') ? 'Updating...' : 'Creating...')
+    : primaryLabel;
+
   return (
     <form className="stacked-form" onSubmit={onSubmit}>
+      <fieldset className="form-fieldset" disabled={isSubmitting}>
       <label>
         Rule Name
         <input
@@ -1614,17 +1670,45 @@ function RuleForm({ categories, children, form, primaryLabel, setForm, onSubmit 
           onChange={(event) => setForm({ ...form, name: event.target.value })}
         />
       </label>
-      <label>
-        Category
-        <SearchableCategorySelect
-          allowEmpty
-          categories={visibleCategories}
-          emptyLabel="No category"
-          showBucketInLabel
-          value={form.product_category_id}
-          onChange={(categoryId) => setForm({ ...form, product_category_id: categoryId })}
-        />
-      </label>
+      <div className="form-row">
+        <label>
+          Bucket
+          <select
+            value={form.target_bucket}
+            onChange={(event) => {
+              const target_bucket = event.target.value;
+              const selectedCategory = categories.find(
+                (category) => String(category.id) === String(form.product_category_id),
+              );
+              const product_category_id = !target_bucket
+                || selectedCategory?.sales_analysis_bucket === target_bucket
+                ? form.product_category_id
+                : '';
+
+              setForm({ ...form, target_bucket, product_category_id });
+            }}
+          >
+            <option value="">None</option>
+            {salesAnalysisBucketOptions.map((bucket) => (
+              <option key={bucket.value} value={bucket.value}>
+                {bucket.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Category
+          <SearchableCategorySelect
+            allowEmpty
+            categories={visibleCategories}
+            disabled={isSubmitting}
+            emptyLabel="No category"
+            showBucketInLabel
+            value={form.product_category_id}
+            onChange={(categoryId) => setForm({ ...form, product_category_id: categoryId })}
+          />
+        </label>
+      </div>
       <label>
         Source Type
         <input
@@ -1669,41 +1753,15 @@ function RuleForm({ categories, children, form, primaryLabel, setForm, onSubmit 
           />
         </label>
       </div>
-      <div className="form-row">
-        <label>
-          Bucket
-          <select
-            value={form.target_bucket}
-            onChange={(event) => {
-              const target_bucket = event.target.value;
-              const selectedCategory = categories.find(
-                (category) => String(category.id) === String(form.product_category_id),
-              );
-              const product_category_id = selectedCategory?.sales_analysis_bucket === target_bucket
-                ? form.product_category_id
-                : '';
-
-              setForm({ ...form, target_bucket, product_category_id });
-            }}
-          >
-            <option value="">None</option>
-            {salesAnalysisBucketOptions.map((bucket) => (
-              <option key={bucket.value} value={bucket.value}>
-                {bucket.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Priority
-          <input
-            min="1"
-            type="number"
-            value={form.priority}
-            onChange={(event) => setForm({ ...form, priority: event.target.value })}
-          />
-        </label>
-      </div>
+      <label>
+        Priority
+        <input
+          min="1"
+          type="number"
+          value={form.priority}
+          onChange={(event) => setForm({ ...form, priority: event.target.value })}
+        />
+      </label>
       <label className="checkbox-label">
         <input
           checked={form.is_active}
@@ -1713,11 +1771,17 @@ function RuleForm({ categories, children, form, primaryLabel, setForm, onSubmit 
         Active
       </label>
       <div className="form-actions">
-        <button className="primary-button" type="submit">
-          <ButtonContent icon={primaryLabel.startsWith('Update') ? 'save' : 'check'}>{primaryLabel}</ButtonContent>
+        <button className="primary-button" disabled={isSubmitting} type="submit">
+          <ButtonContent
+            icon={primaryLabel.startsWith('Update') ? 'save' : 'check'}
+            loading={isSubmitting}
+          >
+            {submitLabel}
+          </ButtonContent>
         </button>
         {children}
       </div>
+      </fieldset>
     </form>
   );
 }
@@ -1750,7 +1814,9 @@ function ConfirmDialog({
           </button>
           <button className={confirmButtonClassName} disabled={isProcessing} type="button" onClick={onConfirm}>
             {confirmIcon ? (
-              <ButtonContent icon={confirmIcon}>{isProcessing ? 'Processing...' : confirmLabel}</ButtonContent>
+              <ButtonContent icon={confirmIcon} loading={isProcessing}>
+                {isProcessing ? 'Processing...' : confirmLabel}
+              </ButtonContent>
             ) : (
               isProcessing ? 'Processing...' : confirmLabel
             )}
@@ -1761,11 +1827,37 @@ function ConfirmDialog({
   );
 }
 
-function Modal({ children, title, onClose }) {
+function Modal({ children, title, className = '', isBusy = false, onClose }) {
   return (
-    <div className="modal-backdrop" role="presentation">
-      <section className="modal-card" role="dialog" aria-modal="true" aria-label={title}>
-        <button className="modal-close-button" type="button" aria-label="Close" onClick={onClose}>
+    <div
+      className="modal-backdrop"
+      role="presentation"
+      onClick={() => {
+        if (!isBusy) {
+          onClose?.();
+        }
+      }}
+    >
+      <section
+        aria-busy={isBusy}
+        aria-label={title}
+        className={['modal-card', className, isBusy ? 'modal-card-busy' : ''].filter(Boolean).join(' ')}
+        role="dialog"
+        aria-modal="true"
+        onClick={(event) => event.stopPropagation()}
+      >
+        {isBusy ? (
+          <div aria-hidden="true" className="modal-busy-overlay">
+            <LoadingSpinner className="modal-spinner" />
+          </div>
+        ) : null}
+        <button
+          aria-label="Close"
+          className="modal-close-button"
+          disabled={isBusy}
+          type="button"
+          onClick={onClose}
+        >
           <ActionIcon name="cancel" />
         </button>
         <div className="section-heading">
@@ -1937,7 +2029,8 @@ function UnmatchedItemsModal({
     showNoticeRef.current = showNotice;
   }, [showNotice]);
 
-  const [itemGroups] = useState(initialItemGroups);
+  const [view, setView] = useState('unmatched');
+  const [itemGroups, setItemGroups] = useState(initialItemGroups);
   const [categories, setCategories] = useState(initialCategories);
   const [resolutions, setResolutions] = useState({});
   const [noCategoryAssignments, setNoCategoryAssignments] = useState({});
@@ -1946,9 +2039,11 @@ function UnmatchedItemsModal({
   const [createCategoryForm, setCreateCategoryForm] = useState(emptyCategoryForm);
   const [createCategoryForItemId, setCreateCategoryForItemId] = useState('');
   const [creatingCategory, setCreatingCategory] = useState(false);
-  const [salesAnalysisFileId] = useState(initialSalesAnalysisFileId);
+  const [salesAnalysisFileId, setSalesAnalysisFileId] = useState(initialSalesAnalysisFileId);
   const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
   const [discardingUpload, setDiscardingUpload] = useState(false);
+  const [createRuleForm, setCreateRuleForm] = useState(emptyMappingRuleForm());
+  const [creatingRule, setCreatingRule] = useState(false);
 
   const allResolved = useMemo(
     () =>
@@ -1956,6 +2051,17 @@ function UnmatchedItemsModal({
       itemGroups.every((group) => noCategoryAssignments[group.item_id] || resolutions[group.item_id]),
     [itemGroups, resolutions, noCategoryAssignments],
   );
+
+  const resolvedCount = useMemo(
+    () =>
+      itemGroups.filter(
+        (group) => noCategoryAssignments[group.item_id] || resolutions[group.item_id],
+      ).length,
+    [itemGroups, resolutions, noCategoryAssignments],
+  );
+
+  const remainingCount = itemGroups.length - resolvedCount;
+  const isBusy = saving || discardingUpload || creatingRule;
 
   function toggleNoCategoryAssignment(itemId, checked) {
     setNoCategoryAssignments((current) => ({
@@ -1976,6 +2082,47 @@ function UnmatchedItemsModal({
     setCreateCategoryForItemId(itemId);
     setCreateCategoryForm(emptyCategoryForm);
     setIsCreateCategoryOpen(true);
+  }
+
+  function openCreateRuleView() {
+    setCreateRuleForm(emptyMappingRuleForm());
+    setView('create-rule');
+  }
+
+  function backToUnmatchedView() {
+    if (creatingRule) {
+      return;
+    }
+
+    setView('unmatched');
+  }
+
+  function pruneResolutionsForItemIds(nextItemIds) {
+    const allowed = new Set(nextItemIds);
+
+    setResolutions((current) => {
+      const next = {};
+
+      Object.entries(current).forEach(([itemId, value]) => {
+        if (allowed.has(itemId)) {
+          next[itemId] = value;
+        }
+      });
+
+      return next;
+    });
+
+    setNoCategoryAssignments((current) => {
+      const next = {};
+
+      Object.entries(current).forEach(([itemId, value]) => {
+        if (allowed.has(itemId)) {
+          next[itemId] = value;
+        }
+      });
+
+      return next;
+    });
   }
 
   async function copyItemId(itemId) {
@@ -2023,6 +2170,56 @@ function UnmatchedItemsModal({
     }
   }
 
+  async function submitCreateRule(event) {
+    event.preventDefault();
+    setCreatingRule(true);
+
+    try {
+      await axios.post('/api/mapping-rules', mappingRulePayload(createRuleForm));
+      showNoticeRef.current('success', 'Mapping rule created.');
+
+      await axios.post(`/api/import-batches/${batchId}/classify-sales-rows`);
+      const data = await fetchUnmatchedModalData(batchId);
+      const nextGroups = data.itemGroups ?? [];
+
+      setItemGroups(nextGroups);
+      setCategories(data.categories ?? []);
+      setSalesAnalysisFileId(data.salesAnalysisFileId ?? null);
+      pruneResolutionsForItemIds(nextGroups.map((group) => group.item_id));
+      setCreateRuleForm(emptyMappingRuleForm());
+
+      if (nextGroups.length === 0) {
+        clearReconcileSession();
+        await loadBatches?.();
+        showNoticeRef.current('success', 'All unmatched items were classified by mapping rules.');
+        onClose();
+        return;
+      }
+
+      setView('unmatched');
+      showNoticeRef.current(
+        'success',
+        `Unmatched items refreshed: ${nextGroups.length} item${nextGroups.length === 1 ? '' : 's'} remaining.`,
+      );
+    } catch (error) {
+      const status = error?.response?.status;
+
+      if (status === 404) {
+        clearReconcileSession();
+        await loadBatches?.();
+        showNoticeRef.current(
+          'error',
+          'This Sales Analysis upload is no longer available. It may have been discarded. Please upload it again.',
+        );
+        onClose();
+      } else {
+        showNoticeRef.current('error', messageFromError(error, 'Unable to create mapping rule.'));
+      }
+    } finally {
+      setCreatingRule(false);
+    }
+  }
+
   async function saveResolutions() {
     if (!allResolved) {
       return;
@@ -2057,14 +2254,27 @@ function UnmatchedItemsModal({
       await loadBatches?.();
       onClose();
     } catch (error) {
-      showNoticeRef.current('error', messageFromError(error, 'Unable to save unmatched item resolutions.'));
+      const status = error?.response?.status;
+      const missingBatch = status === 404;
+
+      if (missingBatch) {
+        clearReconcileSession();
+        await loadBatches?.();
+        showNoticeRef.current(
+          'error',
+          'This Sales Analysis upload is no longer available. It may have been discarded. Please upload it again.',
+        );
+        onClose();
+      } else {
+        showNoticeRef.current('error', messageFromError(error, 'Unable to save unmatched item resolutions.'));
+      }
     } finally {
       setSaving(false);
     }
   }
 
   function requestClose() {
-    if (saving || discardingUpload) {
+    if (isBusy) {
       return;
     }
 
@@ -2100,126 +2310,188 @@ function UnmatchedItemsModal({
       <section
         aria-labelledby="unmatched-items-title"
         aria-modal="true"
-        className="modal-card modal-card-wide modal-card-unmatched"
+        className={
+          view === 'create-rule'
+            ? 'modal-card modal-card-rule modal-card-unmatched-rule'
+            : 'modal-card modal-card-wide modal-card-unmatched'
+        }
         role="dialog"
       >
-        <button aria-label="Close" className="modal-close-button" type="button" onClick={requestClose}>
-          <ActionIcon name="cancel" />
-        </button>
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Reconcile</p>
-            <h2 id="unmatched-items-title">Resolve Unmatched Items</h2>
-          </div>
-        </div>
-        <p className="unmatched-modal-intro">
-          Assign a category to each item, or mark items that should stay on the raw sheet only with no category
-          assignment. A mapping rule will be created for each resolved item.
-        </p>
-
-        {itemGroups.length === 0 ? <p>No unmatched items found.</p> : null}
-
-        {itemGroups.length > 0 ? (
-          <>
-            <div className="unmatched-items-scroll table-wrap">
-              <table className="unmatched-items-table">
-                <thead>
-                  <tr>
-                    <th>Item ID</th>
-                    <th>Description</th>
-                    <th>Details</th>
-                    <th>Category</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {itemGroups.map((group) => (
-                    <tr key={group.item_id}>
-                      <td>
-                        <div className="unmatched-item-id-cell">
-                          <span>{group.item_id}</span>
-                          <button
-                            aria-label={`Copy item ID ${group.item_id}`}
-                            className="copy-item-id-button"
-                            title="Copy item ID"
-                            type="button"
-                            onClick={() => copyItemId(group.item_id)}
-                          >
-                            <ActionIcon name="copy" />
-                          </button>
-                        </div>
-                      </td>
-                      <td>{group.description ?? '—'}</td>
-                      <td>
-                        <UnmatchedDetailsTrigger group={group} />
-                      </td>
-                      <td>
-                        <div className="unmatched-category-cell">
-                          <div className="unmatched-category-controls">
-                            <SearchableCategorySelect
-                              categories={categories}
-                              disabled={Boolean(noCategoryAssignments[group.item_id])}
-                              showBucketInLabel
-                              value={resolutions[group.item_id] ?? ''}
-                              onChange={(categoryId) => {
-                                setNoCategoryAssignments((current) => ({
-                                  ...current,
-                                  [group.item_id]: false,
-                                }));
-                                setResolutions((current) => ({
-                                  ...current,
-                                  [group.item_id]: categoryId,
-                                }));
-                              }}
-                            />
-                            <button
-                              className="secondary-button"
-                              disabled={Boolean(noCategoryAssignments[group.item_id])}
-                              type="button"
-                              onClick={() => openCreateCategory(group.item_id)}
-                            >
-                              <ButtonContent icon="add">Add</ButtonContent>
-                            </button>
-                            <label className="checkbox-label unmatched-no-category-label">
-                              <input
-                                checked={Boolean(noCategoryAssignments[group.item_id])}
-                                type="checkbox"
-                                onChange={(event) =>
-                                  toggleNoCategoryAssignment(group.item_id, event.target.checked)
-                                }
-                              />
-                              <span>No category assignment</span>
-                            </label>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {!allResolved ? <p className="unmatched-modal-hint">Resolve all items to enable Save.</p> : null}
-
-            <div className="unmatched-modal-actions">
-              <button className="secondary-button" disabled={saving} type="button" onClick={requestClose}>
-                Cancel
-              </button>
-              <button
-                className="primary-button"
-                disabled={!allResolved || saving}
-                type="button"
-                onClick={saveResolutions}
-              >
-                <ButtonContent icon="save">{saving ? 'Saving...' : 'Save'}</ButtonContent>
-              </button>
-            </div>
-          </>
+        {view !== 'create-rule' ? (
+          <button
+            aria-label="Close"
+            className="modal-close-button"
+            disabled={isBusy}
+            type="button"
+            onClick={requestClose}
+          >
+            <ActionIcon name="cancel" />
+          </button>
         ) : null}
 
+        {view === 'create-rule' ? (
+          <>
+            <div className="section-heading unmatched-rule-heading">
+              <div>
+                <button
+                  className="link-button unmatched-rule-back"
+                  disabled={creatingRule}
+                  type="button"
+                  onClick={backToUnmatchedView}
+                >
+                  <ButtonContent icon="back">Back</ButtonContent>
+                </button>
+                <h2 id="unmatched-items-title">Create Mapping Rule</h2>
+              </div>
+            </div>
+            <RuleForm
+              categories={categories}
+              form={createRuleForm}
+              isSubmitting={creatingRule}
+              primaryLabel="Create Rule"
+              setForm={setCreateRuleForm}
+              onSubmit={submitCreateRule}
+            />
+          </>
+        ) : (
+          <>
+            <div className="section-heading unmatched-modal-heading">
+              <div>
+                <p className="eyebrow">Reconcile</p>
+                <h2 id="unmatched-items-title">
+                  Resolve Unmatched Items
+                  {itemGroups.length > 0 ? (
+                    <span className="unmatched-items-count">
+                      {' '}
+                      ({itemGroups.length} item{itemGroups.length === 1 ? '' : 's'})
+                    </span>
+                  ) : null}
+                </h2>
+              </div>
+              <button
+                className="secondary-button"
+                disabled={isBusy}
+                type="button"
+                onClick={openCreateRuleView}
+              >
+                <ButtonContent icon="add">Add mapping rule</ButtonContent>
+              </button>
+            </div>
+            <p className="unmatched-modal-intro">
+              Assign a category to each item, or mark items that should stay on the raw sheet only with no category
+              assignment. A mapping rule will be created for each resolved item.
+            </p>
+
+            {itemGroups.length === 0 ? <p>No unmatched items found.</p> : null}
+
+            {itemGroups.length > 0 ? (
+              <>
+                <div className="unmatched-items-scroll table-wrap">
+                  <table className="unmatched-items-table">
+                    <thead>
+                      <tr>
+                        <th>Item ID</th>
+                        <th>Description</th>
+                        <th>Details</th>
+                        <th>Category</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {itemGroups.map((group) => (
+                        <tr key={group.item_id}>
+                          <td>
+                            <div className="unmatched-item-id-cell">
+                              <span>{group.item_id}</span>
+                              <button
+                                aria-label={`Copy item ID ${group.item_id}`}
+                                className="copy-item-id-button"
+                                title="Copy item ID"
+                                type="button"
+                                onClick={() => copyItemId(group.item_id)}
+                              >
+                                <ActionIcon name="copy" />
+                              </button>
+                            </div>
+                          </td>
+                          <td>{group.description ?? '—'}</td>
+                          <td>
+                            <UnmatchedDetailsTrigger group={group} />
+                          </td>
+                          <td>
+                            <div className="unmatched-category-cell">
+                              <div className="unmatched-category-controls">
+                                <SearchableCategorySelect
+                                  categories={categories}
+                                  disabled={Boolean(noCategoryAssignments[group.item_id])}
+                                  showBucketInLabel
+                                  value={resolutions[group.item_id] ?? ''}
+                                  onChange={(categoryId) => {
+                                    setNoCategoryAssignments((current) => ({
+                                      ...current,
+                                      [group.item_id]: false,
+                                    }));
+                                    setResolutions((current) => ({
+                                      ...current,
+                                      [group.item_id]: categoryId,
+                                    }));
+                                  }}
+                                />
+                                <button
+                                  className="secondary-button"
+                                  disabled={Boolean(noCategoryAssignments[group.item_id])}
+                                  type="button"
+                                  onClick={() => openCreateCategory(group.item_id)}
+                                >
+                                  <ButtonContent icon="add">Add</ButtonContent>
+                                </button>
+                                <label className="checkbox-label unmatched-no-category-label">
+                                  <input
+                                    checked={Boolean(noCategoryAssignments[group.item_id])}
+                                    type="checkbox"
+                                    onChange={(event) =>
+                                      toggleNoCategoryAssignment(group.item_id, event.target.checked)
+                                    }
+                                  />
+                                  <span>No category assignment</span>
+                                </label>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {!allResolved ? (
+                  <p className="unmatched-modal-hint">
+                    Resolve {remainingCount} remaining item{remainingCount === 1 ? '' : 's'} to enable Save
+                    ({resolvedCount} of {itemGroups.length} done).
+                  </p>
+                ) : null}
+
+                <div className="unmatched-modal-actions">
+                  <button className="secondary-button" disabled={saving} type="button" onClick={requestClose}>
+                    Cancel
+                  </button>
+                  <button
+                    className="primary-button"
+                    disabled={!allResolved || saving}
+                    type="button"
+                    onClick={saveResolutions}
+                  >
+                    <ButtonContent icon="save" loading={saving}>{saving ? 'Saving...' : 'Save'}</ButtonContent>
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </>
+        )}
       </section>
     </div>
     {isCreateCategoryOpen ? (
       <Modal
+        isBusy={creatingCategory}
         title="Add Category"
         onClose={() => {
           if (!creatingCategory) {
@@ -2230,7 +2502,8 @@ function UnmatchedItemsModal({
       >
         <CategoryForm
           form={createCategoryForm}
-          primaryLabel={creatingCategory ? 'Creating...' : 'Create Category'}
+          isSubmitting={creatingCategory}
+          primaryLabel="Create Category"
           setForm={setCreateCategoryForm}
           onSubmit={submitCreateCategory}
         >
@@ -2283,6 +2556,8 @@ function CategoriesScreen({ showNotice }) {
   const [createForm, setCreateForm] = useState(emptyForm);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [statusFilter, setStatusFilter] = useState('active');
   const [searchQuery, setSearchQuery] = useState('');
@@ -2360,6 +2635,7 @@ function CategoriesScreen({ showNotice }) {
 
   async function submitCreateCategory(event) {
     event.preventDefault();
+    setCreating(true);
 
     try {
       const response = await axios.post('/api/product-categories', categoryPayload(createForm));
@@ -2371,6 +2647,8 @@ function CategoriesScreen({ showNotice }) {
       setSelectedCategory(response.data.data);
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to create category.'));
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -2381,6 +2659,8 @@ function CategoriesScreen({ showNotice }) {
       return;
     }
 
+    setEditing(true);
+
     try {
       const response = await axios.patch(`/api/product-categories/${selectedCategory.id}`, categoryPayload(editForm));
 
@@ -2389,6 +2669,8 @@ function CategoriesScreen({ showNotice }) {
       setSelectedCategory(response.data.data);
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to update category.'));
+    } finally {
+      setEditing(false);
     }
   }
 
@@ -2473,8 +2755,14 @@ function CategoriesScreen({ showNotice }) {
         </div>
 
         {selectedCategory ? (
-          <CategoryForm form={editForm} primaryLabel="Update Category" setForm={setEditForm} onSubmit={submitEditCategory}>
-            <button className="danger-button" type="button" onClick={() => setIsDeleteConfirmOpen(true)}>
+          <CategoryForm
+            form={editForm}
+            isSubmitting={editing}
+            primaryLabel="Update Category"
+            setForm={setEditForm}
+            onSubmit={submitEditCategory}
+          >
+            <button className="danger-button" disabled={editing} type="button" onClick={() => setIsDeleteConfirmOpen(true)}>
               <ButtonContent icon="delete">Delete Category</ButtonContent>
             </button>
           </CategoryForm>
@@ -2487,9 +2775,18 @@ function CategoriesScreen({ showNotice }) {
       </article>
 
       {isCreateOpen ? (
-        <Modal title="Create Category" onClose={() => setIsCreateOpen(false)}>
+        <Modal
+          isBusy={creating}
+          title="Create Category"
+          onClose={() => {
+            if (!creating) {
+              setIsCreateOpen(false);
+            }
+          }}
+        >
           <CategoryForm
             form={createForm}
+            isSubmitting={creating}
             primaryLabel="Create Category"
             setForm={setCreateForm}
             onSubmit={submitCreateCategory}
@@ -2510,9 +2807,14 @@ function categoryToForm(category) {
   };
 }
 
-function CategoryForm({ children, form, primaryLabel, setForm, onSubmit }) {
+function CategoryForm({ children, form, isSubmitting = false, primaryLabel, setForm, onSubmit }) {
+  const submitLabel = isSubmitting
+    ? (primaryLabel.startsWith('Update') ? 'Updating...' : 'Creating...')
+    : primaryLabel;
+
   return (
     <form className="stacked-form" onSubmit={onSubmit}>
+      <fieldset className="form-fieldset" disabled={isSubmitting}>
       <label>
         Name
         <input
@@ -2553,11 +2855,17 @@ function CategoryForm({ children, form, primaryLabel, setForm, onSubmit }) {
         Active
       </label>
       <div className="form-actions">
-        <button className="primary-button" type="submit">
-          <ButtonContent icon={primaryLabel.startsWith('Update') ? 'save' : 'add'}>{primaryLabel}</ButtonContent>
+        <button className="primary-button" disabled={isSubmitting} type="submit">
+          <ButtonContent
+            icon={primaryLabel.startsWith('Update') ? 'save' : 'add'}
+            loading={isSubmitting}
+          >
+            {submitLabel}
+          </ButtonContent>
         </button>
         {children}
       </div>
+      </fieldset>
     </form>
   );
 }
@@ -2908,6 +3216,7 @@ function RulesTable({ rules, selectedRule, statusFilter, searchQuery, onSelectRu
           <tr>
             <th>Match</th>
             <th>Category</th>
+            <th>Bucket</th>
           </tr>
         </thead>
         <tbody>
@@ -2921,6 +3230,7 @@ function RulesTable({ rules, selectedRule, statusFilter, searchQuery, onSelectRu
                 {rule.match_field} {rule.match_operator} {rule.pattern}
               </td>
               <td>{rule.product_category?.name ?? 'Unassigned'}</td>
+              <td>{salesAnalysisBucketLabel(rule.target_bucket) ?? 'None'}</td>
             </tr>
           ))}
         </tbody>
@@ -2936,6 +3246,8 @@ function ReconciliationScreen({ batchId, batches, batchesLoading, setBatchId, sh
   const [totals, setTotals] = useState([]);
   const [fees, setFees] = useState([]);
   const [feeForm, setFeeForm] = useState({ marketplace: 'Amazon', amount: '', description: '' });
+  const [running, setRunning] = useState(false);
+  const [addingFee, setAddingFee] = useState(false);
 
   const canLoad = Boolean(batchId);
 
@@ -2962,6 +3274,8 @@ function ReconciliationScreen({ batchId, batches, batchesLoading, setBatchId, sh
   }, [loadData]);
 
   async function runReconciliation() {
+    setRunning(true);
+
     try {
       const response = await axios.post(`/api/import-batches/${batchId}/reconciliation`, { tolerance: 0.01 });
       setResult(response.data.data.reconciliation);
@@ -2970,11 +3284,15 @@ function ReconciliationScreen({ batchId, batches, batchesLoading, setBatchId, sh
       await loadData();
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to run reconciliation.'));
+    } finally {
+      setRunning(false);
     }
   }
 
   async function addFee(event) {
     event.preventDefault();
+    setAddingFee(true);
+
     try {
       await axios.post(`/api/import-batches/${batchId}/marketplace-fees`, {
         ...feeForm,
@@ -2985,6 +3303,8 @@ function ReconciliationScreen({ batchId, batches, batchesLoading, setBatchId, sh
       await loadData();
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to add marketplace fee.'));
+    } finally {
+      setAddingFee(false);
     }
   }
 
@@ -3002,8 +3322,8 @@ function ReconciliationScreen({ batchId, batches, batchesLoading, setBatchId, sh
             <p className="eyebrow">Reconciliation</p>
             <h2>Balance Sales Analysis to Income Statement</h2>
           </div>
-          <button className="primary-button" disabled={!canLoad} type="button" onClick={runReconciliation}>
-            <ButtonContent icon="run">Run Reconciliation</ButtonContent>
+          <button className="primary-button" disabled={!canLoad || running} type="button" onClick={runReconciliation}>
+            <ButtonContent icon="run" loading={running}>{running ? 'Running...' : 'Run Reconciliation'}</ButtonContent>
           </button>
         </div>
         {!canLoad ? <p>Select a batch to continue.</p> : null}
@@ -3013,6 +3333,7 @@ function ReconciliationScreen({ batchId, batches, batchesLoading, setBatchId, sh
       <article className="panel">
         <h2>Marketplace Fees</h2>
         <form className="stacked-form" onSubmit={addFee}>
+          <fieldset className="form-fieldset" disabled={addingFee}>
           <label>
             Marketplace
             <select
@@ -3040,9 +3361,10 @@ function ReconciliationScreen({ batchId, batches, batchesLoading, setBatchId, sh
               onChange={(event) => setFeeForm({ ...feeForm, description: event.target.value })}
             />
           </label>
-          <button className="secondary-button" disabled={!canLoad} type="submit">
-            <ButtonContent icon="add">Add Fee</ButtonContent>
+          <button className="secondary-button" disabled={!canLoad || addingFee} type="submit">
+            <ButtonContent icon="add" loading={addingFee}>{addingFee ? 'Adding...' : 'Add Fee'}</ButtonContent>
           </button>
+          </fieldset>
         </form>
         <SimpleList items={fees.map((fee) => `${fee.marketplace}: ${currency(fee.amount)}`)} />
       </article>
@@ -3082,17 +3404,28 @@ function SummaryCards({ result }) {
 
 function ExportsScreen({ batchId, batches, batchesLoading, setBatchId, showNotice }) {
   const [reports, setReports] = useState([]);
+  const [generating, setGenerating] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const canLoad = Boolean(batchId);
 
-  const loadReports = useCallback(async () => {
+  const loadReports = useCallback(async ({ showLoading = false } = {}) => {
     if (!canLoad) {
       return;
     }
+
+    if (showLoading) {
+      setRefreshing(true);
+    }
+
     try {
       const response = await axios.get(`/api/import-batches/${batchId}/generated-reports`);
       setReports(response.data.data ?? []);
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to load generated reports.'));
+    } finally {
+      if (showLoading) {
+        setRefreshing(false);
+      }
     }
   }, [batchId, canLoad, showNotice]);
 
@@ -3101,12 +3434,16 @@ function ExportsScreen({ batchId, batches, batchesLoading, setBatchId, showNotic
   }, [loadReports]);
 
   async function generateReports() {
+    setGenerating(true);
+
     try {
       const response = await axios.post(`/api/import-batches/${batchId}/generated-reports`);
       setReports(response.data.data ?? []);
       showNotice('success', 'Report export finished.');
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to generate reports.'));
+    } finally {
+      setGenerating(false);
     }
   }
 
@@ -3125,11 +3462,16 @@ function ExportsScreen({ batchId, batches, batchesLoading, setBatchId, showNotic
             <h2>Generated Excel Reports</h2>
           </div>
           <div className="button-row">
-            <button className="secondary-button" disabled={!canLoad} type="button" onClick={loadReports}>
-              <ButtonContent icon="refresh">Refresh</ButtonContent>
+            <button
+              className="secondary-button"
+              disabled={!canLoad || refreshing || generating}
+              type="button"
+              onClick={() => loadReports({ showLoading: true })}
+            >
+              <ButtonContent icon="refresh" loading={refreshing}>{refreshing ? 'Refreshing...' : 'Refresh'}</ButtonContent>
             </button>
-            <button className="primary-button" disabled={!canLoad} type="button" onClick={generateReports}>
-              <ButtonContent icon="export">Generate Reports</ButtonContent>
+            <button className="primary-button" disabled={!canLoad || generating || refreshing} type="button" onClick={generateReports}>
+              <ButtonContent icon="export" loading={generating}>{generating ? 'Generating...' : 'Generate Reports'}</ButtonContent>
             </button>
           </div>
         </div>

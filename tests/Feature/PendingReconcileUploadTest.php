@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\ImportBatch;
+use App\Models\MappingRule;
 use App\Models\ProductCategory;
 use App\Models\SalesRow;
 use App\Models\UploadedFile;
@@ -72,6 +73,47 @@ class PendingReconcileUploadTest extends TestCase
         $this->actingAs($user)
             ->getJson('/api/uploaded-files/'.$uploadedFile->id.'/download')
             ->assertStatus(422);
+    }
+
+    public function test_classify_confirms_pending_reconcile_when_mapping_rule_clears_unmatched(): void
+    {
+        $user = $this->createAnalyst();
+        $batch = $this->createBatch($user);
+        $category = $this->createCategory();
+        $uploadedFile = $this->createSalesAnalysisUpload($batch, 'pending_reconcile');
+        $row = $this->createUnmatchedRow($batch, $uploadedFile, '880-TEST-001');
+
+        MappingRule::query()->create([
+            'name' => 'test rule → 880-TEST-001',
+            'product_category_id' => $category->id,
+            'source_type' => 'sales_analysis',
+            'match_field' => 'item_id',
+            'match_operator' => 'exact',
+            'pattern' => '880-TEST-001',
+            'target_bucket' => 'rhp',
+            'priority' => 100,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->postJson("/api/import-batches/{$batch->id}/classify-sales-rows")
+            ->assertOk()
+            ->assertJsonPath('data.reconcilable_unmatched', 0)
+            ->assertJsonPath('data.matched', 1);
+
+        $row->refresh();
+
+        $this->assertSame('matched', $row->classification_status);
+        $this->assertSame('rhp', $row->source_bucket);
+        $this->assertSame($category->id, $row->product_category_id);
+        $this->assertDatabaseHas('uploaded_files', [
+            'id' => $uploadedFile->id,
+            'status' => 'imported',
+        ]);
+        $this->actingAs($user)
+            ->getJson("/api/import-batches/{$batch->id}/unmatched-item-groups")
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
     }
 
     private function createAnalyst(): User

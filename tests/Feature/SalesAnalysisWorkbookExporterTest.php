@@ -184,4 +184,53 @@ class SalesAnalysisWorkbookExporterTest extends TestCase
         $this->assertSame(1699.0, (float) $sheet->getCell('K'.$grandTotalRow)->getCalculatedValue());
         $this->assertSame('A9D1F7', strtoupper($sheet->getStyle('A'.$grandTotalRow)->getFill()->getStartColor()->getRGB()));
     }
+
+    public function test_parts_tsd_sheet_writes_category_headers_for_legacy_sections(): void
+    {
+        $user = User::query()->create([
+            'first_name' => 'Ana',
+            'last_name' => 'Lyst',
+            'email' => 'analyst-parts-tsd@example.com',
+            'password' => 'password',
+            'role' => 'analyst',
+        ]);
+
+        $batch = ImportBatch::query()->create([
+            'week_start' => '2026-02-01',
+            'week_ending' => '2026-02-07',
+            'status' => 'draft',
+            'created_by_user_id' => $user->id,
+            'source_system' => 'Traverse Global',
+        ]);
+
+        $miscCategory = ProductCategory::query()->create([
+            'code' => 'misc_on_total_sales_report',
+            'name' => 'Misc (on Total Sales Report)',
+            'report_family' => 'parts_tsd',
+            'sales_analysis_bucket' => 'parts_tsd',
+            'sort_order' => 100,
+            'is_active' => true,
+        ]);
+
+        SalesRow::query()->create([
+            'import_batch_id' => $batch->id,
+            'product_category_id' => $miscCategory->id,
+            'source_sheet' => 'Sheet',
+            'source_row_number' => 2,
+            'source_bucket' => 'parts_tsd',
+            'item_id' => '674-00004-001',
+            'description' => 'THERMAL, CAMERA, TC8650',
+            'quantity_ordered' => 1,
+            'amount' => 199,
+            'classification_status' => 'matched',
+        ]);
+
+        $report = app(SalesAnalysisWorkbookExporter::class)->export($batch, $user->id);
+        $sheet = IOFactory::load(storage_path('app/private/'.$report->storage_path))->getSheetByName('Parts & TSD');
+
+        $this->assertSame('Misc (on Total Sales Report)', $sheet->getCell('A2')->getCalculatedValue());
+        $this->assertSame('Misc (on Total Sales Report)', $sheet->getCell('B2')->getCalculatedValue());
+        $this->assertSame('674-00004-001', $sheet->getCell('A3')->getCalculatedValue());
+        $this->assertSame('THERMAL, CAMERA, TC8650', $sheet->getCell('B3')->getCalculatedValue());
+    }
 }
