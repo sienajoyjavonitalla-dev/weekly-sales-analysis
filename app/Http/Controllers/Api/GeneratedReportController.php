@@ -33,9 +33,14 @@ class GeneratedReportController
         Gate::authorize('update', $importBatch);
         Gate::authorize('create', GeneratedReport::class);
 
+        $validated = $request->validate([
+            'include_state' => ['sometimes', 'boolean'],
+        ]);
+
         $reports = $exportService->exportAll(
             importBatch: $importBatch,
             generatedByUserId: $request->user()?->id,
+            includeState: (bool) ($validated['include_state'] ?? false),
         );
         $auditLogger->log('reports.generated', $request, $importBatch, $importBatch, [
             'report_ids' => collect($reports)->pluck('id')->all(),

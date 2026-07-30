@@ -93,6 +93,7 @@ function ActionIcon({ name }) {
     download: ['M12 4v10', 'M8 10l4 4 4-4', 'M5 20h14'],
     edit: ['M5 19l4-1 9-9-3-3-9 9-1 4z', 'M14 6l3 3'],
     export: ['M6 4h9l3 3v13H6z', 'M14 4v4h4', 'M12 11v6', 'M9 14l3 3 3-3'],
+    info: ['M12 22a10 10 0 110-20 10 10 0 010 20z', 'M12 16v-4', 'M12 8h.01'],
     login: ['M14 6h4v12h-4', 'M10 8l4 4-4 4', 'M4 12h10'],
     logout: ['M10 6H6v12h4', 'M14 8l4 4-4 4', 'M8 12h10'],
     refresh: ['M17 3v5h-5', 'M7 21v-5h5', 'M17 8a7 7 0 00-12 3', 'M7 16a7 7 0 0012-3'],
@@ -3406,6 +3407,7 @@ function ExportsScreen({ batchId, batches, batchesLoading, setBatchId, showNotic
   const [reports, setReports] = useState([]);
   const [generating, setGenerating] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [includeState, setIncludeState] = useState(false);
   const canLoad = Boolean(batchId);
 
   const loadReports = useCallback(async ({ showLoading = false } = {}) => {
@@ -3437,7 +3439,9 @@ function ExportsScreen({ batchId, batches, batchesLoading, setBatchId, showNotic
     setGenerating(true);
 
     try {
-      const response = await axios.post(`/api/import-batches/${batchId}/generated-reports`);
+      const response = await axios.post(`/api/import-batches/${batchId}/generated-reports`, {
+        include_state: includeState,
+      });
       setReports(response.data.data ?? []);
       showNotice('success', 'Report export finished.');
     } catch (error) {
@@ -3462,6 +3466,25 @@ function ExportsScreen({ batchId, batches, batchesLoading, setBatchId, showNotic
             <h2>Generated Excel Reports</h2>
           </div>
           <div className="button-row">
+            <div className="exports-include-state">
+              <label className="checkbox-label">
+                <input
+                  checked={includeState}
+                  disabled={generating || refreshing}
+                  type="checkbox"
+                  onChange={(event) => setIncludeState(event.target.checked)}
+                />
+                Include State
+              </label>
+              <button
+                aria-label="Click Generate Reports after changing this to update the downloadable file."
+                className="exports-include-state-info"
+                data-tooltip="Click Generate Reports after changing this to update the downloadable file."
+                type="button"
+              >
+                <ActionIcon name="info" />
+              </button>
+            </div>
             <button
               className="secondary-button"
               disabled={!canLoad || refreshing || generating}

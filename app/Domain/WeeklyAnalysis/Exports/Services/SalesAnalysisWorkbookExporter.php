@@ -66,8 +66,11 @@ class SalesAnalysisWorkbookExporter
     ) {
     }
 
-    public function export(ImportBatch $importBatch, ?int $generatedByUserId = null): GeneratedReport
-    {
+    public function export(
+        ImportBatch $importBatch,
+        ?int $generatedByUserId = null,
+        bool $includeState = false,
+    ): GeneratedReport {
         $spreadsheet = new Spreadsheet();
         $spreadsheet->getProperties()
             ->setCreator(config('app.name'))
@@ -75,7 +78,11 @@ class SalesAnalysisWorkbookExporter
 
         $this->writeOrganizedBucketSheet($spreadsheet->getActiveSheet(), $importBatch, 'RHP', 'rhp');
         $this->writeOrganizedBucketSheet($spreadsheet->createSheet(), $importBatch, 'Parts & TSD', 'parts_tsd');
-        $this->writeStateSheet($spreadsheet->createSheet(), $importBatch, 'State');
+
+        if ($includeState) {
+            $this->writeStateSheet($spreadsheet->createSheet(), $importBatch, 'State');
+        }
+
         $this->writeSourceSheet($spreadsheet->createSheet(), $importBatch, 'Sheet');
 
         return $this->recorder->save(
@@ -86,13 +93,15 @@ class SalesAnalysisWorkbookExporter
             summary: [
                 'rhp_rows' => $this->rowCount($importBatch, 'rhp'),
                 'parts_tsd_rows' => $this->rowCount($importBatch, 'parts_tsd'),
-                'state_rows' => SalesRow::query()
-                    ->where('import_batch_id', $importBatch->id)
-                    ->where(function ($query): void {
-                        $query->where('source_bucket', 'state')
-                            ->orWhereHas('statePlacement');
-                    })
-                    ->count(),
+                'state_rows' => $includeState
+                    ? SalesRow::query()
+                        ->where('import_batch_id', $importBatch->id)
+                        ->where(function ($query): void {
+                            $query->where('source_bucket', 'state')
+                                ->orWhereHas('statePlacement');
+                        })
+                        ->count()
+                    : 0,
                 'raw_rows' => $this->rowCount($importBatch, 'raw'),
                 'source_sheet_rows' => $this->sourceSheetRowCount($importBatch),
             ],

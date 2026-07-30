@@ -233,4 +233,77 @@ class SalesAnalysisWorkbookExporterTest extends TestCase
         $this->assertSame('674-00004-001', $sheet->getCell('A3')->getCalculatedValue());
         $this->assertSame('THERMAL, CAMERA, TC8650', $sheet->getCell('B3')->getCalculatedValue());
     }
+
+    public function test_state_sheet_is_omitted_by_default(): void
+    {
+        $user = User::query()->create([
+            'first_name' => 'Ana',
+            'last_name' => 'Lyst',
+            'email' => 'analyst-no-state@example.com',
+            'password' => 'password',
+            'role' => 'analyst',
+        ]);
+
+        $batch = ImportBatch::query()->create([
+            'week_start' => '2026-02-01',
+            'week_ending' => '2026-02-07',
+            'status' => 'draft',
+            'created_by_user_id' => $user->id,
+            'source_system' => 'Traverse Global',
+        ]);
+
+        SalesRow::query()->create([
+            'import_batch_id' => $batch->id,
+            'source_sheet' => 'Sheet',
+            'source_row_number' => 2,
+            'source_bucket' => 'state',
+            'item_id' => 'STATE-001',
+            'quantity_ordered' => 1,
+            'amount' => 50,
+            'classification_status' => 'matched',
+        ]);
+
+        $report = app(SalesAnalysisWorkbookExporter::class)->export($batch, $user->id);
+        $spreadsheet = IOFactory::load(storage_path('app/private/'.$report->storage_path));
+
+        $this->assertSame(['RHP', 'Parts & TSD', 'Sheet'], $spreadsheet->getSheetNames());
+        $this->assertSame(0, $report->summary['state_rows'] ?? null);
+    }
+
+    public function test_state_sheet_is_included_when_requested(): void
+    {
+        $user = User::query()->create([
+            'first_name' => 'Ana',
+            'last_name' => 'Lyst',
+            'email' => 'analyst-with-state@example.com',
+            'password' => 'password',
+            'role' => 'analyst',
+        ]);
+
+        $batch = ImportBatch::query()->create([
+            'week_start' => '2026-02-01',
+            'week_ending' => '2026-02-07',
+            'status' => 'draft',
+            'created_by_user_id' => $user->id,
+            'source_system' => 'Traverse Global',
+        ]);
+
+        SalesRow::query()->create([
+            'import_batch_id' => $batch->id,
+            'source_sheet' => 'Sheet',
+            'source_row_number' => 2,
+            'source_bucket' => 'state',
+            'item_id' => 'STATE-001',
+            'quantity_ordered' => 1,
+            'amount' => 50,
+            'classification_status' => 'matched',
+        ]);
+
+        $report = app(SalesAnalysisWorkbookExporter::class)->export($batch, $user->id, true);
+        $spreadsheet = IOFactory::load(storage_path('app/private/'.$report->storage_path));
+
+        $this->assertSame(['RHP', 'Parts & TSD', 'State', 'Sheet'], $spreadsheet->getSheetNames());
+        $this->assertSame(1, $report->summary['state_rows'] ?? null);
+        $this->assertSame('STATE-001', $spreadsheet->getSheetByName('State')->getCell('A2')->getCalculatedValue());
+    }
 }

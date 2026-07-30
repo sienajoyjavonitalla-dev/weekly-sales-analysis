@@ -20,12 +20,15 @@ class WeeklyReportExportService
     /**
      * @return array<int, GeneratedReport>
      */
-    public function exportAll(ImportBatch $importBatch, ?int $generatedByUserId = null): array
-    {
+    public function exportAll(
+        ImportBatch $importBatch,
+        ?int $generatedByUserId = null,
+        bool $includeState = false,
+    ): array {
         $this->reconciliationService->reconcile($importBatch);
 
         return [
-            $this->salesAnalysisExporter->export($importBatch->refresh(), $generatedByUserId),
+            $this->salesAnalysisExporter->export($importBatch->refresh(), $generatedByUserId, $includeState),
             $this->attemptTemplateExport($importBatch->refresh(), 'total_sales_report', $generatedByUserId),
             $this->attemptTemplateExport($importBatch->refresh(), 'weekly_meter_report', $generatedByUserId),
         ];
