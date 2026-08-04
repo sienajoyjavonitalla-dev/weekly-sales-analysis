@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ReconciliationController;
 use App\Http\Controllers\Api\ReportTotalController;
 use App\Http\Controllers\Api\UnmatchedSalesRowController;
 use App\Http\Controllers\Api\UploadedFileController;
+use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\WorkbookImportController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +32,10 @@ Route::middleware(['web', 'auth', 'throttle:60,1'])->group(function (): void {
     Route::post('/me/profile-photo', [AuthController::class, 'updateProfilePhoto']);
     Route::patch('/me/password', [AuthController::class, 'updatePassword']);
     Route::post('/workbook-imports', WorkbookImportController::class);
+
+    Route::get('/users', [UserController::class, 'index']);
+    Route::post('/users', [UserController::class, 'store']);
+    Route::patch('/users/{user}', [UserController::class, 'update']);
 
     Route::apiResource('product-categories', ProductCategoryController::class)
         ->parameters(['product-categories' => 'productCategory'])

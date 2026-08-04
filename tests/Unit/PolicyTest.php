@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Policies\GeneratedReportPolicy;
 use App\Policies\ImportBatchPolicy;
 use App\Policies\MappingRulePolicy;
+use App\Policies\UserPolicy;
 use PHPUnit\Framework\TestCase;
 
 class PolicyTest extends TestCase
@@ -55,5 +56,27 @@ class PolicyTest extends TestCase
 
         $this->assertTrue($policy->download($analyst, new GeneratedReport(['status' => 'completed'])));
         $this->assertFalse($policy->download($analyst, new GeneratedReport(['status' => 'failed'])));
+    }
+
+    public function test_admin_can_manage_users(): void
+    {
+        $policy = new UserPolicy();
+        $admin = new User(['role' => 'admin']);
+        $model = new User(['role' => 'analyst']);
+
+        $this->assertTrue($policy->viewAny($admin));
+        $this->assertTrue($policy->create($admin));
+        $this->assertTrue($policy->update($admin, $model));
+    }
+
+    public function test_analyst_cannot_manage_users(): void
+    {
+        $policy = new UserPolicy();
+        $analyst = new User(['role' => 'analyst']);
+        $model = new User(['role' => 'analyst']);
+
+        $this->assertFalse($policy->viewAny($analyst));
+        $this->assertFalse($policy->create($analyst));
+        $this->assertFalse($policy->update($analyst, $model));
     }
 }

@@ -89,6 +89,17 @@ function HowToUseIcon() {
   );
 }
 
+function UsersIcon() {
+  return (
+    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+      <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+      <path d="M9 11a4 4 0 100-8 4 4 0 000 8z" />
+      <path d="M22 21v-2a4 4 0 00-3-3.87" />
+      <path d="M16 3.13a4 4 0 010 7.75" />
+    </svg>
+  );
+}
+
 function ActionIcon({ name }) {
   const paths = {
     add: ['M12 5v14', 'M5 12h14'],
@@ -156,6 +167,11 @@ const workflowTabs = [
   { id: 'rules', label: 'Mapping Rules', icon: RulesIcon },
   { id: 'reconcile', label: 'Reconcile', icon: ReconcileIcon },
   { id: 'exports', label: 'Exports', icon: ExportIcon },
+];
+
+const userRoleOptions = [
+  { value: 'admin', label: 'Admin' },
+  { value: 'analyst', label: 'Analyst' },
 ];
 
 const workbookTypes = [
@@ -266,6 +282,12 @@ function App() {
   }, [showNotice]);
 
   const batchesWithUploads = useMemo(() => batches.filter(batchHasUploads), [batches]);
+
+  useEffect(() => {
+    if (user && user.role !== 'admin' && activeTab === 'users') {
+      setActiveTab('upload');
+    }
+  }, [user, activeTab]);
 
   useEffect(() => {
     axios
@@ -425,6 +447,21 @@ function App() {
                   <SettingsPopup selectedTheme={user.theme ?? 'dark'} onThemeChange={handleThemeChange} />
                 ) : null}
               </div>
+              {user?.role === 'admin' ? (
+                <button
+                  className={activeTab === 'users' ? 'sidebar-link sidebar-link-active' : 'sidebar-link'}
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('users');
+                    setIsSettingsOpen(false);
+                  }}
+                >
+                  <span className="sidebar-link-icon" aria-hidden="true">
+                    <UsersIcon />
+                  </span>
+                  <span className="sidebar-link-label">Users</span>
+                </button>
+              ) : null}
             </div>
             <div className="sidebar-nav-footer">
               <button
@@ -457,6 +494,7 @@ function App() {
           ) : null}
           {activeTab === 'rules' ? <MappingRulesScreen showNotice={showNotice} /> : null}
           {activeTab === 'categories' ? <CategoriesScreen showNotice={showNotice} /> : null}
+          {activeTab === 'users' ? <UsersScreen currentUser={user} showNotice={showNotice} /> : null}
           {activeTab === 'reconcile' ? (
             <ReconciliationScreen
               batchId={batchId}
@@ -2568,6 +2606,406 @@ function UnmatchedItemsModal({
       />
     ) : null}
   </>
+  );
+}
+
+function UsersScreen({ currentUser, showNotice }) {
+  const emptyForm = {
+    first_name: '',
+    last_name: '',
+    email: '',
+    password: '',
+    role: 'analyst',
+    is_active: true,
+  };
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [editForm, setEditForm] = useState(emptyForm);
+  const [createForm, setCreateForm] = useState(emptyForm);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('active');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredUsers = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    return users.filter((managedUser) => {
+      const matchesStatus =
+        statusFilter === 'all' || Boolean(managedUser.is_active) === (statusFilter === 'active');
+      const matchesRole = roleFilter === 'all' || managedUser.role === roleFilter;
+
+      if (!matchesStatus || !matchesRole) {
+        return false;
+      }
+
+      if (!normalizedQuery) {
+        return true;
+      }
+
+      return matchesListSearch(normalizedQuery, [
+        managedUser.name,
+        managedUser.first_name,
+        managedUser.last_name,
+        managedUser.email,
+        managedUser.role,
+      ]);
+    });
+  }, [users, searchQuery, statusFilter, roleFilter]);
+
+  const loadUsers = useCallback(async () => {
+    setLoading(true);
+
+    try {
+      const response = await axios.get('/api/users');
+      const nextUsers = response.data.data ?? [];
+
+      setUsers(nextUsers);
+      setSelectedUser((current) => {
+        if (!current) {
+          return null;
+        }
+
+        return nextUsers.find((managedUser) => managedUser.id === current.id) ?? null;
+      });
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to load users.'));
+    } finally {
+      setLoading(false);
+    }
+  }, [showNotice]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
+  useEffect(() => {
+    if (selectedUser) {
+      setEditForm(userToForm(selectedUser));
+    }
+  }, [selectedUser]);
+
+  useEffect(() => {
+    if (selectedUser && !filteredUsers.some((managedUser) => managedUser.id === selectedUser.id)) {
+      setSelectedUser(null);
+    }
+  }, [filteredUsers, selectedUser]);
+
+  function userPayload(form, { includePassword = true } = {}) {
+    const payload = {
+      first_name: form.first_name,
+      last_name: form.last_name,
+      email: form.email,
+      role: form.role,
+      is_active: Boolean(form.is_active),
+    };
+
+    if (includePassword && form.password) {
+      payload.password = form.password;
+    }
+
+    return payload;
+  }
+
+  async function submitCreateUser(event) {
+    event.preventDefault();
+    setCreating(true);
+
+    try {
+      const response = await axios.post('/api/users', userPayload(createForm, { includePassword: true }));
+
+      showNotice('success', 'User created.');
+      setCreateForm(emptyForm);
+      setIsCreateOpen(false);
+      await loadUsers();
+      setSelectedUser(response.data.data);
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to create user.'));
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function submitEditUser(event) {
+    event.preventDefault();
+
+    if (!selectedUser) {
+      return;
+    }
+
+    setEditing(true);
+
+    try {
+      const response = await axios.patch(
+        `/api/users/${selectedUser.id}`,
+        userPayload(editForm, { includePassword: Boolean(editForm.password) }),
+      );
+
+      showNotice('success', 'User updated.');
+      await loadUsers();
+      setSelectedUser(response.data.data);
+      setEditForm((current) => ({ ...current, password: '' }));
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to update user.'));
+    } finally {
+      setEditing(false);
+    }
+  }
+
+  const isEditingSelf = selectedUser && currentUser && selectedUser.id === currentUser.id;
+
+  return (
+    <section className="panel-grid">
+      <article className="panel panel-legend panel-transparent">
+        <p className="eyebrow">Users</p>
+        <div className="section-heading section-heading-toolbar">
+          <div className="button-row">
+            <ListSearchInput
+              placeholder="Search users..."
+              value={searchQuery}
+              onChange={setSearchQuery}
+            />
+            <label className="status-filter">
+              Role
+              <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}>
+                <option value="all">All</option>
+                {userRoleOptions.map((role) => (
+                  <option key={role.value} value={role.value}>
+                    {role.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="status-filter">
+              Status
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="all">All</option>
+              </select>
+            </label>
+          </div>
+          <button className="primary-button" type="button" onClick={() => setIsCreateOpen(true)}>
+            <ButtonContent icon="add">Create User</ButtonContent>
+          </button>
+        </div>
+        {loading ? (
+          <p>Loading users...</p>
+        ) : (
+          <UsersTable
+            roleFilter={roleFilter}
+            searchQuery={searchQuery}
+            selectedUser={selectedUser}
+            statusFilter={statusFilter}
+            users={filteredUsers}
+            onSelectUser={setSelectedUser}
+          />
+        )}
+      </article>
+
+      <article className="panel panel-legend">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Details</p>
+            <h2>{selectedUser ? 'Edit User' : 'Select a User'}</h2>
+          </div>
+        </div>
+
+        {selectedUser ? (
+          <UserForm
+            form={editForm}
+            isSelf={Boolean(isEditingSelf)}
+            isSubmitting={editing}
+            passwordRequired={false}
+            primaryLabel="Update User"
+            setForm={setEditForm}
+            onSubmit={submitEditUser}
+          />
+        ) : (
+          <div className="empty-state">
+            <strong>No user selected</strong>
+            <p>Click a user from the table on the left to view or edit them.</p>
+          </div>
+        )}
+      </article>
+
+      {isCreateOpen ? (
+        <Modal
+          isBusy={creating}
+          title="Create User"
+          onClose={() => {
+            if (!creating) {
+              setIsCreateOpen(false);
+            }
+          }}
+        >
+          <UserForm
+            form={createForm}
+            isSelf={false}
+            isSubmitting={creating}
+            passwordRequired
+            primaryLabel="Create User"
+            setForm={setCreateForm}
+            onSubmit={submitCreateUser}
+          />
+        </Modal>
+      ) : null}
+    </section>
+  );
+}
+
+function userToForm(managedUser) {
+  return {
+    first_name: managedUser.first_name ?? '',
+    last_name: managedUser.last_name ?? '',
+    email: managedUser.email ?? '',
+    password: '',
+    role: managedUser.role ?? 'analyst',
+    is_active: Boolean(managedUser.is_active),
+  };
+}
+
+function UserForm({
+  form,
+  isSelf = false,
+  isSubmitting = false,
+  passwordRequired = false,
+  primaryLabel,
+  setForm,
+  onSubmit,
+}) {
+  const submitLabel = isSubmitting
+    ? (primaryLabel.startsWith('Update') ? 'Updating...' : 'Creating...')
+    : primaryLabel;
+
+  return (
+    <form className="stacked-form" onSubmit={onSubmit}>
+      <fieldset className="form-fieldset" disabled={isSubmitting}>
+        <label>
+          First Name
+          <input
+            required
+            value={form.first_name}
+            onChange={(event) => setForm({ ...form, first_name: event.target.value })}
+          />
+        </label>
+        <label>
+          Last Name
+          <input
+            required
+            value={form.last_name}
+            onChange={(event) => setForm({ ...form, last_name: event.target.value })}
+          />
+        </label>
+        <label>
+          Email
+          <input
+            required
+            type="email"
+            value={form.email}
+            onChange={(event) => setForm({ ...form, email: event.target.value })}
+          />
+        </label>
+        <label>
+          Role
+          <select
+            disabled={isSelf}
+            required
+            value={form.role}
+            onChange={(event) => setForm({ ...form, role: event.target.value })}
+          >
+            {userRoleOptions.map((role) => (
+              <option key={role.value} value={role.value}>
+                {role.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Password{passwordRequired ? '' : ' (leave blank to keep)'}
+          <input
+            autoComplete="new-password"
+            minLength={passwordRequired ? 8 : undefined}
+            required={passwordRequired}
+            type="password"
+            value={form.password}
+            onChange={(event) => setForm({ ...form, password: event.target.value })}
+          />
+        </label>
+        <label className="checkbox-label">
+          <input
+            checked={form.is_active}
+            disabled={isSelf}
+            type="checkbox"
+            onChange={(event) => setForm({ ...form, is_active: event.target.checked })}
+          />
+          Active
+        </label>
+        {isSelf ? (
+          <p className="form-hint">You cannot deactivate or demote your own account.</p>
+        ) : null}
+        <div className="form-actions">
+          <button className="primary-button" disabled={isSubmitting} type="submit">
+            <ButtonContent
+              icon={primaryLabel.startsWith('Update') ? 'save' : 'add'}
+              loading={isSubmitting}
+            >
+              {submitLabel}
+            </ButtonContent>
+          </button>
+        </div>
+      </fieldset>
+    </form>
+  );
+}
+
+function UsersTable({ users, selectedUser, statusFilter, roleFilter, searchQuery, onSelectUser }) {
+  const pagination = usePagination(users);
+
+  if (users.length === 0) {
+    if (searchQuery.trim()) {
+      return <p>No users match your search.</p>;
+    }
+
+    const statusLabel = statusFilter === 'all' ? '' : `${statusFilter} `;
+    const roleLabel = roleFilter === 'all' ? '' : `${roleFilter} `;
+
+    return <p>No {statusLabel}{roleLabel}users found.</p>;
+  }
+
+  return (
+    <>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pagination.paginatedItems.map((managedUser) => (
+              <tr
+                className={selectedUser?.id === managedUser.id ? 'clickable-row selected-row' : 'clickable-row'}
+                key={managedUser.id}
+                onClick={() => onSelectUser(managedUser)}
+              >
+                <td>{managedUser.name}</td>
+                <td>{managedUser.email}</td>
+                <td>{managedUser.role}</td>
+                <td>{managedUser.is_active ? 'Active' : 'Inactive'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <PaginationControls {...pagination} />
+    </>
   );
 }
 

@@ -31,10 +31,22 @@ class AuthController
             ]);
         }
 
+        $user = $request->user();
+
+        if (! $user?->is_active) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return response()->json([
+                'message' => 'This account is inactive. Contact an administrator.',
+            ], 403);
+        }
+
         $request->session()->regenerate();
 
         return response()->json([
-            'data' => $request->user(),
+            'data' => $user,
         ]);
     }
 
