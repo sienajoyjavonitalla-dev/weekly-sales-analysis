@@ -24,6 +24,18 @@ Artisan::command('db:fix-product-category-fks', function (): int {
         return self::FAILURE;
     }
 
+    $idColumnType = DB::table('information_schema.COLUMNS')
+        ->where('TABLE_SCHEMA', DB::getDatabaseName())
+        ->where('TABLE_NAME', 'product_categories')
+        ->where('COLUMN_NAME', 'id')
+        ->value('COLUMN_TYPE');
+
+    if (! is_string($idColumnType) || $idColumnType === '') {
+        $this->error('Unable to read product_categories.id column type.');
+
+        return self::FAILURE;
+    }
+
     $tables = ['mapping_rules', 'sales_rows'];
 
     if (Schema::hasTable('sales_row_state_placements')) {
@@ -47,6 +59,9 @@ Artisan::command('db:fix-product-category-fks', function (): int {
                 $blueprint->dropForeign(['product_category_id']);
             });
         }
+
+        DB::statement("ALTER TABLE `{$table}` MODIFY `product_category_id` {$idColumnType} NULL");
+        $this->line("{$table}: aligned product_category_id to {$idColumnType}");
 
         Schema::table($table, function (Blueprint $blueprint): void {
             $blueprint->foreign('product_category_id')

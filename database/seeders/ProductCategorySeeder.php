@@ -109,6 +109,16 @@ class ProductCategorySeeder extends Seeder
             return;
         }
 
+        $idColumnType = DB::table('information_schema.COLUMNS')
+            ->where('TABLE_SCHEMA', DB::getDatabaseName())
+            ->where('TABLE_NAME', 'product_categories')
+            ->where('COLUMN_NAME', 'id')
+            ->value('COLUMN_TYPE');
+
+        if (! is_string($idColumnType) || $idColumnType === '') {
+            return;
+        }
+
         $tables = ['mapping_rules', 'sales_rows'];
 
         if (Schema::hasTable('sales_row_state_placements')) {
@@ -140,6 +150,9 @@ class ProductCategorySeeder extends Seeder
                     $blueprint->dropForeign(['product_category_id']);
                 });
             }
+
+            // MySQL requires identical types for FK columns (error 3780).
+            DB::statement("ALTER TABLE `{$table}` MODIFY `product_category_id` {$idColumnType} NULL");
 
             Schema::table($table, function (Blueprint $blueprint): void {
                 $blueprint->foreign('product_category_id')
