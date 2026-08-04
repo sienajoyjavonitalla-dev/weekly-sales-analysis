@@ -36,6 +36,18 @@ Artisan::command('db:fix-product-category-fks', function (): int {
         return self::FAILURE;
     }
 
+    $hasUniqueId = DB::table('information_schema.STATISTICS')
+        ->where('TABLE_SCHEMA', DB::getDatabaseName())
+        ->where('TABLE_NAME', 'product_categories')
+        ->where('COLUMN_NAME', 'id')
+        ->where('NON_UNIQUE', 0)
+        ->exists();
+
+    if (! $hasUniqueId) {
+        $this->warn('product_categories: adding PRIMARY KEY on id');
+        DB::statement('ALTER TABLE `product_categories` ADD PRIMARY KEY (`id`)');
+    }
+
     $tables = ['mapping_rules', 'sales_rows'];
 
     if (Schema::hasTable('sales_row_state_placements')) {

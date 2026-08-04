@@ -109,8 +109,10 @@ class ProductCategorySeeder extends Seeder
             return;
         }
 
+        $database = DB::getDatabaseName();
+
         $idColumnType = DB::table('information_schema.COLUMNS')
-            ->where('TABLE_SCHEMA', DB::getDatabaseName())
+            ->where('TABLE_SCHEMA', $database)
             ->where('TABLE_NAME', 'product_categories')
             ->where('COLUMN_NAME', 'id')
             ->value('COLUMN_TYPE');
@@ -119,13 +121,13 @@ class ProductCategorySeeder extends Seeder
             return;
         }
 
+        $this->ensureProductCategoriesIdIsUnique($database);
+
         $tables = ['mapping_rules', 'sales_rows'];
 
         if (Schema::hasTable('sales_row_state_placements')) {
             $tables[] = 'sales_row_state_placements';
         }
-
-        $database = DB::getDatabaseName();
 
         foreach ($tables as $table) {
             if (! Schema::hasTable($table)) {
@@ -161,6 +163,24 @@ class ProductCategorySeeder extends Seeder
                     ->nullOnDelete();
             });
         }
+    }
+
+    private function ensureProductCategoriesIdIsUnique(string $database): void
+    {
+        $hasUniqueId = DB::table('information_schema.STATISTICS')
+            ->where('TABLE_SCHEMA', $database)
+            ->where('TABLE_NAME', 'product_categories')
+            ->where('COLUMN_NAME', 'id')
+            ->where('NON_UNIQUE', 0)
+            ->exists();
+
+        if ($hasUniqueId) {
+            return;
+        }
+
+        $this->command?->warn('product_categories: adding PRIMARY KEY on id (required for foreign keys)');
+
+        DB::statement('ALTER TABLE `product_categories` ADD PRIMARY KEY (`id`)');
     }
 
     /**
