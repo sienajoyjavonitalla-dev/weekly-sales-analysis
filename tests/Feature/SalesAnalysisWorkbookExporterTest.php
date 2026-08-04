@@ -169,9 +169,11 @@ class SalesAnalysisWorkbookExporterTest extends TestCase
         $this->assertSame('n/a', $sheet->getCell('J4')->getCalculatedValue());
         $this->assertTrue($sheet->getStyle('J4')->getFont()->getBold());
         $this->assertTrue($sheet->getStyle('K4')->getFont()->getBold());
+        $this->assertSame('FFFF00', strtoupper($sheet->getStyle('A4')->getFill()->getStartColor()->getRGB()));
         $this->assertSame(440.0, (float) $sheet->getCell('K4')->getCalculatedValue());
         $this->assertSame('n/a', $sheet->getCell('J8')->getCalculatedValue());
         $this->assertSame(1070.0, (float) $sheet->getCell('K8')->getCalculatedValue());
+        $this->assertSame('FFFF00', strtoupper($sheet->getStyle('A8')->getFill()->getStartColor()->getRGB()));
         $this->assertNull($sheet->getCell('A9')->getCalculatedValue());
         $this->assertSame('Floor Sentry', $sheet->getCell('A10')->getCalculatedValue());
         $this->assertTrue($sheet->getStyle('A10')->getFont()->getBold());

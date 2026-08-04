@@ -2,6 +2,7 @@
 
 namespace App\Domain\WeeklyAnalysis\Exports\Services;
 
+use App\Domain\WeeklyAnalysis\Classification\Services\SalesRowClassifier;
 use App\Domain\WeeklyAnalysis\Reconciliation\Services\WeeklyReconciliationService;
 use App\Models\GeneratedReport;
 use App\Models\ImportBatch;
@@ -10,6 +11,7 @@ use Throwable;
 class WeeklyReportExportService
 {
     public function __construct(
+        private readonly SalesRowClassifier $classifier,
         private readonly WeeklyReconciliationService $reconciliationService,
         private readonly SalesAnalysisWorkbookExporter $salesAnalysisExporter,
         private readonly TotalSalesReportExporter $totalSalesReportExporter,
@@ -25,7 +27,8 @@ class WeeklyReportExportService
         ?int $generatedByUserId = null,
         bool $includeState = false,
     ): array {
-        $this->reconciliationService->reconcile($importBatch);
+        $this->classifier->classifyBatch($importBatch);
+        $this->reconciliationService->reconcile($importBatch->refresh());
 
         return [
             $this->salesAnalysisExporter->export($importBatch->refresh(), $generatedByUserId, $includeState),

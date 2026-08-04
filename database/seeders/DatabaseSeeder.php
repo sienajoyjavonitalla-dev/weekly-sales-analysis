@@ -10,11 +10,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             UserSeeder::class,
-            RhpProductCategorySeeder::class,
-            PartsTsdProductCategorySeeder::class,
-            RhpMappingRuleSeeder::class,
-            PartsTsdMappingRuleSeeder::class,
-            StateMappingRuleSeeder::class,
+            ProductCategorySeeder::class,
+            MappingRuleSeeder::class,
         ]);
     }
 }

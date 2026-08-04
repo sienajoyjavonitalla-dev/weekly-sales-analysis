@@ -1,0 +1,4099 @@
+[
+    {
+        "name": "pack_5_rapid_rh_l6_smart_sensor → 880-R0000-009",
+        "category_code": "pack_5_rapid_rh_l6_smart_sensor",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0000-009",
+        "target_bucket": "rhp",
+        "priority": 26,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "pack_5_rapid_rh_l6_smart_sensor",
+            "unique_identifier": "880-R0000-009"
+        }
+    },
+    {
+        "name": "floor_sentry → 890-00080-001",
+        "category_code": "floor_sentry",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "890-00080-001",
+        "target_bucket": "rhp",
+        "priority": 27,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "floor_sentry",
+            "unique_identifier": "890-00080-001"
+        }
+    },
+    {
+        "name": "kit_upgrade → 880-R0040-012",
+        "category_code": "kit_upgrade",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0040-012",
+        "target_bucket": "rhp",
+        "priority": 28,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "kit_upgrade",
+            "unique_identifier": "880-R0040-012"
+        }
+    },
+    {
+        "name": "pack_5_rapid_rh_l6_smart_sensor_reader → 880-R0001-011",
+        "category_code": "pack_5_rapid_rh_l6_smart_sensor_reader",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0001-011",
+        "target_bucket": "rhp",
+        "priority": 29,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "pack_5_rapid_rh_l6_smart_sensor_reader",
+            "unique_identifier": "880-R0001-011"
+        }
+    },
+    {
+        "name": "pack_5_rapid_rh_l6_smart_sensor_reader → 880-R0001-012",
+        "category_code": "pack_5_rapid_rh_l6_smart_sensor_reader",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-R0001-012",
+        "target_bucket": "rhp",
+        "priority": 30,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "pack_5_rapid_rh_l6_smart_sensor_reader",
+            "unique_identifier": "880-R0001-012"
+        }
+    },
+    {
+        "name": "kit_rapid_rh_l6_starter_kit_plus_fahrenheit → 880-R0002-012",
+        "category_code": "kit_rapid_rh_l6_starter_kit_plus_fahrenheit",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0002-012",
+        "target_bucket": "rhp",
+        "priority": 31,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "kit_rapid_rh_l6_starter_kit_plus_fahrenheit",
+            "unique_identifier": "880-R0002-012"
+        }
+    },
+    {
+        "name": "value_pack_25pc_rhp_l6_smart_sensor → 880-R0040-011",
+        "category_code": "value_pack_25pc_rhp_l6_smart_sensor",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0040-011",
+        "target_bucket": "rhp",
+        "priority": 32,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "value_pack_25pc_rhp_l6_smart_sensor",
+            "unique_identifier": "880-R0040-011"
+        }
+    },
+    {
+        "name": "value_pack_50pc_rhp_l6_smart_sensor → 880-R0050-011",
+        "category_code": "value_pack_50pc_rhp_l6_smart_sensor",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0050-011",
+        "target_bucket": "rhp",
+        "priority": 33,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "value_pack_50pc_rhp_l6_smart_sensor",
+            "unique_identifier": "880-R0050-011"
+        }
+    },
+    {
+        "name": "super_value_pack_rapid_rh_l6_smart_sensor → 880-R0100-011",
+        "category_code": "super_value_pack_rapid_rh_l6_smart_sensor",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0100-011",
+        "target_bucket": "rhp",
+        "priority": 34,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "super_value_pack_rapid_rh_l6_smart_sensor",
+            "unique_identifier": "880-R0100-011"
+        }
+    },
+    {
+        "name": "wfp400_rapid_rh_l6_professional_flooring_installer_kit → 880-R0WFP-402",
+        "category_code": "wfp400_rapid_rh_l6_professional_flooring_installer_kit",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0WFP-402",
+        "target_bucket": "rhp",
+        "priority": 35,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "wfp400_rapid_rh_l6_professional_flooring_installer_kit",
+            "unique_identifier": "880-R0WFP-402"
+        }
+    },
+    {
+        "name": "wfp450_rrh_l6_pro_floor_installer_kit_dg_w_bt → 880-R0WFP-451",
+        "category_code": "wfp450_rrh_l6_pro_floor_installer_kit_dg_w_bt",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-R0WFP-451",
+        "target_bucket": "rhp",
+        "priority": 36,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "wfp450_rrh_l6_pro_floor_installer_kit_dg_w_bt",
+            "unique_identifier": "880-R0WFP-451"
+        }
+    },
+    {
+        "name": "top_assy_orion_c555_concrete_kit_tested → 890-00555-001",
+        "category_code": "top_assy_orion_c555_concrete_kit_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "890-00555-001",
+        "target_bucket": "rhp",
+        "priority": 38,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "top_assy_orion_c555_concrete_kit_tested",
+            "unique_identifier": "890-00555-001"
+        }
+    },
+    {
+        "name": "top_assy_orion_910_kit_tested → 890-00910-001",
+        "category_code": "top_assy_orion_910_kit_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "890-00910-001",
+        "target_bucket": "rhp",
+        "priority": 39,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "top_assy_orion_910_kit_tested",
+            "unique_identifier": "890-00910-001"
+        }
+    },
+    {
+        "name": "top_assy_orion_910_kit_tested → 890-00910-002",
+        "category_code": "top_assy_orion_910_kit_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-00910-002",
+        "target_bucket": "rhp",
+        "priority": 40,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "top_assy_orion_910_kit_tested",
+            "unique_identifier": "890-00910-002"
+        }
+    },
+    {
+        "name": "top_assy_orion_920_kit_tested → 890-00920-001",
+        "category_code": "top_assy_orion_920_kit_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "890-00920-001",
+        "target_bucket": "rhp",
+        "priority": 41,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "top_assy_orion_920_kit_tested",
+            "unique_identifier": "890-00920-001"
+        }
+    },
+    {
+        "name": "top_assy_orion_930_kit_tested → 890-00930-001",
+        "category_code": "top_assy_orion_930_kit_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "890-00930-001",
+        "target_bucket": "rhp",
+        "priority": 42,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "top_assy_orion_930_kit_tested",
+            "unique_identifier": "890-00930-001"
+        }
+    },
+    {
+        "name": "top_assy_orion_930_kit_tested → 890-00930-002",
+        "category_code": "top_assy_orion_930_kit_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-00930-002",
+        "target_bucket": "rhp",
+        "priority": 43,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "top_assy_orion_930_kit_tested",
+            "unique_identifier": "890-00930-002"
+        }
+    },
+    {
+        "name": "top_assy_orion_940_kit_tested → 890-00940-001",
+        "category_code": "top_assy_orion_940_kit_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "890-00940-001",
+        "target_bucket": "rhp",
+        "priority": 44,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "top_assy_orion_940_kit_tested",
+            "unique_identifier": "890-00940-001"
+        }
+    },
+    {
+        "name": "top_assy_orion_950_kit_tested → 890-00950-001",
+        "category_code": "top_assy_orion_950_kit_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "890-00950-001",
+        "target_bucket": "rhp",
+        "priority": 45,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "top_assy_orion_950_kit_tested",
+            "unique_identifier": "890-00950-001"
+        }
+    },
+    {
+        "name": "top_assy_orion_950_kit_tested → 890-00950-002",
+        "category_code": "top_assy_orion_950_kit_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-00950-002",
+        "target_bucket": "rhp",
+        "priority": 46,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "top_assy_orion_950_kit_tested",
+            "unique_identifier": "890-00950-002"
+        }
+    },
+    {
+        "name": "meter_reach_extender → 880-90001-001",
+        "category_code": "meter_reach_extender",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-90001-001",
+        "target_bucket": "rhp",
+        "priority": 47,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "meter_reach_extender",
+            "unique_identifier": "880-90001-001"
+        }
+    },
+    {
+        "name": "top_assy_l5300 → 890-05300-001",
+        "category_code": "top_assy_l5300",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-05300-001",
+        "target_bucket": "rhp",
+        "priority": 48,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "top_assy_l5300",
+            "unique_identifier": "890-05300-001"
+        }
+    },
+    {
+        "name": "kit_l5300_l722_stack_probe → 880-53722-001",
+        "category_code": "kit_l5300_l722_stack_probe",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-53722-001",
+        "target_bucket": "rhp",
+        "priority": 49,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "kit_l5300_l722_stack_probe",
+            "unique_identifier": "880-53722-001"
+        }
+    },
+    {
+        "name": "rhp_miscellaneous → 880-R4100-005",
+        "category_code": "rhp_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R4100-005",
+        "target_bucket": "rhp",
+        "priority": 10,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "rhp_miscellaneous",
+            "unique_identifier": "880-R4100-005"
+        }
+    },
+    {
+        "name": "rhp_miscellaneous → 880-R4100-020",
+        "category_code": "rhp_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R4100-020",
+        "target_bucket": "rhp",
+        "priority": 11,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "rhp_miscellaneous",
+            "unique_identifier": "880-R4100-020"
+        }
+    },
+    {
+        "name": "rhp_miscellaneous → 674-R4100-002",
+        "category_code": "rhp_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "674-R4100-002",
+        "target_bucket": "rhp",
+        "priority": 12,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "rhp_miscellaneous",
+            "unique_identifier": "674-R4100-002"
+        }
+    },
+    {
+        "name": "rhp_miscellaneous → 880-R0041-001",
+        "category_code": "rhp_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0041-001",
+        "target_bucket": "rhp",
+        "priority": 13,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "rhp_miscellaneous",
+            "unique_identifier": "880-R0041-001"
+        }
+    },
+    {
+        "name": "rhp_miscellaneous → 712-R0015-002",
+        "category_code": "rhp_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "712-R0015-002",
+        "target_bucket": "rhp",
+        "priority": 14,
+        "is_active": false,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "rhp_miscellaneous",
+            "unique_identifier": "712-R0015-002"
+        }
+    },
+    {
+        "name": "rhp_miscellaneous → 712-R0025-003",
+        "category_code": "rhp_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "712-R0025-003",
+        "target_bucket": "rhp",
+        "priority": 15,
+        "is_active": false,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "rhp_miscellaneous",
+            "unique_identifier": "712-R0025-003"
+        }
+    },
+    {
+        "name": "rhp_miscellaneous → 712-RRP01-001",
+        "category_code": "rhp_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "712-RRP01-001",
+        "target_bucket": "rhp",
+        "priority": 16,
+        "is_active": false,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "rhp_miscellaneous",
+            "unique_identifier": "712-RRP01-001"
+        }
+    },
+    {
+        "name": "rhp_miscellaneous → 714-R0000-001",
+        "category_code": "rhp_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "714-R0000-001",
+        "target_bucket": "rhp",
+        "priority": 17,
+        "is_active": false,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "rhp_miscellaneous",
+            "unique_identifier": "714-R0000-001"
+        }
+    },
+    {
+        "name": "rhp_miscellaneous → 714-R0005-001",
+        "category_code": "rhp_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "714-R0005-001",
+        "target_bucket": "rhp",
+        "priority": 18,
+        "is_active": false,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "rhp_miscellaneous",
+            "unique_identifier": "714-R0005-001"
+        }
+    },
+    {
+        "name": "rhp_miscellaneous → 860-R0040-003",
+        "category_code": "rhp_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "860-R0040-003",
+        "target_bucket": "rhp",
+        "priority": 19,
+        "is_active": false,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "rhp_miscellaneous",
+            "unique_identifier": "860-R0040-003"
+        }
+    },
+    {
+        "name": "rhp_miscellaneous → 880-R0005-001",
+        "category_code": "rhp_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0005-001",
+        "target_bucket": "rhp",
+        "priority": 20,
+        "is_active": false,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "rhp_miscellaneous",
+            "unique_identifier": "880-R0005-001"
+        }
+    },
+    {
+        "name": "rhp_miscellaneous → 880-R0025-001",
+        "category_code": "rhp_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0025-001",
+        "target_bucket": "rhp",
+        "priority": 21,
+        "is_active": false,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "rhp_miscellaneous",
+            "unique_identifier": "880-R0025-001"
+        }
+    },
+    {
+        "name": "no category → 880-R4100-005",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R4100-005",
+        "target_bucket": "state",
+        "priority": 13,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-R4100-005"
+        }
+    },
+    {
+        "name": "no category → 880-R4100-020",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R4100-020",
+        "target_bucket": "state",
+        "priority": 34,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-R4100-020"
+        }
+    },
+    {
+        "name": "no category → 674-R4100-002",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "674-R4100-002",
+        "target_bucket": "state",
+        "priority": 39,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "674-R4100-002"
+        }
+    },
+    {
+        "name": "no category → 880-R0041-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0041-001",
+        "target_bucket": "state",
+        "priority": 30,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-R0041-001"
+        }
+    },
+    {
+        "name": "no category → 712-R0015-002",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "712-R0015-002",
+        "target_bucket": "parts_tsd",
+        "priority": 205,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": null,
+            "unique_identifier": "712-R0015-002"
+        }
+    },
+    {
+        "name": "no category → 712-R0025-003",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "712-R0025-003",
+        "target_bucket": "parts_tsd",
+        "priority": 207,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": null,
+            "unique_identifier": "712-R0025-003"
+        }
+    },
+    {
+        "name": "no category → 712-RRP01-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "712-RRP01-001",
+        "target_bucket": "parts_tsd",
+        "priority": 210,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": null,
+            "unique_identifier": "712-RRP01-001"
+        }
+    },
+    {
+        "name": "no category → 714-R0000-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "714-R0000-001",
+        "target_bucket": "rhp",
+        "priority": 17,
+        "is_active": false,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": null,
+            "unique_identifier": "714-R0000-001"
+        }
+    },
+    {
+        "name": "no category → 714-R0005-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "714-R0005-001",
+        "target_bucket": "parts_tsd",
+        "priority": 212,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": null,
+            "unique_identifier": "714-R0005-001"
+        }
+    },
+    {
+        "name": "no category → 860-R0040-003",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "860-R0040-003",
+        "target_bucket": "parts_tsd",
+        "priority": 214,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": null,
+            "unique_identifier": "860-R0040-003"
+        }
+    },
+    {
+        "name": "no category → 880-R0005-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0005-001",
+        "target_bucket": "rhp",
+        "priority": 20,
+        "is_active": false,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": null,
+            "unique_identifier": "880-R0005-001"
+        }
+    },
+    {
+        "name": "no category → 880-R0025-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0025-001",
+        "target_bucket": "parts_tsd",
+        "priority": 215,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": null,
+            "unique_identifier": "880-R0025-001"
+        }
+    },
+    {
+        "name": "no category → 890-21870-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-21870-001",
+        "target_bucket": "parts_tsd",
+        "priority": 80,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "unique_identifier": "890-21870-001"
+        }
+    },
+    {
+        "name": "no category → 890-82570-002",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-82570-002",
+        "target_bucket": "parts_tsd",
+        "priority": 80,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "unique_identifier": "890-82570-002"
+        }
+    },
+    {
+        "name": "no category → 880-82507-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-82507-001",
+        "target_bucket": "parts_tsd",
+        "priority": 102,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": null,
+            "unique_identifier": "880-82507-001"
+        }
+    },
+    {
+        "name": "no category → 880-60075-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-60075-001",
+        "target_bucket": "parts_tsd",
+        "priority": 103,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": null,
+            "unique_identifier": "880-60075-001"
+        }
+    },
+    {
+        "name": "misc_on_total_sales_report → 674-00004-001",
+        "category_code": "misc_on_total_sales_report",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "674-00004-001",
+        "target_bucket": "parts_tsd",
+        "priority": 103,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "misc_on_total_sales_report",
+            "unique_identifier": "674-00004-001"
+        }
+    },
+    {
+        "name": "misc_on_total_sales_report → 674-00004-002",
+        "category_code": "misc_on_total_sales_report",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "674-00004-002",
+        "target_bucket": "parts_tsd",
+        "priority": 104,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "misc_on_total_sales_report",
+            "unique_identifier": "674-00004-002"
+        }
+    },
+    {
+        "name": "misc_on_total_sales_report → 674-04196-003",
+        "category_code": "misc_on_total_sales_report",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "674-04196-003",
+        "target_bucket": "parts_tsd",
+        "priority": 105,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "misc_on_total_sales_report",
+            "unique_identifier": "674-04196-003"
+        }
+    },
+    {
+        "name": "tsd_parts → 648-00902-030",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "648-00902-030",
+        "target_bucket": "parts_tsd",
+        "priority": 107,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "648-00902-030"
+        }
+    },
+    {
+        "name": "tsd_parts → 668-01620-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "668-01620-001",
+        "target_bucket": "parts_tsd",
+        "priority": 108,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "668-01620-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 674-82505-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "674-82505-001",
+        "target_bucket": "parts_tsd",
+        "priority": 109,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "674-82505-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 681-01380-010",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "681-01380-010",
+        "target_bucket": "parts_tsd",
+        "priority": 110,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "681-01380-010"
+        }
+    },
+    {
+        "name": "tsd_parts → 712-71201-002",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-71201-002",
+        "target_bucket": "parts_tsd",
+        "priority": 111,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "712-71201-002"
+        }
+    },
+    {
+        "name": "tsd_parts → 712-71202-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-71202-001",
+        "target_bucket": "parts_tsd",
+        "priority": 109,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "712-71202-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 712-72205-002",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-72205-002",
+        "target_bucket": "parts_tsd",
+        "priority": 113,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "712-72205-002"
+        }
+    },
+    {
+        "name": "tsd_parts → 720-01482-165",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "720-01482-165",
+        "target_bucket": "parts_tsd",
+        "priority": 114,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "720-01482-165"
+        }
+    },
+    {
+        "name": "tsd_parts → 809-00825-003",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "809-00825-003",
+        "target_bucket": "parts_tsd",
+        "priority": 115,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "809-00825-003"
+        }
+    },
+    {
+        "name": "tsd_parts → 810-01620-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "810-01620-001",
+        "target_bucket": "parts_tsd",
+        "priority": 114,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "810-01620-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 811-40002-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "811-40002-001",
+        "target_bucket": "parts_tsd",
+        "priority": 117,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "811-40002-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 830-60010-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "830-60010-001",
+        "target_bucket": "parts_tsd",
+        "priority": 118,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "830-60010-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 830-71202-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "830-71202-001",
+        "target_bucket": "parts_tsd",
+        "priority": 118,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "830-71202-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 830-82570-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "830-82570-001",
+        "target_bucket": "parts_tsd",
+        "priority": 120,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "830-82570-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 830-82575-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "830-82575-001",
+        "target_bucket": "parts_tsd",
+        "priority": 120,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "830-82575-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 840-82520-003",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "840-82520-003",
+        "target_bucket": "parts_tsd",
+        "priority": 122,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "840-82520-003"
+        }
+    },
+    {
+        "name": "tsd_parts → 860-72202-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "860-72202-001",
+        "target_bucket": "parts_tsd",
+        "priority": 124,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "860-72202-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 880-05300-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-05300-001",
+        "target_bucket": "parts_tsd",
+        "priority": 128,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "880-05300-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 880-60030-004",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-60030-004",
+        "target_bucket": "parts_tsd",
+        "priority": 129,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "880-60030-004"
+        }
+    },
+    {
+        "name": "tsd_parts → 880-60130-009",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-60130-009",
+        "target_bucket": "parts_tsd",
+        "priority": 126,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "880-60130-009"
+        }
+    },
+    {
+        "name": "tsd_parts → 880-72202-003",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-72202-003",
+        "target_bucket": "parts_tsd",
+        "priority": 127,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "880-72202-003"
+        }
+    },
+    {
+        "name": "tsd_repairs → 890-14670-REF",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-14670-REF",
+        "target_bucket": "parts_tsd",
+        "priority": 128,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "890-14670-REF"
+        }
+    },
+    {
+        "name": "tsd_repairs → FLD-SERVICE-001",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "FLD-SERVICE-001",
+        "target_bucket": "parts_tsd",
+        "priority": 129,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "FLD-SERVICE-001"
+        }
+    },
+    {
+        "name": "tsd_repairs → MISCELLANEOUS",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "MISCELLANEOUS",
+        "target_bucket": "parts_tsd",
+        "priority": 130,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "MISCELLANEOUS"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-00910-001",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-00910-001",
+        "target_bucket": "parts_tsd",
+        "priority": 136,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-00910-001"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-14670-001",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-14670-001",
+        "target_bucket": "parts_tsd",
+        "priority": 132,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-14670-001"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-21870-001",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-21870-001",
+        "target_bucket": "parts_tsd",
+        "priority": 137,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-21870-001"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-60130-001",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-60130-001",
+        "target_bucket": "parts_tsd",
+        "priority": 134,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-60130-001"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-62000-001",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-62000-001",
+        "target_bucket": "parts_tsd",
+        "priority": 135,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-62000-001"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-62200-001",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-62200-001",
+        "target_bucket": "parts_tsd",
+        "priority": 138,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-62200-001"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-72200-001",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-72200-001",
+        "target_bucket": "parts_tsd",
+        "priority": 140,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-72200-001"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-72200-002",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-72200-002",
+        "target_bucket": "parts_tsd",
+        "priority": 141,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-72200-002"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-72200-003",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-72200-003",
+        "target_bucket": "parts_tsd",
+        "priority": 142,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-72200-003"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-72200-004",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-72200-004",
+        "target_bucket": "parts_tsd",
+        "priority": 140,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-72200-004"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-CALIB-002",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-CALIB-002",
+        "target_bucket": "parts_tsd",
+        "priority": 144,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-CALIB-002"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-IL\/EVAL-001",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-IL\/EVAL-001",
+        "target_bucket": "parts_tsd",
+        "priority": 145,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-IL\/EVAL-001"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-IL\/EVAL-LBR",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-IL\/EVAL-LBR",
+        "target_bucket": "parts_tsd",
+        "priority": 143,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-IL\/EVAL-LBR"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-SUBMST-002",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-SUBMST-002",
+        "target_bucket": "parts_tsd",
+        "priority": 144,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-SUBMST-002"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-SUBMST-003",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-SUBMST-003",
+        "target_bucket": "parts_tsd",
+        "priority": 145,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-SUBMST-003"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-WR5300-MFG",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-WR5300-MFG",
+        "target_bucket": "parts_tsd",
+        "priority": 146,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-WR5300-MFG"
+        }
+    },
+    {
+        "name": "tsd_repairs → TSD-HANDL-001",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "TSD-HANDL-001",
+        "target_bucket": "parts_tsd",
+        "priority": 150,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "TSD-HANDL-001"
+        }
+    },
+    {
+        "name": "no category → 713-R0000-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "713-R0000-001",
+        "target_bucket": "parts_tsd",
+        "priority": 211,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": null,
+            "unique_identifier": "713-R0000-001"
+        }
+    },
+    {
+        "name": "no category → 712-R0025-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-R0025-001",
+        "target_bucket": "parts_tsd",
+        "priority": 206,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": null,
+            "unique_identifier": "712-R0025-001"
+        }
+    },
+    {
+        "name": "no category → 712-R0060-002",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-R0060-002",
+        "target_bucket": "state",
+        "priority": 15,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "712-R0060-002"
+        }
+    },
+    {
+        "name": "no category → 860-R0040-002",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "860-R0040-002",
+        "target_bucket": "state",
+        "priority": 17,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "860-R0040-002"
+        }
+    },
+    {
+        "name": "no category → 880-R0000-009",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0000-009",
+        "target_bucket": "state",
+        "priority": 100,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-R0000-009"
+        }
+    },
+    {
+        "name": "no category → 880-R0001-011",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0001-011",
+        "target_bucket": "state",
+        "priority": 100,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-R0001-011"
+        }
+    },
+    {
+        "name": "no category → 880-R0002-012",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0002-012",
+        "target_bucket": "state",
+        "priority": 21,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-R0002-012"
+        }
+    },
+    {
+        "name": "no category → 880-R0020-002",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-R0020-002",
+        "target_bucket": "state",
+        "priority": 22,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-R0020-002"
+        }
+    },
+    {
+        "name": "no category → 880-R0040-011",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0040-011",
+        "target_bucket": "state",
+        "priority": 23,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-R0040-011"
+        }
+    },
+    {
+        "name": "no category → 880-R0100-011",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0100-011",
+        "target_bucket": "state",
+        "priority": 24,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-R0100-011"
+        }
+    },
+    {
+        "name": "no category → 880-RRP50-100",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP50-100",
+        "target_bucket": "state",
+        "priority": 25,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-RRP50-100"
+        }
+    },
+    {
+        "name": "no category → 880-RRP55-010",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP55-010",
+        "target_bucket": "state",
+        "priority": 26,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-RRP55-010"
+        }
+    },
+    {
+        "name": "no category → 694-R0003-002",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "694-R0003-002",
+        "target_bucket": "parts_tsd",
+        "priority": 204,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": null,
+            "unique_identifier": "694-R0003-002"
+        }
+    },
+    {
+        "name": "no category → 712-R0025-004",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-R0025-004",
+        "target_bucket": "parts_tsd",
+        "priority": 208,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": null,
+            "unique_identifier": "712-R0025-004"
+        }
+    },
+    {
+        "name": "no category → 712-R0068-002",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-R0068-002",
+        "target_bucket": "parts_tsd",
+        "priority": 209,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": null,
+            "unique_identifier": "712-R0068-002"
+        }
+    },
+    {
+        "name": "no category → 880-RRP55-005",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP55-005",
+        "target_bucket": "state",
+        "priority": 31,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-RRP55-005"
+        }
+    },
+    {
+        "name": "no category → 890-00080-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "890-00080-001",
+        "target_bucket": "state",
+        "priority": 32,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "890-00080-001"
+        }
+    },
+    {
+        "name": "no category → 880-R0001-013",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-R0001-013",
+        "target_bucket": "state",
+        "priority": 35,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-R0001-013"
+        }
+    },
+    {
+        "name": "no category → 880-R0040-012",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0040-012",
+        "target_bucket": "state",
+        "priority": 36,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-R0040-012"
+        }
+    },
+    {
+        "name": "no category → 880-R0050-011",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0050-011",
+        "target_bucket": "state",
+        "priority": 37,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-R0050-011"
+        }
+    },
+    {
+        "name": "no category → 880-RRP50-052",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP50-052",
+        "target_bucket": "state",
+        "priority": 38,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-RRP50-052"
+        }
+    },
+    {
+        "name": "no category → 880-RRP60-025",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP60-025",
+        "target_bucket": "state",
+        "priority": 40,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-RRP60-025"
+        }
+    },
+    {
+        "name": "no category → 880-R0050-012",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-R0050-012",
+        "target_bucket": "state",
+        "priority": 41,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-R0050-012"
+        }
+    },
+    {
+        "name": "no category → 880-RRP55-050",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP55-050",
+        "target_bucket": "state",
+        "priority": 42,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-RRP55-050"
+        }
+    },
+    {
+        "name": "no category → 880-RRP50-025",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP50-025",
+        "target_bucket": "state",
+        "priority": 44,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-RRP50-025"
+        }
+    },
+    {
+        "name": "no category → 880-RRP50-200",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP50-200",
+        "target_bucket": "state",
+        "priority": 45,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-RRP50-200"
+        }
+    },
+    {
+        "name": "no category → 880-RRP60-050",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP60-050",
+        "target_bucket": "state",
+        "priority": 46,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-RRP60-050"
+        }
+    },
+    {
+        "name": "no category → 880-RRP60-200",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP60-200",
+        "target_bucket": "state",
+        "priority": 47,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-RRP60-200"
+        }
+    },
+    {
+        "name": "no category → 880-R0WFP-350",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0WFP-350",
+        "target_bucket": "state",
+        "priority": 48,
+        "is_active": true,
+        "metadata": {
+            "source": "state_sales_analysis_template",
+            "unique_identifier": "880-R0WFP-350"
+        }
+    },
+    {
+        "name": "no category → 890-00301-002",
+        "category_code": "bessemeter",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-00301-002",
+        "target_bucket": "parts_tsd",
+        "priority": 102,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "unique_identifier": "890-00301-002"
+        }
+    },
+    {
+        "name": "tsd_parts → 674-00005-002",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "674-00005-002",
+        "target_bucket": "parts_tsd",
+        "priority": 106,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "674-00005-002"
+        }
+    },
+    {
+        "name": "tsd_parts → 674-82555-003",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "674-82555-003",
+        "target_bucket": "parts_tsd",
+        "priority": 107,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "674-82555-003"
+        }
+    },
+    {
+        "name": "tsd_parts → 712-62200-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-62200-001",
+        "target_bucket": "parts_tsd",
+        "priority": 108,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "712-62200-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 712-72203-002",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-72203-002",
+        "target_bucket": "parts_tsd",
+        "priority": 110,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "712-72203-002"
+        }
+    },
+    {
+        "name": "tsd_parts → 712-72204-002",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-72204-002",
+        "target_bucket": "parts_tsd",
+        "priority": 111,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "712-72204-002"
+        }
+    },
+    {
+        "name": "tsd_parts → 712-72206-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-72206-001",
+        "target_bucket": "parts_tsd",
+        "priority": 112,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "712-72206-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 739-90002-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "739-90002-001",
+        "target_bucket": "parts_tsd",
+        "priority": 113,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "739-90002-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 811-82520-002",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "811-82520-002",
+        "target_bucket": "parts_tsd",
+        "priority": 115,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "811-82520-002"
+        }
+    },
+    {
+        "name": "tsd_parts → 830-60000-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "830-60000-001",
+        "target_bucket": "parts_tsd",
+        "priority": 116,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "830-60000-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 830-60015-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "830-60015-001",
+        "target_bucket": "parts_tsd",
+        "priority": 117,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "830-60015-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 830-72207-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "830-72207-001",
+        "target_bucket": "parts_tsd",
+        "priority": 119,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "830-72207-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 840-61201-002",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "840-61201-002",
+        "target_bucket": "parts_tsd",
+        "priority": 121,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "840-61201-002"
+        }
+    },
+    {
+        "name": "tsd_parts → 840-61201-003",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "840-61201-003",
+        "target_bucket": "parts_tsd",
+        "priority": 122,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "840-61201-003"
+        }
+    },
+    {
+        "name": "tsd_parts → 860-40103-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "860-40103-001",
+        "target_bucket": "parts_tsd",
+        "priority": 123,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "860-40103-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 860-72202-003",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "860-72202-003",
+        "target_bucket": "parts_tsd",
+        "priority": 125,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "860-72202-003"
+        }
+    },
+    {
+        "name": "tsd_parts → 880-00825-003",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-00825-003",
+        "target_bucket": "parts_tsd",
+        "priority": 126,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "880-00825-003"
+        }
+    },
+    {
+        "name": "tsd_parts → 880-05000-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-05000-001",
+        "target_bucket": "parts_tsd",
+        "priority": 127,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "880-05000-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 880-60070-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-60070-001",
+        "target_bucket": "parts_tsd",
+        "priority": 130,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "880-60070-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 880-60075-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-60075-001",
+        "target_bucket": "parts_tsd",
+        "priority": 131,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "880-60075-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 880-60130-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-60130-001",
+        "target_bucket": "parts_tsd",
+        "priority": 132,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "880-60130-001"
+        }
+    },
+    {
+        "name": "tsd_parts → 880-72204-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-72204-001",
+        "target_bucket": "parts_tsd",
+        "priority": 133,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "880-72204-001"
+        }
+    },
+    {
+        "name": "tsd_parts → CST-62200-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "CST-62200-001",
+        "target_bucket": "parts_tsd",
+        "priority": 134,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_parts",
+            "unique_identifier": "CST-62200-001"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-00900-NIST",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-00900-NIST",
+        "target_bucket": "parts_tsd",
+        "priority": 135,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-00900-NIST"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-62200-002",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-62200-002",
+        "target_bucket": "parts_tsd",
+        "priority": 139,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-62200-002"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-CALIB-001",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-CALIB-001",
+        "target_bucket": "parts_tsd",
+        "priority": 143,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-CALIB-001"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-IL\/EVAL-002",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-IL\/EVAL-002",
+        "target_bucket": "parts_tsd",
+        "priority": 146,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-IL\/EVAL-002"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-WR622-MFG",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-WR622-MFG",
+        "target_bucket": "parts_tsd",
+        "priority": 147,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-WR622-MFG"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-WR910-MFG",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-WR910-MFG",
+        "target_bucket": "parts_tsd",
+        "priority": 148,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-WR910-MFG"
+        }
+    },
+    {
+        "name": "tsd_repairs → REP-WR930-MFG",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "REP-WR930-MFG",
+        "target_bucket": "parts_tsd",
+        "priority": 149,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_legacy_sales_analysis_template",
+            "category_code": "tsd_repairs",
+            "unique_identifier": "REP-WR930-MFG"
+        }
+    },
+    {
+        "name": "parts_tsd_rhp_miscellaneous → 674-R4100-002",
+        "category_code": "parts_tsd_rhp_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "674-R4100-002",
+        "target_bucket": "parts_tsd",
+        "priority": 200,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_rhp_miscellaneous",
+            "unique_identifier": "674-R4100-002"
+        }
+    },
+    {
+        "name": "parts_tsd_rhp_miscellaneous → 880-R0041-001",
+        "category_code": "parts_tsd_rhp_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0041-001",
+        "target_bucket": "parts_tsd",
+        "priority": 201,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_rhp_miscellaneous",
+            "unique_identifier": "880-R0041-001"
+        }
+    },
+    {
+        "name": "parts_tsd_rhp_miscellaneous → 880-R4100-005",
+        "category_code": "parts_tsd_rhp_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R4100-005",
+        "target_bucket": "parts_tsd",
+        "priority": 202,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_rhp_miscellaneous",
+            "unique_identifier": "880-R4100-005"
+        }
+    },
+    {
+        "name": "parts_tsd_rhp_miscellaneous → 880-R4100-020",
+        "category_code": "parts_tsd_rhp_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R4100-020",
+        "target_bucket": "parts_tsd",
+        "priority": 203,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_rhp_miscellaneous",
+            "unique_identifier": "880-R4100-020"
+        }
+    },
+    {
+        "name": "no category → MISCELLANEOUS",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "MISCELLANEOUS",
+        "target_bucket": "parts_tsd",
+        "priority": 213,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": null,
+            "unique_identifier": "MISCELLANEOUS"
+        }
+    },
+    {
+        "name": "parts_tsd_pack_5_rapid_rh_l6_smart_sensor → 880-R0000-009",
+        "category_code": "parts_tsd_pack_5_rapid_rh_l6_smart_sensor",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0000-009",
+        "target_bucket": "parts_tsd",
+        "priority": 216,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_pack_5_rapid_rh_l6_smart_sensor",
+            "unique_identifier": "880-R0000-009"
+        }
+    },
+    {
+        "name": "parts_tsd_pack_5_rapid_rh_l6_smart_sensor_reader → 880-R0001-011",
+        "category_code": "parts_tsd_pack_5_rapid_rh_l6_smart_sensor_reader",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0001-011",
+        "target_bucket": "parts_tsd",
+        "priority": 217,
+        "is_active": false,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_pack_5_rapid_rh_l6_smart_sensor_reader",
+            "unique_identifier": "880-R0001-011"
+        }
+    },
+    {
+        "name": "rhp_true_remote → 880-R0001-013",
+        "category_code": "true_remote",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-R0001-013",
+        "target_bucket": "rhp",
+        "priority": 200,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "true_remote",
+            "unique_identifier": "880-R0001-013"
+        }
+    },
+    {
+        "name": "parts_tsd_floor_sentry → 890-00080-001",
+        "category_code": "parts_tsd_floor_sentry",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "890-00080-001",
+        "target_bucket": "parts_tsd",
+        "priority": 203,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_floor_sentry",
+            "unique_identifier": "890-00080-001"
+        }
+    },
+    {
+        "name": "rhp_kit_rapid_rh_l6_starter_kit_plus_fahrenheit → 880-R0002-013",
+        "category_code": "parts_tsd_kit_rapid_rh_l6_starter_kit_plus_fahrenheit",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0002-013",
+        "target_bucket": "rhp",
+        "priority": 205,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_kit_rapid_rh_l6_starter_kit_plus_fahrenheit",
+            "unique_identifier": "880-R0002-013"
+        }
+    },
+    {
+        "name": "parts_tsd_value_pack_25pc_rhp_l6_smart_sensor → 880-R0040-011",
+        "category_code": "parts_tsd_value_pack_25pc_rhp_l6_smart_sensor",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0040-011",
+        "target_bucket": "parts_tsd",
+        "priority": 206,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_value_pack_25pc_rhp_l6_smart_sensor",
+            "unique_identifier": "880-R0040-011"
+        }
+    },
+    {
+        "name": "parts_tsd_value_pack_50pc_rhp_l6_smart_sensor → 880-R0050-011",
+        "category_code": "parts_tsd_value_pack_50pc_rhp_l6_smart_sensor",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0050-011",
+        "target_bucket": "parts_tsd",
+        "priority": 207,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_value_pack_50pc_rhp_l6_smart_sensor",
+            "unique_identifier": "880-R0050-011"
+        }
+    },
+    {
+        "name": "parts_tsd_super_value_pack_rapid_rh_l6_smart_sensor → 880-R0100-011",
+        "category_code": "parts_tsd_super_value_pack_rapid_rh_l6_smart_sensor",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0100-011",
+        "target_bucket": "parts_tsd",
+        "priority": 208,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_super_value_pack_rapid_rh_l6_smart_sensor",
+            "unique_identifier": "880-R0100-011"
+        }
+    },
+    {
+        "name": "rhp_wfp350_rapid_rh_l6_adv_concrete_kit_datagrabbers_w_bt → 880-R0WFP-350",
+        "category_code": "wfp350_rapid_rh_l6_adv_concrete_kit_datagrabbers_w_bt",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0WFP-350",
+        "target_bucket": "rhp",
+        "priority": 209,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "wfp350_rapid_rh_l6_adv_concrete_kit_datagrabbers_w_bt",
+            "unique_identifier": "880-R0WFP-350"
+        }
+    },
+    {
+        "name": "rhp_five_0_miscellaneous → 880-RRP50-025",
+        "category_code": "5_0_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP50-025",
+        "target_bucket": "rhp",
+        "priority": 210,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "5_0_miscellaneous",
+            "unique_identifier": "880-RRP50-025"
+        }
+    },
+    {
+        "name": "rhp_five_0_miscellaneous → 880-RRP50-052",
+        "category_code": "5_0_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP50-052",
+        "target_bucket": "rhp",
+        "priority": 211,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "5_0_miscellaneous",
+            "unique_identifier": "880-RRP50-052"
+        }
+    },
+    {
+        "name": "rhp_five_0_miscellaneous → 880-RRP50-100",
+        "category_code": "5_0_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP50-100",
+        "target_bucket": "rhp",
+        "priority": 212,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "5_0_miscellaneous",
+            "unique_identifier": "880-RRP50-100"
+        }
+    },
+    {
+        "name": "rhp_five_0_miscellaneous → 880-RRP50-200",
+        "category_code": "5_0_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP50-200",
+        "target_bucket": "rhp",
+        "priority": 213,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "5_0_miscellaneous",
+            "unique_identifier": "880-RRP50-200"
+        }
+    },
+    {
+        "name": "rhp_five_0_miscellaneous → 880-RRP55-005",
+        "category_code": "5_0_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP55-005",
+        "target_bucket": "rhp",
+        "priority": 214,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "5_0_miscellaneous",
+            "unique_identifier": "880-RRP55-005"
+        }
+    },
+    {
+        "name": "rhp_five_0_miscellaneous → 880-RRP55-010",
+        "category_code": "5_0_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP55-010",
+        "target_bucket": "rhp",
+        "priority": 215,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "5_0_miscellaneous",
+            "unique_identifier": "880-RRP55-010"
+        }
+    },
+    {
+        "name": "rhp_five_0_miscellaneous → 880-RRP55-050",
+        "category_code": "5_0_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP55-050",
+        "target_bucket": "rhp",
+        "priority": 216,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "5_0_miscellaneous",
+            "unique_identifier": "880-RRP55-050"
+        }
+    },
+    {
+        "name": "rhp_five_0_miscellaneous → 880-RRP60-025",
+        "category_code": "5_0_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP60-025",
+        "target_bucket": "rhp",
+        "priority": 217,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "5_0_miscellaneous",
+            "unique_identifier": "880-RRP60-025"
+        }
+    },
+    {
+        "name": "rhp_five_0_miscellaneous → 880-RRP60-050",
+        "category_code": "5_0_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP60-050",
+        "target_bucket": "rhp",
+        "priority": 218,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "5_0_miscellaneous",
+            "unique_identifier": "880-RRP60-050"
+        }
+    },
+    {
+        "name": "rhp_five_0_miscellaneous → 880-RRP60-200",
+        "category_code": "5_0_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP60-200",
+        "target_bucket": "rhp",
+        "priority": 219,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "5_0_miscellaneous",
+            "unique_identifier": "880-RRP60-200"
+        }
+    },
+    {
+        "name": "rhp_five_0_miscellaneous → 880-R0020-002",
+        "category_code": "5_0_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-R0020-002",
+        "target_bucket": "rhp",
+        "priority": 220,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "5_0_miscellaneous",
+            "unique_identifier": "880-R0020-002"
+        }
+    },
+    {
+        "name": "rhp_five_0_miscellaneous → 860-R0040-002",
+        "category_code": "5_0_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "860-R0040-002",
+        "target_bucket": "rhp",
+        "priority": 221,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "5_0_miscellaneous",
+            "unique_identifier": "860-R0040-002"
+        }
+    },
+    {
+        "name": "rhp_five_0_miscellaneous → 712-R0060-002",
+        "category_code": "5_0_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-R0060-002",
+        "target_bucket": "rhp",
+        "priority": 222,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "5_0_miscellaneous",
+            "unique_identifier": "712-R0060-002"
+        }
+    },
+    {
+        "name": "parts_tsd_top_assy_orion_c555_concrete_kit_tested → 890-00555-001",
+        "category_code": "parts_tsd_top_assy_orion_c555_concrete_kit_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "890-00555-001",
+        "target_bucket": "parts_tsd",
+        "priority": 223,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_top_assy_orion_c555_concrete_kit_tested",
+            "unique_identifier": "890-00555-001"
+        }
+    },
+    {
+        "name": "rhp_top_assy_orion_c555_concrete_kit_tested → 890-00555-002",
+        "category_code": "parts_tsd_top_assy_orion_c555_concrete_kit_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-00555-002",
+        "target_bucket": "rhp",
+        "priority": 224,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_top_assy_orion_c555_concrete_kit_tested",
+            "unique_identifier": "890-00555-002"
+        }
+    },
+    {
+        "name": "parts_tsd_top_assy_orion_910_kit_tested → 890-00910-001",
+        "category_code": "parts_tsd_top_assy_orion_910_kit_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "890-00910-001",
+        "target_bucket": "parts_tsd",
+        "priority": 225,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_top_assy_orion_910_kit_tested",
+            "unique_identifier": "890-00910-001"
+        }
+    },
+    {
+        "name": "parts_tsd_top_assy_orion_930_kit_tested → 890-00930-001",
+        "category_code": "parts_tsd_top_assy_orion_930_kit_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "890-00930-001",
+        "target_bucket": "parts_tsd",
+        "priority": 227,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_top_assy_orion_930_kit_tested",
+            "unique_identifier": "890-00930-001"
+        }
+    },
+    {
+        "name": "parts_tsd_top_assy_orion_930_kit_tested → 890-00930-002",
+        "category_code": "parts_tsd_top_assy_orion_930_kit_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-00930-002",
+        "target_bucket": "parts_tsd",
+        "priority": 228,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_top_assy_orion_930_kit_tested",
+            "unique_identifier": "890-00930-002"
+        }
+    },
+    {
+        "name": "parts_tsd_top_assy_orion_940_kit_tested → 890-00940-001",
+        "category_code": "parts_tsd_top_assy_orion_940_kit_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "890-00940-001",
+        "target_bucket": "parts_tsd",
+        "priority": 229,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_top_assy_orion_940_kit_tested",
+            "unique_identifier": "890-00940-001"
+        }
+    },
+    {
+        "name": "parts_tsd_top_assy_orion_950_kit_tested → 890-00950-001",
+        "category_code": "parts_tsd_top_assy_orion_950_kit_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "890-00950-001",
+        "target_bucket": "parts_tsd",
+        "priority": 230,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_top_assy_orion_950_kit_tested",
+            "unique_identifier": "890-00950-001"
+        }
+    },
+    {
+        "name": "parts_tsd_top_assy_orion_950_kit_tested → 890-00950-002",
+        "category_code": "parts_tsd_top_assy_orion_950_kit_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-00950-002",
+        "target_bucket": "parts_tsd",
+        "priority": 231,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_top_assy_orion_950_kit_tested",
+            "unique_identifier": "890-00950-002"
+        }
+    },
+    {
+        "name": "parts_tsd_meter_reach_extender → 880-90001-001",
+        "category_code": "parts_tsd_meter_reach_extender",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-90001-001",
+        "target_bucket": "parts_tsd",
+        "priority": 232,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_meter_reach_extender",
+            "unique_identifier": "880-90001-001"
+        }
+    },
+    {
+        "name": "rhp_top_assy_l5300 → 890-05200-002",
+        "category_code": "parts_tsd_top_assy_l5300",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-05200-002",
+        "target_bucket": "rhp",
+        "priority": 233,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_top_assy_l5300",
+            "unique_identifier": "890-05200-002"
+        }
+    },
+    {
+        "name": "parts_tsd_top_assy_l5300 → 890-05300-001",
+        "category_code": "parts_tsd_top_assy_l5300",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-05300-001",
+        "target_bucket": "parts_tsd",
+        "priority": 234,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_top_assy_l5300",
+            "unique_identifier": "890-05300-001"
+        }
+    },
+    {
+        "name": "rhp_top_assy_l601_3_df_tstd → 890-60131-001",
+        "category_code": "top_assy_l601_3_df_tstd",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-60131-001",
+        "target_bucket": "rhp",
+        "priority": 235,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "top_assy_l601_3_df_tstd",
+            "unique_identifier": "890-60131-001"
+        }
+    },
+    {
+        "name": "rhp_top_assy_l722_long_stack_probe_tested → 890-72201-001",
+        "category_code": "top_assy_l722_long_stack_probe_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-72201-001",
+        "target_bucket": "rhp",
+        "priority": 236,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "top_assy_l722_long_stack_probe_tested",
+            "unique_identifier": "890-72201-001"
+        }
+    },
+    {
+        "name": "rhp_top_assy_l722_long_stack_probe_tested → 890-72201-003",
+        "category_code": "top_assy_l722_long_stack_probe_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-72201-003",
+        "target_bucket": "rhp",
+        "priority": 237,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "top_assy_l722_long_stack_probe_tested",
+            "unique_identifier": "890-72201-003"
+        }
+    },
+    {
+        "name": "rhp_top_assy_l722_short_stack_probe_tested → 890-72201-002",
+        "category_code": "top_assy_l722_short_stack_probe_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-72201-002",
+        "target_bucket": "rhp",
+        "priority": 238,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "top_assy_l722_short_stack_probe_tested",
+            "unique_identifier": "890-72201-002"
+        }
+    },
+    {
+        "name": "rhp_top_assy_l722_short_stack_probe_tested → 890-72201-004",
+        "category_code": "top_assy_l722_short_stack_probe_tested",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-72201-004",
+        "target_bucket": "rhp",
+        "priority": 239,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "top_assy_l722_short_stack_probe_tested",
+            "unique_identifier": "890-72201-004"
+        }
+    },
+    {
+        "name": "parts_tsd_kit_l5300_l722_long_stack_probe → 880-53722-001",
+        "category_code": "parts_tsd_kit_l5300_l722_long_stack_probe",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-53722-001",
+        "target_bucket": "parts_tsd",
+        "priority": 240,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "parts_tsd_kit_l5300_l722_long_stack_probe",
+            "unique_identifier": "880-53722-001"
+        }
+    },
+    {
+        "name": "rhp_kit_l5300_l722_long_stack_probe → 880-53722-002",
+        "category_code": "kit_l5300_l722_stack_probe",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-53722-002",
+        "target_bucket": "rhp",
+        "priority": 241,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "kit_l5300_l722_stack_probe",
+            "unique_identifier": "880-53722-002"
+        }
+    },
+    {
+        "name": "rhp_kit_l5300_l722_long_stack_probe → 880-53722-003",
+        "category_code": "kit_l5300_l722_stack_probe",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-53722-003",
+        "target_bucket": "rhp",
+        "priority": 242,
+        "is_active": true,
+        "metadata": {
+            "source": "parts_tsd_sales_analysis_template",
+            "category_code": "kit_l5300_l722_stack_probe",
+            "unique_identifier": "880-53722-003"
+        }
+    },
+    {
+        "name": "resolved → Intl Duties & Taxes",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "Intl Duties & Taxes",
+        "target_bucket": "raw",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "Intl Duties & Taxes",
+            "raw_sheet_only": true
+        }
+    },
+    {
+        "name": "resolved → SHIP_UPS_1DAY",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "SHIP_UPS_1DAY",
+        "target_bucket": "raw",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "SHIP_UPS_1DAY",
+            "raw_sheet_only": true
+        }
+    },
+    {
+        "name": "resolved → SHIP_UPS_2DAY",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "SHIP_UPS_2DAY",
+        "target_bucket": "raw",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "SHIP_UPS_2DAY",
+            "raw_sheet_only": true
+        }
+    },
+    {
+        "name": "resolved → SHIP_UPS_3DAY",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "SHIP_UPS_3DAY",
+        "target_bucket": "raw",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "SHIP_UPS_3DAY",
+            "raw_sheet_only": true
+        }
+    },
+    {
+        "name": "resolved → SHIP_UPS_EXPEDI",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "SHIP_UPS_EXPEDI",
+        "target_bucket": "raw",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "SHIP_UPS_EXPEDI",
+            "raw_sheet_only": true
+        }
+    },
+    {
+        "name": "resolved → SHIP_UPS_GROUND",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "SHIP_UPS_GROUND",
+        "target_bucket": "raw",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "SHIP_UPS_GROUND",
+            "raw_sheet_only": true
+        }
+    },
+    {
+        "name": "resolved → SHIP_UPS_WWSAVR",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "SHIP_UPS_WWSAVR",
+        "target_bucket": "raw",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "SHIP_UPS_WWSAVR",
+            "raw_sheet_only": true
+        }
+    },
+    {
+        "name": "resolved → SHIP-MISC",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "SHIP-MISC",
+        "target_bucket": "raw",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "SHIP-MISC",
+            "raw_sheet_only": true
+        }
+    },
+    {
+        "name": "resolved → SHIP-UPS-STANDA",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "SHIP-UPS-STANDA",
+        "target_bucket": "raw",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "SHIP-UPS-STANDA",
+            "raw_sheet_only": true
+        }
+    },
+    {
+        "name": "resolved → WIRE-TRANSFER",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "WIRE-TRANSFER",
+        "target_bucket": "raw",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "WIRE-TRANSFER",
+            "raw_sheet_only": true
+        }
+    },
+    {
+        "name": "rhp_unassigned → 694-R0003-002",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "694-R0003-002",
+        "target_bucket": "rhp",
+        "priority": 14,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "unique_identifier": "694-R0003-002"
+        }
+    },
+    {
+        "name": "rhp_unassigned → 712-R0015-002",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "712-R0015-002",
+        "target_bucket": "rhp",
+        "priority": 15,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "unique_identifier": "712-R0015-002"
+        }
+    },
+    {
+        "name": "rhp_unassigned → 712-R0025-001",
+        "category_code": "5_0_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-R0025-001",
+        "target_bucket": "rhp",
+        "priority": 16,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "unique_identifier": "712-R0025-001"
+        }
+    },
+    {
+        "name": "rhp_unassigned → 712-R0025-003",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "712-R0025-003",
+        "target_bucket": "rhp",
+        "priority": 17,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "unique_identifier": "712-R0025-003"
+        }
+    },
+    {
+        "name": "rhp_unassigned → 712-R0025-004",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-R0025-004",
+        "target_bucket": "rhp",
+        "priority": 18,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "unique_identifier": "712-R0025-004"
+        }
+    },
+    {
+        "name": "rhp_unassigned → 712-R0068-002",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-R0068-002",
+        "target_bucket": "rhp",
+        "priority": 19,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "unique_identifier": "712-R0068-002"
+        }
+    },
+    {
+        "name": "rhp_unassigned → 712-RRP01-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "712-RRP01-001",
+        "target_bucket": "rhp",
+        "priority": 20,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "unique_identifier": "712-RRP01-001"
+        }
+    },
+    {
+        "name": "rhp_unassigned → 713-R0000-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "713-R0000-001",
+        "target_bucket": "rhp",
+        "priority": 21,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "unique_identifier": "713-R0000-001"
+        }
+    },
+    {
+        "name": "rhp_unassigned → 714-R0005-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "714-R0005-001",
+        "target_bucket": "rhp",
+        "priority": 22,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "unique_identifier": "714-R0005-001"
+        }
+    },
+    {
+        "name": "rhp_unassigned → 860-R0040-003",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "860-R0040-003",
+        "target_bucket": "rhp",
+        "priority": 24,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "unique_identifier": "860-R0040-003"
+        }
+    },
+    {
+        "name": "rhp_unassigned → 880-R0025-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0025-001",
+        "target_bucket": "rhp",
+        "priority": 25,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "unique_identifier": "880-R0025-001"
+        }
+    },
+    {
+        "name": "rhp kit upgrade 880-R0050-012",
+        "category_code": "kit_upgrade",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-R0050-012",
+        "target_bucket": "rhp",
+        "priority": 41,
+        "is_active": true,
+        "metadata": {
+            "source": "rhp_sales_analysis_template",
+            "category_code": "kit_upgrade"
+        }
+    },
+    {
+        "name": "state starts 860-R0040-003",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "860-R0040-003",
+        "target_bucket": "state",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "state-694-R0003-002",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "694-R0003-002",
+        "target_bucket": "state",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "state 712-R0015-002IN",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-R0015-002IN",
+        "target_bucket": "state",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "state starts 712-R0025-00",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "712-R0025-00",
+        "target_bucket": "state",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "state exact 712-R0060-00",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-R0060-00",
+        "target_bucket": "state",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "state exact 712-R0068-002",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-R0068-002",
+        "target_bucket": "state",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "state starts with",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "712-RRP01-001",
+        "target_bucket": "state",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "state starts with 713-R0000-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "713-R0000-001",
+        "target_bucket": "state",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "state exact 714-R0005-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "714-R0005-001",
+        "target_bucket": "state",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "state starts with 860-R0040-00",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "860-R0040-00",
+        "target_bucket": "state",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "state starts with 880-R0025-001",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "880-R0025-001",
+        "target_bucket": "state",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "tsdparts starts with rep",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "REP-",
+        "target_bucket": "parts_tsd",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "partstsd starts with 668-",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "668-",
+        "target_bucket": "parts_tsd",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "tsdparts starts with 830",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "830-",
+        "target_bucket": "parts_tsd",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "tsdparts start with CST-",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "starts_with",
+        "pattern": "CST-",
+        "target_bucket": "parts_tsd",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "resolved → 648-00902-030",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "648-00902-030",
+        "target_bucket": "parts_tsd",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "648-00902-030"
+        }
+    },
+    {
+        "name": "resolved → 674-82505-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "674-82505-001",
+        "target_bucket": "parts_tsd",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "674-82505-001"
+        }
+    },
+    {
+        "name": "resolved → 681-01380-010",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "681-01380-010",
+        "target_bucket": "parts_tsd",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "681-01380-010"
+        }
+    },
+    {
+        "name": "resolved → 712-71201-002",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-71201-002",
+        "target_bucket": "parts_tsd",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "712-71201-002"
+        }
+    },
+    {
+        "name": "resolved → 712-72205-002",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "712-72205-002",
+        "target_bucket": "parts_tsd",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "712-72205-002"
+        }
+    },
+    {
+        "name": "resolved → 720-01482-165",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "720-01482-165",
+        "target_bucket": "parts_tsd",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "720-01482-165"
+        }
+    },
+    {
+        "name": "resolved → 725-00616-013",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "725-00616-013",
+        "target_bucket": "parts_tsd",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "725-00616-013"
+        }
+    },
+    {
+        "name": "resolved → 809-00825-003",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "809-00825-003",
+        "target_bucket": "parts_tsd",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "809-00825-003"
+        }
+    },
+    {
+        "name": "resolved → 811-40002-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "811-40002-001",
+        "target_bucket": "parts_tsd",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "811-40002-001"
+        }
+    },
+    {
+        "name": "resolved → 840-82520-003",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "840-82520-003",
+        "target_bucket": "parts_tsd",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "840-82520-003"
+        }
+    },
+    {
+        "name": "resolved → 860-R0030-001MA",
+        "category_code": "5_0_miscellaneous",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "860-R0030-001MA",
+        "target_bucket": "rhp",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "860-R0030-001MA"
+        }
+    },
+    {
+        "name": "resolved → 880-53722-004",
+        "category_code": "kit_l5300_l722_stack_probe",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-53722-004",
+        "target_bucket": "rhp",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "880-53722-004"
+        }
+    },
+    {
+        "name": "resolved → 880-60130-009",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-60130-009",
+        "target_bucket": "parts_tsd",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "880-60130-009"
+        }
+    },
+    {
+        "name": "resolved → 880-68375-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-68375-001",
+        "target_bucket": "parts_tsd",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "880-68375-001"
+        }
+    },
+    {
+        "name": "resolved → 880-72202-003",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-72202-003",
+        "target_bucket": "parts_tsd",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "880-72202-003"
+        }
+    },
+    {
+        "name": "resolved → 880-72202-004",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-72202-004",
+        "target_bucket": "parts_tsd",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "880-72202-004"
+        }
+    },
+    {
+        "name": "resolved → 880-72220-001",
+        "category_code": "tsd_parts",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-72220-001",
+        "target_bucket": "parts_tsd",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "880-72220-001"
+        }
+    },
+    {
+        "name": "resolved → 880-R0000-012MA",
+        "category_code": "kit_upgrade",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-R0000-012MA",
+        "target_bucket": "rhp",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "880-R0000-012MA"
+        }
+    },
+    {
+        "name": "resolved → 880-R0005-001IN",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-R0005-001IN",
+        "target_bucket": "rhp",
+        "priority": 24,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "880-R0005-001IN"
+        }
+    },
+    {
+        "name": "resolved → 880-R5WFP-512",
+        "category_code": "wfp500_reusable_pro_floor_installer_package_celsius_950",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-R5WFP-512",
+        "target_bucket": "rhp",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "880-R5WFP-512"
+        }
+    },
+    {
+        "name": "resolved → 880-RRP02-011IN",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "880-RRP02-011IN",
+        "target_bucket": "rhp",
+        "priority": 24,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "880-RRP02-011IN"
+        }
+    },
+    {
+        "name": "resolved → 890-14670-REF",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-14670-REF",
+        "target_bucket": "parts_tsd",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "890-14670-REF"
+        }
+    },
+    {
+        "name": "resolved → 890-60131-002",
+        "category_code": "top_assy_l601_3_df_tstd",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "890-60131-002",
+        "target_bucket": "rhp",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "890-60131-002"
+        }
+    },
+    {
+        "name": "resolved → FLD-SERVICE-001",
+        "category_code": "tsd_repairs",
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "FLD-SERVICE-001",
+        "target_bucket": "parts_tsd",
+        "priority": 500,
+        "is_active": true,
+        "metadata": {
+            "source": "upload_reconcile_modal",
+            "item_id": "FLD-SERVICE-001"
+        }
+    },
+    {
+        "name": "item_id exactly 860-R0040-005IN",
+        "category_code": null,
+        "source_type": "sales_analysis",
+        "match_field": "item_id",
+        "match_operator": "exact",
+        "pattern": "860-R0040-005IN",
+        "target_bucket": "rhp",
+        "priority": 24,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "description",
+        "category_code": "top_assy_l5300",
+        "source_type": "sales_analysis",
+        "match_field": "description",
+        "match_operator": "contains",
+        "pattern": "FOREST GRP- 30",
+        "target_bucket": "rhp",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "description contains ADVANCED TRAINING IN APPEARANCE",
+        "category_code": "misc_on_total_sales_report",
+        "source_type": "sales_analysis",
+        "match_field": "description",
+        "match_operator": "contains",
+        "pattern": "ADVANCED TRAINING IN APPEARANCE",
+        "target_bucket": "parts_tsd",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "name": "description contains $250 TRADE-IN CREDIT FOR OLD L622",
+        "category_code": "top_assy_l5300",
+        "source_type": "sales_analysis",
+        "match_field": "description",
+        "match_operator": "contains",
+        "pattern": "$250 TRADE-IN CREDIT FOR OLD L622",
+        "target_bucket": "rhp",
+        "priority": 100,
+        "is_active": true,
+        "metadata": null
+    }
+]

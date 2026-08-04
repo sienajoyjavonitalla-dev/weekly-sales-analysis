@@ -1,0 +1,735 @@
+[
+    {
+        "code": "rhp_miscellaneous",
+        "name": "RHP MISCELLANEOUS",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "RHP MISCELLANEOUS",
+        "weekly_meter_row_label": null,
+        "sort_order": 10,
+        "is_active": true,
+        "metadata": {
+            "slug": "rhp-miscellaneous",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "pack_5_rapid_rh_l6_smart_sensor",
+        "name": "PACK, 5 ,RAPID RH L6, SMART SENSOR",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "PACK, 5 ,RAPID RH L6, SMART SENSOR",
+        "weekly_meter_row_label": null,
+        "sort_order": 14,
+        "is_active": true,
+        "metadata": {
+            "slug": "pack-5-rapid-rh-l6-smart-sensor",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "floor_sentry",
+        "name": "Floor Sentry",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "Floor Sentry",
+        "weekly_meter_row_label": null,
+        "sort_order": 18,
+        "is_active": true,
+        "metadata": {
+            "slug": "floor-sentry",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "kit_upgrade",
+        "name": "KIT,UPGRADE",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "KIT,UPGRADE",
+        "weekly_meter_row_label": null,
+        "sort_order": 22,
+        "is_active": true,
+        "metadata": {
+            "slug": "kitupgrade",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "pack_5_rapid_rh_l6_smart_sensor_reader",
+        "name": "PACK, 5 ,RAPID RH L6, SMART SENSOR",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "PACK, 5 ,RAPID RH L6, SMART SENSOR",
+        "weekly_meter_row_label": null,
+        "sort_order": 26,
+        "is_active": true,
+        "metadata": {
+            "slug": "pack-5-rapid-rh-l6-smart-sensor",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "kit_rapid_rh_l6_starter_kit_plus_fahrenheit",
+        "name": "KIT, RAPID RH L6 STARTER KIT PLUS-FAHRENHEIT",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "KIT, RAPID RH L6 STARTER KIT PLUS-FAHRENHEIT",
+        "weekly_meter_row_label": null,
+        "sort_order": 30,
+        "is_active": true,
+        "metadata": {
+            "slug": "kit-rapid-rh-l6-starter-kit-plus-fahrenheit",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "value_pack_25pc_rhp_l6_smart_sensor",
+        "name": "VALUE PACK, 25PC, RHP L6 SMART SENSOR",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "VALUE PACK, 25PC, RHP L6 SMART SENSOR",
+        "weekly_meter_row_label": null,
+        "sort_order": 34,
+        "is_active": true,
+        "metadata": {
+            "slug": "value-pack-25pc-rhp-l6-smart-sensor",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "value_pack_50pc_rhp_l6_smart_sensor",
+        "name": "VALUE PACK, 50PC, RHP L6 SMART SENSOR",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "VALUE PACK, 50PC, RHP L6 SMART SENSOR",
+        "weekly_meter_row_label": null,
+        "sort_order": 38,
+        "is_active": true,
+        "metadata": {
+            "slug": "value-pack-50pc-rhp-l6-smart-sensor",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "super_value_pack_rapid_rh_l6_smart_sensor",
+        "name": "SUPER VALUE PACK,RAPID RH L6, SMART SENSOR",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "SUPER VALUE PACK,RAPID RH L6, SMART SENSOR",
+        "weekly_meter_row_label": null,
+        "sort_order": 42,
+        "is_active": true,
+        "metadata": {
+            "slug": "super-value-packrapid-rh-l6-smart-sensor",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "wfp400_rapid_rh_l6_professional_flooring_installer_kit",
+        "name": "WFP400+ RAPID RH L6 PROFESSIONAL FLOORING INSTALLER KIT",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "WFP400+ RAPID RH L6 PROFESSIONAL FLOORING INSTALLER KIT",
+        "weekly_meter_row_label": null,
+        "sort_order": 46,
+        "is_active": true,
+        "metadata": {
+            "slug": "wfp400-rapid-rh-l6-professional-flooring-installer-kit",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "wfp450_rrh_l6_pro_floor_installer_kit_dg_w_bt",
+        "name": "WFP450+ RRH® L6 Pro Floor Installer Kit + DG w\/BT",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "WFP450+ RRH® L6 Pro Floor Installer Kit + DG w\/BT",
+        "weekly_meter_row_label": null,
+        "sort_order": 50,
+        "is_active": true,
+        "metadata": {
+            "slug": "wfp450-rrh-l6-pro-floor-installer-kit-dg-wbt",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "rapid_rh_5_0_complete_starter_kit_plus_fahrenheit",
+        "name": "Rapid RH 5.0 Complete Starter Kit Plus-Fahrenheit",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "Rapid RH 5.0 Complete Starter Kit Plus-Fahrenheit",
+        "weekly_meter_row_label": null,
+        "sort_order": 54,
+        "is_active": true,
+        "metadata": {
+            "slug": "rapid-rh-50-complete-starter-kit-plus-fahrenheit",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "top_assy_orion_c555_concrete_kit_tested",
+        "name": "TOP ASSY,ORION C555, CONCRETE ,KIT, TESTED",
+        "report_family": "meter",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "TOP ASSY,ORION C555, CONCRETE ,KIT, TESTED",
+        "weekly_meter_row_label": null,
+        "sort_order": 58,
+        "is_active": true,
+        "metadata": {
+            "slug": "top-assyorion-c555-concrete-kit-tested",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "top_assy_orion_910_kit_tested",
+        "name": "TOP ASSY,ORION 910 KIT, TESTED",
+        "report_family": "meter",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "TOP ASSY,ORION 910 KIT, TESTED",
+        "weekly_meter_row_label": "Orion 910",
+        "sort_order": 62,
+        "is_active": true,
+        "metadata": {
+            "slug": "top-assyorion-910-kit-tested",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "top_assy_orion_920_kit_tested",
+        "name": "TOP ASSY,ORION 920 KIT, TESTED",
+        "report_family": "meter",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "TOP ASSY,ORION 920 KIT, TESTED",
+        "weekly_meter_row_label": null,
+        "sort_order": 66,
+        "is_active": true,
+        "metadata": {
+            "slug": "top-assyorion-920-kit-tested",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "top_assy_orion_930_kit_tested",
+        "name": "TOP ASSY,ORION 930 KIT, TESTED",
+        "report_family": "meter",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "TOP ASSY,ORION 930 KIT, TESTED",
+        "weekly_meter_row_label": null,
+        "sort_order": 70,
+        "is_active": true,
+        "metadata": {
+            "slug": "top-assyorion-930-kit-tested",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "top_assy_orion_940_kit_tested",
+        "name": "TOP ASSY,ORION 940 KIT, TESTED",
+        "report_family": "meter",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "TOP ASSY,ORION 940 KIT, TESTED",
+        "weekly_meter_row_label": null,
+        "sort_order": 74,
+        "is_active": true,
+        "metadata": {
+            "slug": "top-assyorion-940-kit-tested",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "top_assy_orion_950_kit_tested",
+        "name": "TOP ASSY,ORION 950 KIT, TESTED",
+        "report_family": "meter",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "TOP ASSY,ORION 950 KIT, TESTED",
+        "weekly_meter_row_label": null,
+        "sort_order": 78,
+        "is_active": true,
+        "metadata": {
+            "slug": "top-assyorion-950-kit-tested",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "meter_reach_extender",
+        "name": "METER REACH EXTENDER",
+        "report_family": "meter",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "METER REACH EXTENDER",
+        "weekly_meter_row_label": null,
+        "sort_order": 82,
+        "is_active": true,
+        "metadata": {
+            "slug": "meter-reach-extender",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "top_assy_l5300",
+        "name": "TOP ASSY, L5300",
+        "report_family": "meter",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "TOP ASSY, L5300",
+        "weekly_meter_row_label": "L5300\/L722",
+        "sort_order": 86,
+        "is_active": true,
+        "metadata": {
+            "slug": "top-assy-l5300",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "kit_l5300_l722_stack_probe",
+        "name": "KIT, L5300+L722 STACK PROBE",
+        "report_family": "meter",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "KIT, L5300+L722 STACK PROBE",
+        "weekly_meter_row_label": "L5300\/L722",
+        "sort_order": 90,
+        "is_active": true,
+        "metadata": {
+            "slug": "kit-l5300l722-stack-probe",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "misc_on_total_sales_report",
+        "name": "Misc (on Total Sales Report)",
+        "report_family": "parts_tsd",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "Misc (on Total Sales Report)",
+        "weekly_meter_row_label": null,
+        "sort_order": 100,
+        "is_active": true,
+        "metadata": {
+            "slug": "misc-on-total-sales-report",
+            "source": "parts_tsd_legacy_sales_analysis_template"
+        }
+    },
+    {
+        "code": "tsd_parts",
+        "name": "TSD Parts",
+        "report_family": "parts_tsd",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "TSD Parts",
+        "weekly_meter_row_label": null,
+        "sort_order": 104,
+        "is_active": true,
+        "metadata": {
+            "slug": "tsd-parts",
+            "source": "parts_tsd_legacy_sales_analysis_template"
+        }
+    },
+    {
+        "code": "tsd_repairs",
+        "name": "TSD Repairs",
+        "report_family": "parts_tsd",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "TSD Repairs",
+        "weekly_meter_row_label": null,
+        "sort_order": 108,
+        "is_active": true,
+        "metadata": {
+            "slug": "tsd-repairs",
+            "source": "parts_tsd_legacy_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_rhp_miscellaneous",
+        "name": "RHP MISCELLANEOUS",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "RHP MISCELLANEOUS",
+        "weekly_meter_row_label": null,
+        "sort_order": 200,
+        "is_active": true,
+        "metadata": {
+            "slug": "rhp-miscellaneous",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_pack_5_rapid_rh_l6_smart_sensor",
+        "name": "PACK, 5 ,RAPID RH L6, SMART SENSOR",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "PACK, 5 ,RAPID RH L6, SMART SENSOR",
+        "weekly_meter_row_label": null,
+        "sort_order": 204,
+        "is_active": true,
+        "metadata": {
+            "slug": "pack-5-rapid-rh-l6-smart-sensor",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_pack_5_rapid_rh_l6_smart_sensor_reader",
+        "name": "PACK, 5 ,RAPID RH L6, SMART SENSOR",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "PACK, 5 ,RAPID RH L6, SMART SENSOR",
+        "weekly_meter_row_label": null,
+        "sort_order": 208,
+        "is_active": true,
+        "metadata": {
+            "slug": "pack-5-rapid-rh-l6-smart-sensor",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "true_remote",
+        "name": "TRUE REMOTE",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "TRUE REMOTE",
+        "weekly_meter_row_label": null,
+        "sort_order": 212,
+        "is_active": true,
+        "metadata": {
+            "slug": "true-remote",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_kit_upgrade",
+        "name": "KIT,UPGRADE",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "KIT,UPGRADE",
+        "weekly_meter_row_label": null,
+        "sort_order": 216,
+        "is_active": true,
+        "metadata": {
+            "slug": "kitupgrade",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_floor_sentry",
+        "name": "Floor Sentry",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "Floor Sentry",
+        "weekly_meter_row_label": null,
+        "sort_order": 220,
+        "is_active": true,
+        "metadata": {
+            "slug": "floor-sentry",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_kit_rapid_rh_l6_starter_kit_plus_fahrenheit",
+        "name": "KIT, RAPID RH L6 STARTER KIT PLUS-FAHRENHEIT",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "KIT, RAPID RH L6 STARTER KIT PLUS-FAHRENHEIT",
+        "weekly_meter_row_label": null,
+        "sort_order": 224,
+        "is_active": true,
+        "metadata": {
+            "slug": "kit-rapid-rh-l6-starter-kit-plus-fahrenheit",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_value_pack_25pc_rhp_l6_smart_sensor",
+        "name": "VALUE PACK, 25PC, RHP L6 SMART SENSOR",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "VALUE PACK, 25PC, RHP L6 SMART SENSOR",
+        "weekly_meter_row_label": null,
+        "sort_order": 228,
+        "is_active": true,
+        "metadata": {
+            "slug": "value-pack-25pc-rhp-l6-smart-sensor",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_value_pack_50pc_rhp_l6_smart_sensor",
+        "name": "VALUE PACK, 50PC, RHP L6 SMART SENSOR",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "VALUE PACK, 50PC, RHP L6 SMART SENSOR",
+        "weekly_meter_row_label": null,
+        "sort_order": 232,
+        "is_active": true,
+        "metadata": {
+            "slug": "value-pack-50pc-rhp-l6-smart-sensor",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_super_value_pack_rapid_rh_l6_smart_sensor",
+        "name": "SUPER VALUE PACK,RAPID RH L6, SMART SENSOR",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "SUPER VALUE PACK,RAPID RH L6, SMART SENSOR",
+        "weekly_meter_row_label": null,
+        "sort_order": 236,
+        "is_active": true,
+        "metadata": {
+            "slug": "super-value-packrapid-rh-l6-smart-sensor",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "wfp350_rapid_rh_l6_adv_concrete_kit_datagrabbers_w_bt",
+        "name": "WFP350+ Rapid RH® L6 Adv. Concrete Kit + DataGrabbers w\/BT",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "WFP350+ Rapid RH® L6 Adv. Concrete Kit + DataGrabbers w\/BT",
+        "weekly_meter_row_label": null,
+        "sort_order": 240,
+        "is_active": true,
+        "metadata": {
+            "slug": "wfp350-rapid-rh-l6-adv-concrete-kit-datagrabbers-wbt",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "5_0_miscellaneous",
+        "name": "5.0 MISCELLANEOUS",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "5.0 MISCELLANEOUS",
+        "weekly_meter_row_label": null,
+        "sort_order": 244,
+        "is_active": true,
+        "metadata": {
+            "slug": "50-miscellaneous",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_top_assy_orion_c555_concrete_kit_tested",
+        "name": "TOP ASSY,ORION C555, CONCRETE ,KIT, TESTED",
+        "report_family": "meter",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "TOP ASSY,ORION C555, CONCRETE ,KIT, TESTED",
+        "weekly_meter_row_label": null,
+        "sort_order": 248,
+        "is_active": true,
+        "metadata": {
+            "slug": "top-assyorion-c555-concrete-kit-tested",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_top_assy_orion_910_kit_tested",
+        "name": "TOP ASSY,ORION 910 KIT, TESTED",
+        "report_family": "meter",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "TOP ASSY,ORION 910 KIT, TESTED",
+        "weekly_meter_row_label": "Orion 910",
+        "sort_order": 252,
+        "is_active": true,
+        "metadata": {
+            "slug": "top-assyorion-910-kit-tested",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_top_assy_orion_920_kit_tested",
+        "name": "TOP ASSY,ORION 920 KIT, TESTED",
+        "report_family": "meter",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "TOP ASSY,ORION 920 KIT, TESTED",
+        "weekly_meter_row_label": null,
+        "sort_order": 256,
+        "is_active": true,
+        "metadata": {
+            "slug": "top-assyorion-920-kit-tested",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_top_assy_orion_930_kit_tested",
+        "name": "TOP ASSY,ORION 930 KIT, TESTED",
+        "report_family": "meter",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "TOP ASSY,ORION 930 KIT, TESTED",
+        "weekly_meter_row_label": null,
+        "sort_order": 260,
+        "is_active": true,
+        "metadata": {
+            "slug": "top-assyorion-930-kit-tested",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_top_assy_orion_940_kit_tested",
+        "name": "TOP ASSY,ORION 940 KIT, TESTED",
+        "report_family": "meter",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "TOP ASSY,ORION 940 KIT, TESTED",
+        "weekly_meter_row_label": null,
+        "sort_order": 264,
+        "is_active": true,
+        "metadata": {
+            "slug": "top-assyorion-940-kit-tested",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_top_assy_orion_950_kit_tested",
+        "name": "TOP ASSY,ORION 950 KIT, TESTED",
+        "report_family": "meter",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "TOP ASSY,ORION 950 KIT, TESTED",
+        "weekly_meter_row_label": null,
+        "sort_order": 268,
+        "is_active": true,
+        "metadata": {
+            "slug": "top-assyorion-950-kit-tested",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_meter_reach_extender",
+        "name": "METER REACH EXTENDER",
+        "report_family": "meter",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "METER REACH EXTENDER",
+        "weekly_meter_row_label": null,
+        "sort_order": 272,
+        "is_active": true,
+        "metadata": {
+            "slug": "meter-reach-extender",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_top_assy_l5300",
+        "name": "TOP ASSY, L5300",
+        "report_family": "meter",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "TOP ASSY, L5300",
+        "weekly_meter_row_label": "L5300\/L722",
+        "sort_order": 276,
+        "is_active": true,
+        "metadata": {
+            "slug": "top-assy-l5300",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "top_assy_l601_3_df_tstd",
+        "name": "TOP ASSY.,L601-3 (DF),TSTD",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "TOP ASSY.,L601-3 (DF),TSTD",
+        "weekly_meter_row_label": "L5300\/L722",
+        "sort_order": 280,
+        "is_active": true,
+        "metadata": {
+            "slug": "top-assyl601-3-dftstd",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "top_assy_l722_long_stack_probe_tested",
+        "name": "TOP ASSY,L722 LONG STACK PROBE,TESTED",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "TOP ASSY,L722 LONG STACK PROBE,TESTED",
+        "weekly_meter_row_label": "L5300\/L722",
+        "sort_order": 284,
+        "is_active": true,
+        "metadata": {
+            "slug": "top-assyl722-long-stack-probetested",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "top_assy_l722_short_stack_probe_tested",
+        "name": "TOP ASSY,L722 SHORT STACK PROBE,TESTED",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "TOP ASSY,L722 SHORT STACK PROBE,TESTED",
+        "weekly_meter_row_label": "L5300\/L722",
+        "sort_order": 288,
+        "is_active": true,
+        "metadata": {
+            "slug": "top-assyl722-short-stack-probetested",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "parts_tsd_kit_l5300_l722_long_stack_probe",
+        "name": "KIT, L5300+L722 LONG STACK PROBE",
+        "report_family": "meter",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": "KIT, L5300+L722 LONG STACK PROBE",
+        "weekly_meter_row_label": "L5300\/L722",
+        "sort_order": 292,
+        "is_active": true,
+        "metadata": {
+            "slug": "kit-l5300l722-long-stack-probe",
+            "source": "parts_tsd_sales_analysis_template"
+        }
+    },
+    {
+        "code": "rhp_unassigned",
+        "name": "RHP Unassigned",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "RHP Unassigned",
+        "weekly_meter_row_label": null,
+        "sort_order": 11,
+        "is_active": true,
+        "metadata": {
+            "slug": "rhp-unassigned",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "wfp350_rapid_rh_l6_adv_concrete_kit_datagrabbers_w_bt_2",
+        "name": "WFP350+ Rapid RH® L6 Adv. Concrete Kit + DataGrabbers w\/BT",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": "WFP350+ Rapid RH® L6 Adv. Concrete Kit + DataGrabbers w\/BT",
+        "weekly_meter_row_label": null,
+        "sort_order": 243,
+        "is_active": true,
+        "metadata": {
+            "slug": "wfp350-rapid-rh-l6-adv-concrete-kit-datagrabbers-wbt",
+            "source": "rhp_sales_analysis_template"
+        }
+    },
+    {
+        "code": "bessemeter",
+        "name": "Bessemeter",
+        "report_family": "parts_tsd",
+        "sales_analysis_bucket": "parts_tsd",
+        "total_sales_row_label": null,
+        "weekly_meter_row_label": null,
+        "sort_order": 102,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "code": "wfp500_reusable_pro_floor_installer_package_celsius_950",
+        "name": "WFP500 Reusable Pro Floor Installer Package +Celsius,+950",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": null,
+        "weekly_meter_row_label": null,
+        "sort_order": 120,
+        "is_active": true,
+        "metadata": null
+    },
+    {
+        "code": "category",
+        "name": "-",
+        "report_family": "rhp",
+        "sales_analysis_bucket": "rhp",
+        "total_sales_row_label": null,
+        "weekly_meter_row_label": null,
+        "sort_order": 100,
+        "is_active": true,
+        "metadata": null
+    }
+]

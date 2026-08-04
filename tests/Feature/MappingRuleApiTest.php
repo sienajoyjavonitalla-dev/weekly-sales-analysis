@@ -165,26 +165,25 @@ class MappingRuleApiTest extends TestCase
         $this->assertSame($stateRule->id, $placement->mapping_rule_id);
     }
 
-    public function test_parts_tsd_organized_seeder_does_not_duplicate_rhp_unassigned_rules(): void
+    public function test_mapping_rule_seeder_keeps_single_active_rhp_rule_for_shared_item(): void
     {
         $this->seed([
-            \Database\Seeders\RhpProductCategorySeeder::class,
-            \Database\Seeders\PartsTsdProductCategorySeeder::class,
-            \Database\Seeders\RhpMappingRuleSeeder::class,
-            \Database\Seeders\PartsTsdMappingRuleSeeder::class,
+            \Database\Seeders\ProductCategorySeeder::class,
+            \Database\Seeders\MappingRuleSeeder::class,
         ]);
 
-        $rules = MappingRule::query()
+        $rhpAndPartsRules = MappingRule::query()
             ->where('source_type', 'sales_analysis')
             ->where('match_field', 'item_id')
             ->where('match_operator', 'exact')
             ->where('pattern', '694-R0003-002')
+            ->whereIn('target_bucket', ['rhp', 'parts_tsd'])
             ->where('is_active', true)
             ->get();
 
-        $this->assertCount(1, $rules);
-        $this->assertSame('rhp', $rules->first()->target_bucket);
-        $this->assertSame('rhp_sales_analysis_template', $rules->first()->metadata['source'] ?? null);
+        $this->assertCount(1, $rhpAndPartsRules);
+        $this->assertSame('rhp', $rhpAndPartsRules->first()->target_bucket);
+        $this->assertSame('rhp_sales_analysis_template', $rhpAndPartsRules->first()->metadata['source'] ?? null);
     }
 
     public function test_cannot_assign_parts_tsd_category_to_rhp_mapping_rule(): void

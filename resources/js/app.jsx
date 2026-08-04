@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 
@@ -439,10 +439,8 @@ function App() {
           ) : null}
           {activeTab === 'exports' ? (
             <ExportsScreen
-              batchId={batchId}
               batches={batchesWithUploads}
               batchesLoading={batchesLoading}
-              setBatchId={setBatchId}
               showNotice={showNotice}
             />
           ) : null}
@@ -3403,15 +3401,16 @@ function SummaryCards({ result }) {
   );
 }
 
-function ExportsScreen({ batchId, batches, batchesLoading, setBatchId, showNotice }) {
-  const [reports, setReports] = useState([]);
-  const [generating, setGenerating] = useState(false);
+function ExportsScreen({ batches, batchesLoading, showNotice }) {
+  const [reportsByBatchId, setReportsByBatchId] = useState({});
+  const [generatingBatchId, setGeneratingBatchId] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [includeState, setIncludeState] = useState(false);
-  const canLoad = Boolean(batchId);
+  const isBusy = refreshing || generatingBatchId != null;
 
   const loadReports = useCallback(async ({ showLoading = false } = {}) => {
-    if (!canLoad) {
+    if (batches.length === 0) {
+      setReportsByBatchId({});
       return;
     }
 
@@ -3420,8 +3419,18 @@ function ExportsScreen({ batchId, batches, batchesLoading, setBatchId, showNotic
     }
 
     try {
-      const response = await axios.get(`/api/import-batches/${batchId}/generated-reports`);
-      setReports(response.data.data ?? []);
+      const entries = await Promise.all(
+        batches.map(async (batch) => {
+          try {
+            const response = await axios.get(`/api/import-batches/${batch.id}/generated-reports`);
+            return [String(batch.id), response.data.data ?? []];
+          } catch {
+            return [String(batch.id), []];
+          }
+        }),
+      );
+
+      setReportsByBatchId(Object.fromEntries(entries));
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to load generated reports.'));
     } finally {
@@ -3429,37 +3438,34 @@ function ExportsScreen({ batchId, batches, batchesLoading, setBatchId, showNotic
         setRefreshing(false);
       }
     }
-  }, [batchId, canLoad, showNotice]);
+  }, [batches, showNotice]);
 
   useEffect(() => {
     loadReports();
   }, [loadReports]);
 
-  async function generateReports() {
-    setGenerating(true);
+  async function generateReportsForBatch(batchId) {
+    setGeneratingBatchId(batchId);
 
     try {
       const response = await axios.post(`/api/import-batches/${batchId}/generated-reports`, {
         include_state: includeState,
       });
-      setReports(response.data.data ?? []);
-      showNotice('success', 'Report export finished.');
+      setReportsByBatchId((current) => ({
+        ...current,
+        [String(batchId)]: response.data.data ?? [],
+      }));
+      showNotice('success', `Reports generated for batch #${batchId}.`);
     } catch (error) {
-      showNotice('error', messageFromError(error, 'Unable to generate reports.'));
+      showNotice('error', messageFromError(error, `Unable to generate reports for batch #${batchId}.`));
     } finally {
-      setGenerating(false);
+      setGeneratingBatchId(null);
     }
   }
 
   return (
     <section className="panel-grid">
       <article className="panel panel-span">
-        <BatchSelect
-          batchId={batchId}
-          batches={batches}
-          batchesLoading={batchesLoading}
-          onChange={setBatchId}
-        />
         <div className="section-heading">
           <div>
             <p className="eyebrow">Exports</p>
@@ -3470,16 +3476,16 @@ function ExportsScreen({ batchId, batches, batchesLoading, setBatchId, showNotic
               <label className="checkbox-label">
                 <input
                   checked={includeState}
-                  disabled={generating || refreshing}
+                  disabled={isBusy}
                   type="checkbox"
                   onChange={(event) => setIncludeState(event.target.checked)}
                 />
                 Include State
               </label>
               <button
-                aria-label="Click Generate Reports after changing this to update the downloadable file."
+                aria-label="Click Generate Report on a batch after changing this to update the downloadable file."
                 className="exports-include-state-info"
-                data-tooltip="Click Generate Reports after changing this to update the downloadable file."
+                data-tooltip="Click Generate Report on a batch after changing this to update the downloadable file."
                 type="button"
               >
                 <ActionIcon name="info" />
@@ -3487,19 +3493,27 @@ function ExportsScreen({ batchId, batches, batchesLoading, setBatchId, showNotic
             </div>
             <button
               className="secondary-button"
-              disabled={!canLoad || refreshing || generating}
+              disabled={batches.length === 0 || isBusy}
               type="button"
               onClick={() => loadReports({ showLoading: true })}
             >
-              <ButtonContent icon="refresh" loading={refreshing}>{refreshing ? 'Refreshing...' : 'Refresh'}</ButtonContent>
-            </button>
-            <button className="primary-button" disabled={!canLoad || generating || refreshing} type="button" onClick={generateReports}>
-              <ButtonContent icon="export" loading={generating}>{generating ? 'Generating...' : 'Generate Reports'}</ButtonContent>
+              <ButtonContent icon="refresh" loading={refreshing}>
+                {refreshing ? 'Refreshing...' : 'Refresh'}
+              </ButtonContent>
             </button>
           </div>
         </div>
-        {!canLoad ? <p>Select a batch to continue.</p> : null}
-        <ReportsTable reports={reports} />
+        {batchesLoading ? <p>Loading batches...</p> : null}
+        {!batchesLoading && batches.length === 0 ? <p>No batches with uploads yet.</p> : null}
+        {!batchesLoading && batches.length > 0 ? (
+          <ExportsBatchesTable
+            batches={batches}
+            generatingBatchId={generatingBatchId}
+            isBusy={isBusy}
+            reportsByBatchId={reportsByBatchId}
+            onGenerate={generateReportsForBatch}
+          />
+        ) : null}
       </article>
     </section>
   );
@@ -3528,48 +3542,112 @@ function SettingsPopup({ selectedTheme, onThemeChange }) {
   );
 }
 
-function ReportsTable({ reports }) {
-  const pagination = usePagination(reports);
+function ExportsBatchesTable({ batches, generatingBatchId, isBusy, reportsByBatchId, onGenerate }) {
+  const pagination = usePagination(batches);
+  const [expandedBatchId, setExpandedBatchId] = useState(null);
 
-  if (reports.length === 0) {
-    return <p>No generated reports yet.</p>;
+  function toggleExpanded(batchId) {
+    setExpandedBatchId((current) => (current === batchId ? null : batchId));
   }
 
   return (
     <>
-    <div className="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Report</th>
-            <th>Status</th>
-            <th>File</th>
-            <th>Download</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pagination.paginatedItems.map((report) => (
-            <tr key={report.id ?? report.report_type}>
-              <td>{report.report_type}</td>
-              <td>{report.status}</td>
-              <td>{report.file_name ?? 'n/a'}</td>
-              <td>
-                {report.status === 'completed' ? (
-                  <a className="secondary-button" href={`/api/generated-reports/${report.id}/download`}>
-                    <ButtonContent icon="download">Download</ButtonContent>
-                  </a>
-                ) : (
-                  'Unavailable'
-                )}
-              </td>
+      <div className="table-wrap">
+        <table className="exports-batches-table">
+          <thead>
+            <tr>
+              <th>Batch</th>
+              <th>Week Range</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-    <PaginationControls {...pagination} />
+          </thead>
+          <tbody>
+            {pagination.paginatedItems.map((batch) => {
+              const batchId = String(batch.id);
+              const reports = reportsByBatchId[batchId] ?? [];
+              const isGenerating = generatingBatchId === batch.id || generatingBatchId === batchId;
+              const isExpanded = expandedBatchId === batchId;
+
+              return (
+                <Fragment key={batch.id}>
+                  <tr className={isExpanded ? 'exports-batch-row-expanded' : undefined}>
+                    <td>
+                      <div className="exports-batch-cell">
+                        <button
+                          aria-expanded={isExpanded}
+                          aria-label={isExpanded ? `Collapse batch #${batch.id} reports` : `Expand batch #${batch.id} reports`}
+                          className={isExpanded ? 'exports-expand-button exports-expand-button-open' : 'exports-expand-button'}
+                          type="button"
+                          onClick={() => toggleExpanded(batchId)}
+                        >
+                          <ActionIcon name="chevron" />
+                        </button>
+                        <span>#{batch.id}</span>
+                      </div>
+                    </td>
+                    <td>{formatWeekRange(batch.week_start, batch.week_ending)}</td>
+                    <td>{batch.status}</td>
+                    <td>
+                      <button
+                        className="primary-button"
+                        disabled={isBusy}
+                        type="button"
+                        onClick={() => onGenerate(batch.id)}
+                      >
+                        <ButtonContent icon="export" loading={isGenerating}>
+                          {isGenerating ? 'Generating...' : 'Generate Report'}
+                        </ButtonContent>
+                      </button>
+                    </td>
+                  </tr>
+                  {isExpanded ? (
+                    <tr className="exports-batch-details-row">
+                      <td colSpan={4}>
+                        <ExportBatchReportsPanel reports={reports} />
+                      </td>
+                    </tr>
+                  ) : null}
+                </Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <PaginationControls {...pagination} />
     </>
   );
+}
+
+function ExportBatchReportsPanel({ reports }) {
+  if (reports.length === 0) {
+    return <p className="exports-details-empty">No generated reports yet.</p>;
+  }
+
+  return (
+    <div className="exports-details-list">
+      {reports.map((report) => (
+        <div className="exports-details-row" key={report.id ?? report.report_type}>
+          <div className="exports-details-meta">
+            <strong>{generatedReportLabel(report.report_type)}</strong>
+            <span>{report.status}</span>
+            <span>{report.file_name ?? 'n/a'}</span>
+          </div>
+          {report.status === 'completed' ? (
+            <a className="secondary-button" href={`/api/generated-reports/${report.id}/download`}>
+              <ButtonContent icon="download">Download</ButtonContent>
+            </a>
+          ) : (
+            <span className="exports-details-unavailable">Unavailable</span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function generatedReportLabel(reportType) {
+  return workbookTypes.find((type) => type.key === reportType)?.label ?? reportType;
 }
 
 function SimpleList({ items }) {

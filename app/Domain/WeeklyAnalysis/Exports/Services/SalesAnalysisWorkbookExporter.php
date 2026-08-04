@@ -58,6 +58,8 @@ class SalesAnalysisWorkbookExporter
 
     private const GRAND_TOTAL_FILL = 'A9D1F7';
 
+    private const CATEGORY_TOTAL_FILL = 'FFFF00';
+
     private const CATEGORY_HEADER_FONT_SIZE = 12;
 
     public function __construct(
@@ -461,6 +463,12 @@ class SalesAnalysisWorkbookExporter
         }
 
         $this->applyAccountingFormat($sheet, 'K', $rowNumber);
+
+        $sheet->getStyle('A'.$rowNumber.':K'.$rowNumber)
+            ->getFill()
+            ->setFillType(Fill::FILL_SOLID)
+            ->getStartColor()
+            ->setARGB('FF'.self::CATEGORY_TOTAL_FILL);
 
         $sheet->getStyle('J'.$rowNumber.':K'.$rowNumber)
             ->getFont()
