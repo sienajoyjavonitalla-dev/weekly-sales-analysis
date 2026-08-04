@@ -167,10 +167,7 @@ class MappingRuleApiTest extends TestCase
 
     public function test_mapping_rule_seeder_keeps_single_active_rhp_rule_for_shared_item(): void
     {
-        $this->seed([
-            \Database\Seeders\ProductCategorySeeder::class,
-            \Database\Seeders\MappingRuleSeeder::class,
-        ]);
+        $this->seed(\Database\Seeders\ProductCategorySeeder::class);
 
         $rhpAndPartsRules = MappingRule::query()
             ->where('source_type', 'sales_analysis')
