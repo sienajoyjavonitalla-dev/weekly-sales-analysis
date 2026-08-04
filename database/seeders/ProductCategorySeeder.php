@@ -4,14 +4,18 @@ namespace Database\Seeders;
 
 use App\Models\MappingRule;
 use App\Models\ProductCategory;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 
 class ProductCategorySeeder extends Seeder
 {
     public function run(): void
     {
+        $this->ensureProductCategoryForeignKeys();
+
         if (ProductCategory::query()->exists() || MappingRule::query()->exists()) {
             $this->command?->info('product_categories or mapping_rules already has data; skipping.');
 
@@ -94,6 +98,56 @@ class ProductCategorySeeder extends Seeder
         }
 
         $this->command?->info('Seeded '.count($categories)." product categories and {$ruleCount} mapping rules.");
+    }
+
+    /**
+     * Ensure product_category_id FKs reference product_categories (not a renamed backup table).
+     */
+    private function ensureProductCategoryForeignKeys(): void
+    {
+        if (DB::getDriverName() !== 'mysql' || ! Schema::hasTable('product_categories')) {
+            return;
+        }
+
+        $tables = ['mapping_rules', 'sales_rows'];
+
+        if (Schema::hasTable('sales_row_state_placements')) {
+            $tables[] = 'sales_row_state_placements';
+        }
+
+        $database = DB::getDatabaseName();
+
+        foreach ($tables as $table) {
+            if (! Schema::hasTable($table)) {
+                continue;
+            }
+
+            $referencedTable = DB::table('information_schema.KEY_COLUMN_USAGE')
+                ->where('CONSTRAINT_SCHEMA', $database)
+                ->where('TABLE_NAME', $table)
+                ->where('COLUMN_NAME', 'product_category_id')
+                ->whereNotNull('REFERENCED_TABLE_NAME')
+                ->value('REFERENCED_TABLE_NAME');
+
+            if ($referencedTable === 'product_categories') {
+                continue;
+            }
+
+            if ($referencedTable !== null) {
+                $this->command?->warn("{$table}: retargeting product_category_id FK from {$referencedTable} to product_categories");
+
+                Schema::table($table, function (Blueprint $blueprint): void {
+                    $blueprint->dropForeign(['product_category_id']);
+                });
+            }
+
+            Schema::table($table, function (Blueprint $blueprint): void {
+                $blueprint->foreign('product_category_id')
+                    ->references('id')
+                    ->on('product_categories')
+                    ->nullOnDelete();
+            });
+        }
     }
 
     /**
