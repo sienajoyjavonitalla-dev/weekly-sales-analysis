@@ -6,11 +6,65 @@ use App\Domain\WeeklyAnalysis\Imports\Enums\WorkbookType;
 use App\Domain\WeeklyAnalysis\Imports\Services\WeeklyWorkbookSetValidator;
 use App\Domain\WeeklyAnalysis\Reconciliation\Services\WeeklyReconciliationService;
 use App\Models\ImportBatch;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+Artisan::command('db:fix-product-category-fks', function (): int {
+    if (DB::getDriverName() !== 'mysql') {
+        $this->error('This command only supports MySQL.');
+
+        return self::FAILURE;
+    }
+
+    if (! Schema::hasTable('product_categories')) {
+        $this->error('Table product_categories does not exist.');
+
+        return self::FAILURE;
+    }
+
+    $tables = ['mapping_rules', 'sales_rows'];
+
+    if (Schema::hasTable('sales_row_state_placements')) {
+        $tables[] = 'sales_row_state_placements';
+    }
+
+    $database = DB::getDatabaseName();
+
+    foreach ($tables as $table) {
+        $constraint = DB::table('information_schema.KEY_COLUMN_USAGE')
+            ->where('CONSTRAINT_SCHEMA', $database)
+            ->where('TABLE_NAME', $table)
+            ->where('COLUMN_NAME', 'product_category_id')
+            ->whereNotNull('REFERENCED_TABLE_NAME')
+            ->first(['CONSTRAINT_NAME', 'REFERENCED_TABLE_NAME']);
+
+        if ($constraint !== null) {
+            $this->line("{$table}: dropping FK {$constraint->CONSTRAINT_NAME} -> {$constraint->REFERENCED_TABLE_NAME}");
+
+            Schema::table($table, function (Blueprint $blueprint): void {
+                $blueprint->dropForeign(['product_category_id']);
+            });
+        }
+
+        Schema::table($table, function (Blueprint $blueprint): void {
+            $blueprint->foreign('product_category_id')
+                ->references('id')
+                ->on('product_categories')
+                ->nullOnDelete();
+        });
+
+        $this->info("{$table}: FK now references product_categories");
+    }
+
+    return self::SUCCESS;
+})->purpose('Point product_category_id foreign keys at product_categories');
 
 Artisan::command('about:weekly-sales', function (): void {
     $this->info('Weekly Sales Analysis automation scaffold is installed.');
 })->purpose('Display weekly sales analysis scaffold information');
+
 
 Artisan::command('weekly-analysis:validate-workbooks
     {--sales-analysis= : Path to the weekly Sales Analysis workbook}
