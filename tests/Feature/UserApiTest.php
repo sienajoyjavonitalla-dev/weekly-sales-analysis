@@ -85,6 +85,22 @@ class UserApiTest extends TestCase
             ->assertJsonValidationErrors(['role']);
     }
 
+    public function test_admin_can_delete_other_user_but_not_self(): void
+    {
+        $admin = $this->createAdmin();
+        $other = $this->createAnalyst();
+
+        $this->actingAs($admin)
+            ->deleteJson("/api/users/{$other->id}")
+            ->assertNoContent();
+
+        $this->assertDatabaseMissing('users', ['id' => $other->id]);
+
+        $this->actingAs($admin)
+            ->deleteJson("/api/users/{$admin->id}")
+            ->assertForbidden();
+    }
+
     public function test_inactive_user_cannot_login(): void
     {
         $user = User::query()->create([

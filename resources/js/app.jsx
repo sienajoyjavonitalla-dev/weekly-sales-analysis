@@ -2626,6 +2626,8 @@ function UsersScreen({ currentUser, showNotice }) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState('active');
   const [roleFilter, setRoleFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -2755,9 +2757,44 @@ function UsersScreen({ currentUser, showNotice }) {
     }
   }
 
+  async function confirmDeleteUser() {
+    if (!selectedUser || (currentUser && selectedUser.id === currentUser.id)) {
+      return;
+    }
+
+    setDeleting(true);
+
+    try {
+      await axios.delete(`/api/users/${selectedUser.id}`);
+      showNotice('success', 'User deleted.');
+      setSelectedUser(null);
+      setIsDeleteConfirmOpen(false);
+      await loadUsers();
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to delete user.'));
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   const isEditingSelf = selectedUser && currentUser && selectedUser.id === currentUser.id;
 
   return (
+    <>
+      {isDeleteConfirmOpen && selectedUser ? (
+        <ConfirmDialog
+          confirmLabel="Delete User"
+          isProcessing={deleting}
+          message={`Delete user "${selectedUser.name}"? This action cannot be undone.`}
+          title="Delete User"
+          onCancel={() => {
+            if (!deleting) {
+              setIsDeleteConfirmOpen(false);
+            }
+          }}
+          onConfirm={confirmDeleteUser}
+        />
+      ) : null}
     <section className="panel-grid">
       <article className="panel panel-legend panel-transparent">
         <p className="eyebrow">Users</p>
@@ -2818,12 +2855,23 @@ function UsersScreen({ currentUser, showNotice }) {
           <UserForm
             form={editForm}
             isSelf={Boolean(isEditingSelf)}
-            isSubmitting={editing}
+            isSubmitting={editing || deleting}
             passwordRequired={false}
             primaryLabel="Update User"
             setForm={setEditForm}
             onSubmit={submitEditUser}
-          />
+          >
+            {!isEditingSelf ? (
+              <button
+                className="danger-button"
+                disabled={editing || deleting}
+                type="button"
+                onClick={() => setIsDeleteConfirmOpen(true)}
+              >
+                <ButtonContent icon="delete">Delete User</ButtonContent>
+              </button>
+            ) : null}
+          </UserForm>
         ) : (
           <div className="empty-state">
             <strong>No user selected</strong>
@@ -2854,6 +2902,7 @@ function UsersScreen({ currentUser, showNotice }) {
         </Modal>
       ) : null}
     </section>
+    </>
   );
 }
 
@@ -2869,6 +2918,7 @@ function userToForm(managedUser) {
 }
 
 function UserForm({
+  children,
   form,
   isSelf = false,
   isSubmitting = false,
@@ -2945,7 +2995,7 @@ function UserForm({
           Active
         </label>
         {isSelf ? (
-          <p className="form-hint">You cannot deactivate or demote your own account.</p>
+          <p className="form-hint">You cannot deactivate, demote, or delete your own account.</p>
         ) : null}
         <div className="form-actions">
           <button className="primary-button" disabled={isSubmitting} type="submit">
@@ -2956,6 +3006,7 @@ function UserForm({
               {submitLabel}
             </ButtonContent>
           </button>
+          {children}
         </div>
       </fieldset>
     </form>

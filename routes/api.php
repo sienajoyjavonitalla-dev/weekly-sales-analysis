@@ -36,6 +36,7 @@ Route::middleware(['web', 'auth', 'throttle:60,1'])->group(function (): void {
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
     Route::patch('/users/{user}', [UserController::class, 'update']);
+    Route::delete('/users/{user}', [UserController::class, 'destroy']);
 
     Route::apiResource('product-categories', ProductCategoryController::class)
         ->parameters(['product-categories' => 'productCategory'])

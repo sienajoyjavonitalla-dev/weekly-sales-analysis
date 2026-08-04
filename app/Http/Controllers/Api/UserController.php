@@ -76,4 +76,20 @@ class UserController
 
         return response()->json(['data' => $user->refresh()]);
     }
+
+    public function destroy(Request $request, User $user, AuditLogger $auditLogger): JsonResponse
+    {
+        Gate::authorize('delete', $user);
+
+        if ($request->user()->is($user)) {
+            throw ValidationException::withMessages([
+                'user' => ['You cannot delete your own account.'],
+            ]);
+        }
+
+        $auditLogger->log('user.deleted', $request, $user);
+        $user->delete();
+
+        return response()->json(null, 204);
+    }
 }

@@ -62,11 +62,15 @@ class PolicyTest extends TestCase
     {
         $policy = new UserPolicy();
         $admin = new User(['role' => 'admin']);
+        $admin->id = 1;
         $model = new User(['role' => 'analyst']);
+        $model->id = 2;
 
         $this->assertTrue($policy->viewAny($admin));
         $this->assertTrue($policy->create($admin));
         $this->assertTrue($policy->update($admin, $model));
+        $this->assertTrue($policy->delete($admin, $model));
+        $this->assertFalse($policy->delete($admin, $admin));
     }
 
     public function test_analyst_cannot_manage_users(): void
@@ -78,5 +82,6 @@ class PolicyTest extends TestCase
         $this->assertFalse($policy->viewAny($analyst));
         $this->assertFalse($policy->create($analyst));
         $this->assertFalse($policy->update($analyst, $model));
+        $this->assertFalse($policy->delete($analyst, $model));
     }
 }
