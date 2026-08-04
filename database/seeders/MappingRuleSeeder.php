@@ -30,22 +30,22 @@ class MappingRuleSeeder extends Seeder
         foreach ($rules as $rule) {
             $categoryCode = $rule['category_code'] ?? null;
 
-            MappingRule::query()->updateOrCreate(
-                ['name' => $rule['name']],
-                [
-                    'product_category_id' => $categoryCode
-                        ? ($categoryIds[$categoryCode] ?? null)
-                        : null,
-                    'source_type' => $rule['source_type'],
-                    'match_field' => $rule['match_field'],
-                    'match_operator' => $rule['match_operator'],
-                    'pattern' => $rule['pattern'],
-                    'target_bucket' => $rule['target_bucket'] ?: null,
-                    'priority' => (int) $rule['priority'],
-                    'is_active' => (bool) $rule['is_active'],
-                    'metadata' => $rule['metadata'] ?? null,
-                ],
-            );
+            MappingRule::query()->create([
+                'name' => $rule['name'],
+                'product_category_id' => $categoryCode
+                    ? ($categoryIds[$categoryCode] ?? null)
+                    : null,
+                'source_type' => $rule['source_type'],
+                'match_field' => $rule['match_field'],
+                'match_operator' => $rule['match_operator'],
+                'pattern' => $rule['pattern'],
+                'target_bucket' => $rule['target_bucket'] ?: null,
+                'priority' => (int) $rule['priority'],
+                'is_active' => (bool) $rule['is_active'],
+                'metadata' => $rule['metadata'] ?? null,
+            ]);
         }
+
+        $this->command?->info('Seeded '.count($rules).' mapping rules.');
     }
 }
