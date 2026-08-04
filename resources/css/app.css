@@ -305,6 +305,8 @@ textarea {
   position: sticky;
   top: 58px;
   z-index: 30;
+  display: flex;
+  flex-direction: column;
   align-self: start;
   min-height: calc(100vh - 58px);
   padding: 22px 14px;
@@ -331,8 +333,21 @@ textarea {
 }
 
 .sidebar-nav {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.sidebar-nav-main {
   display: grid;
   gap: 8px;
+}
+
+.sidebar-nav-footer {
+  margin-top: auto;
+  padding-top: 12px;
 }
 
 .sidebar-link {
@@ -2218,6 +2233,81 @@ td {
   position: relative;
 }
 
+.how-to-steps {
+  display: grid;
+  gap: 22px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.how-to-step {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.how-to-step:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.how-to-step-header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.how-to-step-number {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--primary-2);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.how-to-step h3 {
+  margin: 0 0 6px;
+  color: var(--text-strong);
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.how-to-step p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.how-to-step-media {
+  display: grid;
+  place-items: center;
+  width: min(100%, 720px);
+  margin-left: 46px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.how-to-step-media img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 720px) {
+  .how-to-step-media {
+    margin-left: 0;
+  }
+}
+
 .settings-popup {
   position: absolute;
   top: 0;
@@ -2340,7 +2430,16 @@ td {
   }
 
   .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-nav-main {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sidebar-nav-footer {
+    margin-top: 8px;
   }
 
   .workspace {

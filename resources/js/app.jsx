@@ -77,6 +77,18 @@ function SettingsIcon() {
   );
 }
 
+function HowToUseIcon() {
+  return (
+    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+      <path d="M5 4h11a2 2 0 012 2v14H7a2 2 0 01-2-2V4z" />
+      <path d="M7 4v14" />
+      <path d="M10 8h6" />
+      <path d="M10 12h6" />
+      <path d="M10 16h4" />
+    </svg>
+  );
+}
+
 function ActionIcon({ name }) {
   const paths = {
     add: ['M12 5v14', 'M5 12h14'],
@@ -376,41 +388,58 @@ function App() {
         <aside className={isSidebarCollapsed ? 'sidebar sidebar-collapsed' : 'sidebar'} aria-label="Primary navigation">
           <div className="sidebar-title">Workflow</div>
           <nav className="sidebar-nav" aria-label="Weekly analysis workflow">
-            {workflowTabs.map((tab) => {
-              const Icon = tab.icon;
+            <div className="sidebar-nav-main">
+              {workflowTabs.map((tab) => {
+                const Icon = tab.icon;
 
-              return (
+                return (
+                  <button
+                    className={activeTab === tab.id ? 'sidebar-link sidebar-link-active' : 'sidebar-link'}
+                    key={tab.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setIsSettingsOpen(false);
+                    }}
+                  >
+                    <span className="sidebar-link-icon" aria-hidden="true">
+                      <Icon />
+                    </span>
+                    <span className="sidebar-link-label">{tab.label}</span>
+                  </button>
+                );
+              })}
+              <div className="settings-nav-item">
                 <button
-                  className={activeTab === tab.id ? 'sidebar-link sidebar-link-active' : 'sidebar-link'}
-                  key={tab.id}
+                  aria-expanded={isSettingsOpen}
+                  className={isSettingsOpen ? 'sidebar-link sidebar-link-active' : 'sidebar-link'}
                   type="button"
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    setIsSettingsOpen(false);
-                  }}
+                  onClick={() => setIsSettingsOpen((current) => !current)}
                 >
                   <span className="sidebar-link-icon" aria-hidden="true">
-                    <Icon />
+                    <SettingsIcon />
                   </span>
-                  <span className="sidebar-link-label">{tab.label}</span>
+                  <span className="sidebar-link-label">Settings</span>
                 </button>
-              );
-            })}
-            <div className="settings-nav-item">
+                {isSettingsOpen ? (
+                  <SettingsPopup selectedTheme={user.theme ?? 'dark'} onThemeChange={handleThemeChange} />
+                ) : null}
+              </div>
+            </div>
+            <div className="sidebar-nav-footer">
               <button
-                aria-expanded={isSettingsOpen}
-                className={isSettingsOpen ? 'sidebar-link sidebar-link-active' : 'sidebar-link'}
+                className={activeTab === 'how-to-use' ? 'sidebar-link sidebar-link-active' : 'sidebar-link'}
                 type="button"
-                onClick={() => setIsSettingsOpen((current) => !current)}
+                onClick={() => {
+                  setActiveTab('how-to-use');
+                  setIsSettingsOpen(false);
+                }}
               >
                 <span className="sidebar-link-icon" aria-hidden="true">
-                  <SettingsIcon />
+                  <HowToUseIcon />
                 </span>
-                <span className="sidebar-link-label">Settings</span>
+                <span className="sidebar-link-label">How to Use</span>
               </button>
-              {isSettingsOpen ? (
-                <SettingsPopup selectedTheme={user.theme ?? 'dark'} onThemeChange={handleThemeChange} />
-              ) : null}
             </div>
           </nav>
         </aside>
@@ -444,6 +473,7 @@ function App() {
               showNotice={showNotice}
             />
           ) : null}
+          {activeTab === 'how-to-use' ? <HowToUseScreen /> : null}
         </section>
       </div>
     </main>
@@ -3398,6 +3428,77 @@ function SummaryCards({ result }) {
         <strong>{result.is_balanced ? 'Balanced' : 'Needs Review'}</strong>
       </div>
     </div>
+  );
+}
+
+const howToUseSteps = [
+  {
+    title: 'Select a week range',
+    body: 'Choose the week range for the workbook you are about to upload.',
+    image: '/images/1.png',
+  },
+  {
+    title: 'Choose a file to upload',
+    body: 'Select the workbook file. For now, Sales Analysis is the only workbook type that works.',
+    image: '/images/2.png',
+  },
+  {
+    title: 'Click Upload',
+    body: 'Upload the selected Sales Analysis workbook for that week.',
+    image: '/images/3.png',
+  },
+  {
+    title: 'Resolve unmatched rows',
+    body: 'If unmatched rows appear, resolve them by adding a bucket and category. You can also add a mapping rule — after saving the rule, matching rows are resolved automatically.',
+    image: '/images/4.png',
+  },
+  {
+    title: 'Generate reports on Exports',
+    body: 'Go to the Exports page, find the week range for the newly uploaded workbook, then click Generate Reports and wait for generation to finish.',
+    image: '/images/5.png',
+  },
+  {
+    title: 'Download Sales Analysis',
+    body: 'Open the dropdown for that batch and download the Sales Analysis report.',
+    image: '/images/6.png',
+  },
+];
+
+function HowToUseScreen() {
+  return (
+    <section className="panel-grid">
+      <article className="panel panel-span">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Guide</p>
+            <h2>How to Use</h2>
+          </div>
+        </div>
+
+        <ol className="how-to-steps">
+          {howToUseSteps.map((step, index) => {
+            const stepNumber = index + 1;
+
+            return (
+              <li className="how-to-step" key={step.title}>
+                <div className="how-to-step-header">
+                  <span className="how-to-step-number" aria-hidden="true">
+                    {stepNumber}
+                  </span>
+                  <div>
+                    <h3>{step.title}</h3>
+                    <p>{step.body}</p>
+                  </div>
+                </div>
+                <div className="how-to-step-media">
+                  <img src={step.image} alt={`Step ${stepNumber}: ${step.title}`} />
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </article>
+    </section>
   );
 }
 
