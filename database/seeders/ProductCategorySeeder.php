@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\ProductCategory;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class ProductCategorySeeder extends Seeder
@@ -29,8 +30,19 @@ class ProductCategorySeeder extends Seeder
             throw new RuntimeException('Product category snapshot is empty.');
         }
 
+        $now = now();
+        $maxId = 0;
+
         foreach ($categories as $category) {
-            ProductCategory::query()->create([
+            if (! isset($category['id'])) {
+                throw new RuntimeException("Product category snapshot row missing id: {$category['code']}");
+            }
+
+            $id = (int) $category['id'];
+            $maxId = max($maxId, $id);
+
+            ProductCategory::query()->insert([
+                'id' => $id,
                 'code' => $category['code'],
                 'name' => $category['name'],
                 'report_family' => $category['report_family'],
@@ -39,8 +51,16 @@ class ProductCategorySeeder extends Seeder
                 'weekly_meter_row_label' => $category['weekly_meter_row_label'] ?: null,
                 'sort_order' => (int) $category['sort_order'],
                 'is_active' => (bool) $category['is_active'],
-                'metadata' => $category['metadata'] ?? null,
+                'metadata' => isset($category['metadata'])
+                    ? json_encode($category['metadata'], JSON_THROW_ON_ERROR)
+                    : null,
+                'created_at' => $now,
+                'updated_at' => $now,
             ]);
+        }
+
+        if ($maxId > 0 && DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE product_categories AUTO_INCREMENT = ".($maxId + 1));
         }
 
         $this->command?->info('Seeded '.count($categories).' product categories.');

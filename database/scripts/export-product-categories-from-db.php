@@ -35,6 +35,7 @@ $missingFkIds = array_values(array_diff($referencedIds, $categories->pluck('id')
 
 $rows = $categories->map(static function (ProductCategory $category): array {
     return [
+        'id' => (int) $category->id,
         'code' => $category->code,
         'name' => $category->name,
         'report_family' => $category->report_family,

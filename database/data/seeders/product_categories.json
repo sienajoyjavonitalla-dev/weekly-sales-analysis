@@ -1,5 +1,6 @@
 [
     {
+        "id": 12,
         "code": "rhp_miscellaneous",
         "name": "RHP MISCELLANEOUS",
         "report_family": "rhp",
@@ -14,6 +15,7 @@
         }
     },
     {
+        "id": 13,
         "code": "pack_5_rapid_rh_l6_smart_sensor",
         "name": "PACK, 5 ,RAPID RH L6, SMART SENSOR",
         "report_family": "rhp",
@@ -28,6 +30,7 @@
         }
     },
     {
+        "id": 14,
         "code": "floor_sentry",
         "name": "Floor Sentry",
         "report_family": "rhp",
@@ -42,6 +45,7 @@
         }
     },
     {
+        "id": 15,
         "code": "kit_upgrade",
         "name": "KIT,UPGRADE",
         "report_family": "rhp",
@@ -56,6 +60,7 @@
         }
     },
     {
+        "id": 16,
         "code": "pack_5_rapid_rh_l6_smart_sensor_reader",
         "name": "PACK, 5 ,RAPID RH L6, SMART SENSOR",
         "report_family": "rhp",
@@ -70,6 +75,7 @@
         }
     },
     {
+        "id": 17,
         "code": "kit_rapid_rh_l6_starter_kit_plus_fahrenheit",
         "name": "KIT, RAPID RH L6 STARTER KIT PLUS-FAHRENHEIT",
         "report_family": "rhp",
@@ -84,6 +90,7 @@
         }
     },
     {
+        "id": 18,
         "code": "value_pack_25pc_rhp_l6_smart_sensor",
         "name": "VALUE PACK, 25PC, RHP L6 SMART SENSOR",
         "report_family": "rhp",
@@ -98,6 +105,7 @@
         }
     },
     {
+        "id": 19,
         "code": "value_pack_50pc_rhp_l6_smart_sensor",
         "name": "VALUE PACK, 50PC, RHP L6 SMART SENSOR",
         "report_family": "rhp",
@@ -112,6 +120,7 @@
         }
     },
     {
+        "id": 20,
         "code": "super_value_pack_rapid_rh_l6_smart_sensor",
         "name": "SUPER VALUE PACK,RAPID RH L6, SMART SENSOR",
         "report_family": "rhp",
@@ -126,6 +135,7 @@
         }
     },
     {
+        "id": 21,
         "code": "wfp400_rapid_rh_l6_professional_flooring_installer_kit",
         "name": "WFP400+ RAPID RH L6 PROFESSIONAL FLOORING INSTALLER KIT",
         "report_family": "rhp",
@@ -140,6 +150,7 @@
         }
     },
     {
+        "id": 22,
         "code": "wfp450_rrh_l6_pro_floor_installer_kit_dg_w_bt",
         "name": "WFP450+ RRH® L6 Pro Floor Installer Kit + DG w\/BT",
         "report_family": "rhp",
@@ -154,6 +165,7 @@
         }
     },
     {
+        "id": 23,
         "code": "rapid_rh_5_0_complete_starter_kit_plus_fahrenheit",
         "name": "Rapid RH 5.0 Complete Starter Kit Plus-Fahrenheit",
         "report_family": "rhp",
@@ -168,6 +180,7 @@
         }
     },
     {
+        "id": 24,
         "code": "top_assy_orion_c555_concrete_kit_tested",
         "name": "TOP ASSY,ORION C555, CONCRETE ,KIT, TESTED",
         "report_family": "meter",
@@ -182,6 +195,7 @@
         }
     },
     {
+        "id": 25,
         "code": "top_assy_orion_910_kit_tested",
         "name": "TOP ASSY,ORION 910 KIT, TESTED",
         "report_family": "meter",
@@ -196,6 +210,7 @@
         }
     },
     {
+        "id": 26,
         "code": "top_assy_orion_920_kit_tested",
         "name": "TOP ASSY,ORION 920 KIT, TESTED",
         "report_family": "meter",
@@ -210,6 +225,7 @@
         }
     },
     {
+        "id": 27,
         "code": "top_assy_orion_930_kit_tested",
         "name": "TOP ASSY,ORION 930 KIT, TESTED",
         "report_family": "meter",
@@ -224,6 +240,7 @@
         }
     },
     {
+        "id": 28,
         "code": "top_assy_orion_940_kit_tested",
         "name": "TOP ASSY,ORION 940 KIT, TESTED",
         "report_family": "meter",
@@ -238,6 +255,7 @@
         }
     },
     {
+        "id": 29,
         "code": "top_assy_orion_950_kit_tested",
         "name": "TOP ASSY,ORION 950 KIT, TESTED",
         "report_family": "meter",
@@ -252,6 +270,7 @@
         }
     },
     {
+        "id": 30,
         "code": "meter_reach_extender",
         "name": "METER REACH EXTENDER",
         "report_family": "meter",
@@ -266,6 +285,7 @@
         }
     },
     {
+        "id": 31,
         "code": "top_assy_l5300",
         "name": "TOP ASSY, L5300",
         "report_family": "meter",
@@ -280,6 +300,7 @@
         }
     },
     {
+        "id": 32,
         "code": "kit_l5300_l722_stack_probe",
         "name": "KIT, L5300+L722 STACK PROBE",
         "report_family": "meter",
@@ -294,6 +315,7 @@
         }
     },
     {
+        "id": 33,
         "code": "misc_on_total_sales_report",
         "name": "Misc (on Total Sales Report)",
         "report_family": "parts_tsd",
@@ -308,6 +330,7 @@
         }
     },
     {
+        "id": 34,
         "code": "tsd_parts",
         "name": "TSD Parts",
         "report_family": "parts_tsd",
@@ -322,6 +345,7 @@
         }
     },
     {
+        "id": 35,
         "code": "tsd_repairs",
         "name": "TSD Repairs",
         "report_family": "parts_tsd",
@@ -336,6 +360,7 @@
         }
     },
     {
+        "id": 36,
         "code": "parts_tsd_rhp_miscellaneous",
         "name": "RHP MISCELLANEOUS",
         "report_family": "rhp",
@@ -350,6 +375,7 @@
         }
     },
     {
+        "id": 37,
         "code": "parts_tsd_pack_5_rapid_rh_l6_smart_sensor",
         "name": "PACK, 5 ,RAPID RH L6, SMART SENSOR",
         "report_family": "rhp",
@@ -364,6 +390,7 @@
         }
     },
     {
+        "id": 38,
         "code": "parts_tsd_pack_5_rapid_rh_l6_smart_sensor_reader",
         "name": "PACK, 5 ,RAPID RH L6, SMART SENSOR",
         "report_family": "rhp",
@@ -378,6 +405,7 @@
         }
     },
     {
+        "id": 39,
         "code": "true_remote",
         "name": "TRUE REMOTE",
         "report_family": "rhp",
@@ -392,6 +420,7 @@
         }
     },
     {
+        "id": 40,
         "code": "parts_tsd_kit_upgrade",
         "name": "KIT,UPGRADE",
         "report_family": "rhp",
@@ -406,6 +435,7 @@
         }
     },
     {
+        "id": 41,
         "code": "parts_tsd_floor_sentry",
         "name": "Floor Sentry",
         "report_family": "rhp",
@@ -420,6 +450,7 @@
         }
     },
     {
+        "id": 42,
         "code": "parts_tsd_kit_rapid_rh_l6_starter_kit_plus_fahrenheit",
         "name": "KIT, RAPID RH L6 STARTER KIT PLUS-FAHRENHEIT",
         "report_family": "rhp",
@@ -434,6 +465,7 @@
         }
     },
     {
+        "id": 43,
         "code": "parts_tsd_value_pack_25pc_rhp_l6_smart_sensor",
         "name": "VALUE PACK, 25PC, RHP L6 SMART SENSOR",
         "report_family": "rhp",
@@ -448,6 +480,7 @@
         }
     },
     {
+        "id": 44,
         "code": "parts_tsd_value_pack_50pc_rhp_l6_smart_sensor",
         "name": "VALUE PACK, 50PC, RHP L6 SMART SENSOR",
         "report_family": "rhp",
@@ -462,6 +495,7 @@
         }
     },
     {
+        "id": 45,
         "code": "parts_tsd_super_value_pack_rapid_rh_l6_smart_sensor",
         "name": "SUPER VALUE PACK,RAPID RH L6, SMART SENSOR",
         "report_family": "rhp",
@@ -476,6 +510,7 @@
         }
     },
     {
+        "id": 46,
         "code": "wfp350_rapid_rh_l6_adv_concrete_kit_datagrabbers_w_bt",
         "name": "WFP350+ Rapid RH® L6 Adv. Concrete Kit + DataGrabbers w\/BT",
         "report_family": "rhp",
@@ -490,6 +525,7 @@
         }
     },
     {
+        "id": 47,
         "code": "5_0_miscellaneous",
         "name": "5.0 MISCELLANEOUS",
         "report_family": "rhp",
@@ -504,6 +540,7 @@
         }
     },
     {
+        "id": 48,
         "code": "parts_tsd_top_assy_orion_c555_concrete_kit_tested",
         "name": "TOP ASSY,ORION C555, CONCRETE ,KIT, TESTED",
         "report_family": "meter",
@@ -518,6 +555,7 @@
         }
     },
     {
+        "id": 49,
         "code": "parts_tsd_top_assy_orion_910_kit_tested",
         "name": "TOP ASSY,ORION 910 KIT, TESTED",
         "report_family": "meter",
@@ -532,6 +570,7 @@
         }
     },
     {
+        "id": 50,
         "code": "parts_tsd_top_assy_orion_920_kit_tested",
         "name": "TOP ASSY,ORION 920 KIT, TESTED",
         "report_family": "meter",
@@ -546,6 +585,7 @@
         }
     },
     {
+        "id": 51,
         "code": "parts_tsd_top_assy_orion_930_kit_tested",
         "name": "TOP ASSY,ORION 930 KIT, TESTED",
         "report_family": "meter",
@@ -560,6 +600,7 @@
         }
     },
     {
+        "id": 52,
         "code": "parts_tsd_top_assy_orion_940_kit_tested",
         "name": "TOP ASSY,ORION 940 KIT, TESTED",
         "report_family": "meter",
@@ -574,6 +615,7 @@
         }
     },
     {
+        "id": 53,
         "code": "parts_tsd_top_assy_orion_950_kit_tested",
         "name": "TOP ASSY,ORION 950 KIT, TESTED",
         "report_family": "meter",
@@ -588,6 +630,7 @@
         }
     },
     {
+        "id": 54,
         "code": "parts_tsd_meter_reach_extender",
         "name": "METER REACH EXTENDER",
         "report_family": "meter",
@@ -602,6 +645,7 @@
         }
     },
     {
+        "id": 55,
         "code": "parts_tsd_top_assy_l5300",
         "name": "TOP ASSY, L5300",
         "report_family": "meter",
@@ -616,6 +660,7 @@
         }
     },
     {
+        "id": 56,
         "code": "top_assy_l601_3_df_tstd",
         "name": "TOP ASSY.,L601-3 (DF),TSTD",
         "report_family": "rhp",
@@ -630,6 +675,7 @@
         }
     },
     {
+        "id": 57,
         "code": "top_assy_l722_long_stack_probe_tested",
         "name": "TOP ASSY,L722 LONG STACK PROBE,TESTED",
         "report_family": "rhp",
@@ -644,6 +690,7 @@
         }
     },
     {
+        "id": 58,
         "code": "top_assy_l722_short_stack_probe_tested",
         "name": "TOP ASSY,L722 SHORT STACK PROBE,TESTED",
         "report_family": "rhp",
@@ -658,6 +705,7 @@
         }
     },
     {
+        "id": 59,
         "code": "parts_tsd_kit_l5300_l722_long_stack_probe",
         "name": "KIT, L5300+L722 LONG STACK PROBE",
         "report_family": "meter",
@@ -672,6 +720,7 @@
         }
     },
     {
+        "id": 60,
         "code": "rhp_unassigned",
         "name": "RHP Unassigned",
         "report_family": "rhp",
@@ -686,6 +735,7 @@
         }
     },
     {
+        "id": 61,
         "code": "wfp350_rapid_rh_l6_adv_concrete_kit_datagrabbers_w_bt_2",
         "name": "WFP350+ Rapid RH® L6 Adv. Concrete Kit + DataGrabbers w\/BT",
         "report_family": "rhp",
@@ -700,6 +750,7 @@
         }
     },
     {
+        "id": 62,
         "code": "bessemeter",
         "name": "Bessemeter",
         "report_family": "parts_tsd",
@@ -711,6 +762,7 @@
         "metadata": null
     },
     {
+        "id": 63,
         "code": "wfp500_reusable_pro_floor_installer_package_celsius_950",
         "name": "WFP500 Reusable Pro Floor Installer Package +Celsius,+950",
         "report_family": "rhp",
@@ -722,6 +774,7 @@
         "metadata": null
     },
     {
+        "id": 64,
         "code": "category",
         "name": "-",
         "report_family": "rhp",
