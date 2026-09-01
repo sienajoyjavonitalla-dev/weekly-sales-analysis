@@ -2088,6 +2088,7 @@ function UnmatchedItemsModal({
     name: '',
     sales_analysis_bucket: 'rhp',
     sort_order: 100,
+    quantity_multiplier: 1,
     is_active: true,
   };
   const showNoticeRef = useRef(showNotice);
@@ -2209,6 +2210,7 @@ function UnmatchedItemsModal({
       const response = await axios.post('/api/product-categories', {
         name: createCategoryForm.name,
         sort_order: Number(createCategoryForm.sort_order),
+        quantity_multiplier: Math.max(1, Number(createCategoryForm.quantity_multiplier) || 1),
         sales_analysis_bucket: createCategoryForm.sales_analysis_bucket || null,
         is_active: Boolean(createCategoryForm.is_active),
       });
@@ -3065,6 +3067,7 @@ function CategoriesScreen({ showNotice }) {
     name: '',
     sales_analysis_bucket: 'rhp',
     sort_order: 100,
+    quantity_multiplier: 1,
     is_active: true,
   };
   const [categories, setCategories] = useState([]);
@@ -3146,6 +3149,7 @@ function CategoriesScreen({ showNotice }) {
     return {
       name: form.name,
       sort_order: Number(form.sort_order),
+      quantity_multiplier: Math.max(1, Number(form.quantity_multiplier) || 1),
       sales_analysis_bucket: form.sales_analysis_bucket || null,
       is_active: Boolean(form.is_active),
     };
@@ -3321,6 +3325,7 @@ function categoryToForm(category) {
     name: category.name ?? '',
     sales_analysis_bucket: category.sales_analysis_bucket ?? '',
     sort_order: category.sort_order ?? 100,
+    quantity_multiplier: category.quantity_multiplier ?? 1,
     is_active: Boolean(category.is_active),
   };
 }
@@ -3362,6 +3367,15 @@ function CategoryForm({ children, form, isSubmitting = false, primaryLabel, setF
           type="number"
           value={form.sort_order}
           onChange={(event) => setForm({ ...form, sort_order: event.target.value })}
+        />
+      </label>
+      <label>
+        Qty Multiplier
+        <input
+          min="1"
+          type="number"
+          value={form.quantity_multiplier}
+          onChange={(event) => setForm({ ...form, quantity_multiplier: event.target.value })}
         />
       </label>
       <label className="checkbox-label">

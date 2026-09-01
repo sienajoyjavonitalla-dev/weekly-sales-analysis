@@ -67,6 +67,7 @@ class ProductCategorySeeder extends Seeder
                 'total_sales_row_label' => $category['total_sales_row_label'] ?: null,
                 'weekly_meter_row_label' => $category['weekly_meter_row_label'] ?: null,
                 'sort_order' => (int) $category['sort_order'],
+                'quantity_multiplier' => max(1, (int) ($category['quantity_multiplier'] ?? 1)),
                 'is_active' => (bool) $category['is_active'],
                 'metadata' => isset($category['metadata'])
                     ? json_encode($category['metadata'], JSON_THROW_ON_ERROR)

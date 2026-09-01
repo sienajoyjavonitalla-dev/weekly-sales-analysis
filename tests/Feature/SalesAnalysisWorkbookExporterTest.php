@@ -187,6 +187,98 @@ class SalesAnalysisWorkbookExporterTest extends TestCase
         $this->assertSame('A9D1F7', strtoupper($sheet->getStyle('A'.$grandTotalRow)->getFill()->getStartColor()->getRGB()));
     }
 
+    public function test_category_quantity_multiplier_writes_adjusted_qty_and_feeds_grand_total(): void
+    {
+        $user = User::query()->create([
+            'first_name' => 'Ana',
+            'last_name' => 'Lyst',
+            'email' => 'analyst-multiplier@example.com',
+            'password' => 'password',
+            'role' => 'analyst',
+        ]);
+
+        $batch = ImportBatch::query()->create([
+            'week_start' => '2026-02-01',
+            'week_ending' => '2026-02-07',
+            'status' => 'draft',
+            'created_by_user_id' => $user->id,
+            'source_system' => 'Traverse Global',
+        ]);
+
+        $packCategory = ProductCategory::query()->create([
+            'code' => 'value_pack_50pc_rhp_l6_smart_sensor',
+            'name' => 'VALUE PACK, 50PC, RHP L6 SMART SENSOR',
+            'report_family' => 'rhp',
+            'sales_analysis_bucket' => 'rhp',
+            'sort_order' => 10,
+            'quantity_multiplier' => 10,
+            'is_active' => true,
+        ]);
+
+        $plainCategory = ProductCategory::query()->create([
+            'code' => 'floor_sentry',
+            'name' => 'Floor Sentry',
+            'report_family' => 'rhp',
+            'sales_analysis_bucket' => 'rhp',
+            'sort_order' => 20,
+            'quantity_multiplier' => 1,
+            'is_active' => true,
+        ]);
+
+        SalesRow::query()->create([
+            'import_batch_id' => $batch->id,
+            'product_category_id' => $packCategory->id,
+            'source_sheet' => 'Sheet',
+            'source_row_number' => 2,
+            'source_bucket' => 'rhp',
+            'item_id' => '880-R0050-011',
+            'quantity_ordered' => 10,
+            'amount' => 1000,
+            'classification_status' => 'matched',
+        ]);
+
+        SalesRow::query()->create([
+            'import_batch_id' => $batch->id,
+            'product_category_id' => $packCategory->id,
+            'source_sheet' => 'Sheet',
+            'source_row_number' => 3,
+            'source_bucket' => 'rhp',
+            'item_id' => '880-R0050-011IN',
+            'quantity_ordered' => 4,
+            'amount' => 400,
+            'classification_status' => 'matched',
+        ]);
+
+        SalesRow::query()->create([
+            'import_batch_id' => $batch->id,
+            'product_category_id' => $plainCategory->id,
+            'source_sheet' => 'Sheet',
+            'source_row_number' => 4,
+            'source_bucket' => 'rhp',
+            'item_id' => '890-00080-001',
+            'quantity_ordered' => 2,
+            'amount' => 200,
+            'classification_status' => 'matched',
+        ]);
+
+        $report = app(SalesAnalysisWorkbookExporter::class)->export($batch, $user->id);
+        $sheet = IOFactory::load(storage_path('app/private/'.$report->storage_path))->getSheetByName('RHP');
+
+        // Pack category: header row 2, data 3-4, subtotal row 5
+        $this->assertSame(14.0, (float) $sheet->getCell('J5')->getCalculatedValue());
+        $this->assertSame(1400.0, (float) $sheet->getCell('K5')->getCalculatedValue());
+        $this->assertSame(140.0, (float) $sheet->getCell('L5')->getCalculatedValue());
+
+        // Plain category: header 6, data 7, subtotal 8
+        $this->assertSame(2.0, (float) $sheet->getCell('J8')->getCalculatedValue());
+        $this->assertSame(200.0, (float) $sheet->getCell('K8')->getCalculatedValue());
+        $this->assertNull($sheet->getCell('L8')->getCalculatedValue());
+
+        $grandTotalRow = $sheet->getHighestDataRow();
+        $this->assertSame(142.0, (float) $sheet->getCell('J'.$grandTotalRow)->getCalculatedValue());
+        $this->assertSame(1600.0, (float) $sheet->getCell('K'.$grandTotalRow)->getCalculatedValue());
+    }
+
     public function test_parts_tsd_sheet_writes_category_headers_for_legacy_sections(): void
     {
         $user = User::query()->create([

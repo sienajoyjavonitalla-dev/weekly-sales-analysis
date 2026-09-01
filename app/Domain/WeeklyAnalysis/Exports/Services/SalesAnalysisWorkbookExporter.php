@@ -44,6 +44,7 @@ class SalesAnalysisWorkbookExporter
         'I' => 12,
         'J' => 14,
         'K' => 14,
+        'L' => 14,
     ];
 
     /**
@@ -152,19 +153,31 @@ class SalesAnalysisWorkbookExporter
             $amountTotal = 0.0;
 
             foreach ($categoryRows as $salesRow) {
-                $this->writeDataRow($sheet, $rowNumber, $salesRow, $sheetQuantityTotal, $sheetAmountTotal);
+                $this->writeDataRow(
+                    $sheet,
+                    $rowNumber,
+                    $salesRow,
+                    $sheetQuantityTotal,
+                    $sheetAmountTotal,
+                    accumulateQuantity: false,
+                );
                 $quantityTotal += (float) $salesRow->quantity_ordered;
                 $amountTotal += (float) $salesRow->amount;
                 $lastDataRow = $rowNumber;
                 $rowNumber++;
             }
 
+            $useNaQuantity = in_array($category->code, self::MISC_CATEGORY_CODES, true);
+            $multipliedQuantity = $this->multipliedQuantity($quantityTotal, $category->quantity_multiplier);
+            $sheetQuantityTotal += $multipliedQuantity ?? $quantityTotal;
+
             $this->writeSubtotalRow(
                 $sheet,
                 $rowNumber,
                 $quantityTotal,
                 $amountTotal,
-                in_array($category->code, self::MISC_CATEGORY_CODES, true),
+                $useNaQuantity,
+                $multipliedQuantity,
             );
             $lastDataRow = $rowNumber;
             $rowNumber++;
@@ -218,13 +231,21 @@ class SalesAnalysisWorkbookExporter
         $amountTotal = 0.0;
 
         foreach ($noCategoryRows as $salesRow) {
-            $this->writeDataRow($sheet, $rowNumber, $salesRow, $sheetQuantityTotal, $sheetAmountTotal);
+            $this->writeDataRow(
+                $sheet,
+                $rowNumber,
+                $salesRow,
+                $sheetQuantityTotal,
+                $sheetAmountTotal,
+                accumulateQuantity: false,
+            );
             $quantityTotal += (float) $salesRow->quantity_ordered;
             $amountTotal += (float) $salesRow->amount;
             $lastDataRow = $rowNumber;
             $rowNumber++;
         }
 
+        $sheetQuantityTotal += $quantityTotal;
         $this->writeSubtotalRow($sheet, $rowNumber, $quantityTotal, $amountTotal, true);
         $lastDataRow = $rowNumber;
         $rowNumber++;
@@ -314,7 +335,7 @@ class SalesAnalysisWorkbookExporter
     {
         $sheet->fromArray(self::HEADERS, null, 'A1');
 
-        $sheet->getStyle('A1:K1')
+        $sheet->getStyle('A1:L1')
             ->getFill()
             ->setFillType(Fill::FILL_SOLID)
             ->getStartColor()
@@ -332,7 +353,7 @@ class SalesAnalysisWorkbookExporter
         }
 
         $sheet->freezePane('A2');
-        $sheet->setAutoFilter('A1:K'.max(1, $lastDataRow));
+        $sheet->setAutoFilter('A1:L'.max(1, $lastDataRow));
         $this->applyColumnWidths($sheet);
     }
 
@@ -342,9 +363,14 @@ class SalesAnalysisWorkbookExporter
         SalesRow $salesRow,
         float &$sheetQuantityTotal,
         float &$sheetAmountTotal,
+        bool $accumulateQuantity = true,
     ): void {
         $this->writeSalesRow($sheet, $rowNumber, $salesRow);
-        $sheetQuantityTotal += (float) $salesRow->quantity_ordered;
+
+        if ($accumulateQuantity) {
+            $sheetQuantityTotal += (float) $salesRow->quantity_ordered;
+        }
+
         $sheetAmountTotal += (float) $salesRow->amount;
     }
 
@@ -381,13 +407,13 @@ class SalesAnalysisWorkbookExporter
             $amountTotal,
         ], null, 'A'.$rowNumber);
 
-        $sheet->getStyle('A'.$rowNumber.':K'.$rowNumber)
+        $sheet->getStyle('A'.$rowNumber.':L'.$rowNumber)
             ->getFill()
             ->setFillType(Fill::FILL_SOLID)
             ->getStartColor()
             ->setARGB('FF'.self::GRAND_TOTAL_FILL);
 
-        $sheet->getStyle('A'.$rowNumber.':K'.$rowNumber)
+        $sheet->getStyle('A'.$rowNumber.':L'.$rowNumber)
             ->getFont()
             ->setBold(true);
 
@@ -443,6 +469,7 @@ class SalesAnalysisWorkbookExporter
         float $quantityTotal,
         float $amountTotal,
         bool $useNaQuantity,
+        ?float $multipliedQuantity = null,
     ): void {
         $sheet->fromArray([
             null,
@@ -456,6 +483,7 @@ class SalesAnalysisWorkbookExporter
             null,
             $useNaQuantity ? 'n/a' : $quantityTotal,
             $amountTotal,
+            $multipliedQuantity,
         ], null, 'A'.$rowNumber);
 
         if (! $useNaQuantity) {
@@ -464,15 +492,30 @@ class SalesAnalysisWorkbookExporter
 
         $this->applyAccountingFormat($sheet, 'K', $rowNumber);
 
-        $sheet->getStyle('A'.$rowNumber.':K'.$rowNumber)
+        if ($multipliedQuantity !== null) {
+            $this->applyAccountingFormat($sheet, 'L', $rowNumber);
+        }
+
+        $sheet->getStyle('A'.$rowNumber.':L'.$rowNumber)
             ->getFill()
             ->setFillType(Fill::FILL_SOLID)
             ->getStartColor()
             ->setARGB('FF'.self::CATEGORY_TOTAL_FILL);
 
-        $sheet->getStyle('J'.$rowNumber.':K'.$rowNumber)
+        $sheet->getStyle('J'.$rowNumber.':L'.$rowNumber)
             ->getFont()
             ->setBold(true);
+    }
+
+    private function multipliedQuantity(float $quantityTotal, mixed $quantityMultiplier): ?float
+    {
+        $multiplier = max(1, (int) ($quantityMultiplier ?? 1));
+
+        if ($multiplier <= 1) {
+            return null;
+        }
+
+        return $quantityTotal * $multiplier;
     }
 
     private function formatQuantity(mixed $quantity): mixed

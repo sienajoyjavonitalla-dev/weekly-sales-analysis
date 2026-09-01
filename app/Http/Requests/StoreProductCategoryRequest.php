@@ -22,6 +22,7 @@ class StoreProductCategoryRequest extends FormRequest
             'total_sales_row_label' => ['nullable', 'string', 'max:255'],
             'weekly_meter_row_label' => ['nullable', 'string', 'max:255'],
             'sort_order' => ['required', 'integer', 'min:0', 'max:65535'],
+            'quantity_multiplier' => ['sometimes', 'integer', 'min:1'],
             'is_active' => ['sometimes', 'boolean'],
             'metadata' => ['nullable', 'array'],
         ];

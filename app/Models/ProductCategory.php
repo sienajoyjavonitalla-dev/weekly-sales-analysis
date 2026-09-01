@@ -18,6 +18,7 @@ class ProductCategory extends Model
         'total_sales_row_label',
         'weekly_meter_row_label',
         'sort_order',
+        'quantity_multiplier',
         'is_active',
         'metadata',
     ];
@@ -28,6 +29,7 @@ class ProductCategory extends Model
             'is_active' => 'boolean',
             'metadata' => 'array',
             'sort_order' => 'integer',
+            'quantity_multiplier' => 'integer',
         ];
     }
 

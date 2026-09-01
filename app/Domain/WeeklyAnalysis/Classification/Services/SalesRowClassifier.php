@@ -53,20 +53,6 @@ class SalesRowClassifier
                     foreach ($salesRows as $salesRow) {
                         $summary['total']++;
 
-                        if ($this->shouldRemainOnRawSheet($salesRow)) {
-                            $salesRow->forceFill([
-                                'product_category_id' => null,
-                                'mapping_rule_id' => null,
-                                'source_bucket' => 'raw',
-                                'classification_status' => 'matched',
-                                'classified_at' => now(),
-                                'classification_notes' => 'Zero-amount row kept on raw Sheet tab.',
-                            ])->save();
-
-                            $summary['matched']++;
-                            continue;
-                        }
-
                         $match = $this->matcher->match($salesRow, $organizationalRules);
 
                         if ($match === null) {
@@ -107,11 +93,6 @@ class SalesRowClassifier
             ->count('item_id');
 
         return $summary;
-    }
-
-    private function shouldRemainOnRawSheet(SalesRow $salesRow): bool
-    {
-        return (float) $salesRow->amount === 0.0;
     }
 
     /**

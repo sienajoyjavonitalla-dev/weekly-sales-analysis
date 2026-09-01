@@ -8,6 +8,7 @@
         "total_sales_row_label": "RHP MISCELLANEOUS",
         "weekly_meter_row_label": null,
         "sort_order": 10,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "rhp-miscellaneous",
@@ -23,6 +24,7 @@
         "total_sales_row_label": "PACK, 5 ,RAPID RH L6, SMART SENSOR",
         "weekly_meter_row_label": null,
         "sort_order": 14,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "pack-5-rapid-rh-l6-smart-sensor",
@@ -38,6 +40,7 @@
         "total_sales_row_label": "Floor Sentry",
         "weekly_meter_row_label": null,
         "sort_order": 18,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "floor-sentry",
@@ -53,6 +56,7 @@
         "total_sales_row_label": "KIT,UPGRADE",
         "weekly_meter_row_label": null,
         "sort_order": 22,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "kitupgrade",
@@ -68,6 +72,7 @@
         "total_sales_row_label": "PACK, 5 ,RAPID RH L6, SMART SENSOR",
         "weekly_meter_row_label": null,
         "sort_order": 26,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "pack-5-rapid-rh-l6-smart-sensor",
@@ -83,6 +88,7 @@
         "total_sales_row_label": "KIT, RAPID RH L6 STARTER KIT PLUS-FAHRENHEIT",
         "weekly_meter_row_label": null,
         "sort_order": 30,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "kit-rapid-rh-l6-starter-kit-plus-fahrenheit",
@@ -98,6 +104,7 @@
         "total_sales_row_label": "VALUE PACK, 25PC, RHP L6 SMART SENSOR",
         "weekly_meter_row_label": null,
         "sort_order": 34,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "value-pack-25pc-rhp-l6-smart-sensor",
@@ -113,6 +120,7 @@
         "total_sales_row_label": "VALUE PACK, 50PC, RHP L6 SMART SENSOR",
         "weekly_meter_row_label": null,
         "sort_order": 38,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "value-pack-50pc-rhp-l6-smart-sensor",
@@ -128,6 +136,7 @@
         "total_sales_row_label": "SUPER VALUE PACK,RAPID RH L6, SMART SENSOR",
         "weekly_meter_row_label": null,
         "sort_order": 42,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "super-value-packrapid-rh-l6-smart-sensor",
@@ -143,6 +152,7 @@
         "total_sales_row_label": "WFP400+ RAPID RH L6 PROFESSIONAL FLOORING INSTALLER KIT",
         "weekly_meter_row_label": null,
         "sort_order": 46,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "wfp400-rapid-rh-l6-professional-flooring-installer-kit",
@@ -158,6 +168,7 @@
         "total_sales_row_label": "WFP450+ RRH® L6 Pro Floor Installer Kit + DG w\/BT",
         "weekly_meter_row_label": null,
         "sort_order": 50,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "wfp450-rrh-l6-pro-floor-installer-kit-dg-wbt",
@@ -173,6 +184,7 @@
         "total_sales_row_label": "Rapid RH 5.0 Complete Starter Kit Plus-Fahrenheit",
         "weekly_meter_row_label": null,
         "sort_order": 54,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "rapid-rh-50-complete-starter-kit-plus-fahrenheit",
@@ -188,6 +200,7 @@
         "total_sales_row_label": "TOP ASSY,ORION C555, CONCRETE ,KIT, TESTED",
         "weekly_meter_row_label": null,
         "sort_order": 58,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "top-assyorion-c555-concrete-kit-tested",
@@ -203,6 +216,7 @@
         "total_sales_row_label": "TOP ASSY,ORION 910 KIT, TESTED",
         "weekly_meter_row_label": "Orion 910",
         "sort_order": 62,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "top-assyorion-910-kit-tested",
@@ -218,6 +232,7 @@
         "total_sales_row_label": "TOP ASSY,ORION 920 KIT, TESTED",
         "weekly_meter_row_label": null,
         "sort_order": 66,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "top-assyorion-920-kit-tested",
@@ -233,6 +248,7 @@
         "total_sales_row_label": "TOP ASSY,ORION 930 KIT, TESTED",
         "weekly_meter_row_label": null,
         "sort_order": 70,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "top-assyorion-930-kit-tested",
@@ -248,6 +264,7 @@
         "total_sales_row_label": "TOP ASSY,ORION 940 KIT, TESTED",
         "weekly_meter_row_label": null,
         "sort_order": 74,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "top-assyorion-940-kit-tested",
@@ -263,6 +280,7 @@
         "total_sales_row_label": "TOP ASSY,ORION 950 KIT, TESTED",
         "weekly_meter_row_label": null,
         "sort_order": 78,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "top-assyorion-950-kit-tested",
@@ -278,6 +296,7 @@
         "total_sales_row_label": "METER REACH EXTENDER",
         "weekly_meter_row_label": null,
         "sort_order": 82,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "meter-reach-extender",
@@ -293,6 +312,7 @@
         "total_sales_row_label": "TOP ASSY, L5300",
         "weekly_meter_row_label": "L5300\/L722",
         "sort_order": 86,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "top-assy-l5300",
@@ -308,6 +328,7 @@
         "total_sales_row_label": "KIT, L5300+L722 STACK PROBE",
         "weekly_meter_row_label": "L5300\/L722",
         "sort_order": 90,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "kit-l5300l722-stack-probe",
@@ -323,6 +344,7 @@
         "total_sales_row_label": "Misc (on Total Sales Report)",
         "weekly_meter_row_label": null,
         "sort_order": 100,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "misc-on-total-sales-report",
@@ -338,6 +360,7 @@
         "total_sales_row_label": "TSD Parts",
         "weekly_meter_row_label": null,
         "sort_order": 104,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "tsd-parts",
@@ -353,6 +376,7 @@
         "total_sales_row_label": "TSD Repairs",
         "weekly_meter_row_label": null,
         "sort_order": 108,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "tsd-repairs",
@@ -368,6 +392,7 @@
         "total_sales_row_label": "RHP MISCELLANEOUS",
         "weekly_meter_row_label": null,
         "sort_order": 200,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "rhp-miscellaneous",
@@ -383,6 +408,7 @@
         "total_sales_row_label": "PACK, 5 ,RAPID RH L6, SMART SENSOR",
         "weekly_meter_row_label": null,
         "sort_order": 204,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "pack-5-rapid-rh-l6-smart-sensor",
@@ -398,6 +424,7 @@
         "total_sales_row_label": "PACK, 5 ,RAPID RH L6, SMART SENSOR",
         "weekly_meter_row_label": null,
         "sort_order": 208,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "pack-5-rapid-rh-l6-smart-sensor",
@@ -413,6 +440,7 @@
         "total_sales_row_label": "TRUE REMOTE",
         "weekly_meter_row_label": null,
         "sort_order": 212,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "true-remote",
@@ -428,6 +456,7 @@
         "total_sales_row_label": "KIT,UPGRADE",
         "weekly_meter_row_label": null,
         "sort_order": 216,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "kitupgrade",
@@ -443,6 +472,7 @@
         "total_sales_row_label": "Floor Sentry",
         "weekly_meter_row_label": null,
         "sort_order": 220,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "floor-sentry",
@@ -458,6 +488,7 @@
         "total_sales_row_label": "KIT, RAPID RH L6 STARTER KIT PLUS-FAHRENHEIT",
         "weekly_meter_row_label": null,
         "sort_order": 224,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "kit-rapid-rh-l6-starter-kit-plus-fahrenheit",
@@ -473,6 +504,7 @@
         "total_sales_row_label": "VALUE PACK, 25PC, RHP L6 SMART SENSOR",
         "weekly_meter_row_label": null,
         "sort_order": 228,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "value-pack-25pc-rhp-l6-smart-sensor",
@@ -488,6 +520,7 @@
         "total_sales_row_label": "VALUE PACK, 50PC, RHP L6 SMART SENSOR",
         "weekly_meter_row_label": null,
         "sort_order": 232,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "value-pack-50pc-rhp-l6-smart-sensor",
@@ -503,6 +536,7 @@
         "total_sales_row_label": "SUPER VALUE PACK,RAPID RH L6, SMART SENSOR",
         "weekly_meter_row_label": null,
         "sort_order": 236,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "super-value-packrapid-rh-l6-smart-sensor",
@@ -518,6 +552,7 @@
         "total_sales_row_label": "WFP350+ Rapid RH® L6 Adv. Concrete Kit + DataGrabbers w\/BT",
         "weekly_meter_row_label": null,
         "sort_order": 240,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "wfp350-rapid-rh-l6-adv-concrete-kit-datagrabbers-wbt",
@@ -533,6 +568,7 @@
         "total_sales_row_label": "5.0 MISCELLANEOUS",
         "weekly_meter_row_label": null,
         "sort_order": 244,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "50-miscellaneous",
@@ -548,6 +584,7 @@
         "total_sales_row_label": "TOP ASSY,ORION C555, CONCRETE ,KIT, TESTED",
         "weekly_meter_row_label": null,
         "sort_order": 248,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "top-assyorion-c555-concrete-kit-tested",
@@ -563,6 +600,7 @@
         "total_sales_row_label": "TOP ASSY,ORION 910 KIT, TESTED",
         "weekly_meter_row_label": "Orion 910",
         "sort_order": 252,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "top-assyorion-910-kit-tested",
@@ -578,6 +616,7 @@
         "total_sales_row_label": "TOP ASSY,ORION 920 KIT, TESTED",
         "weekly_meter_row_label": null,
         "sort_order": 256,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "top-assyorion-920-kit-tested",
@@ -593,6 +632,7 @@
         "total_sales_row_label": "TOP ASSY,ORION 930 KIT, TESTED",
         "weekly_meter_row_label": null,
         "sort_order": 260,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "top-assyorion-930-kit-tested",
@@ -608,6 +648,7 @@
         "total_sales_row_label": "TOP ASSY,ORION 940 KIT, TESTED",
         "weekly_meter_row_label": null,
         "sort_order": 264,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "top-assyorion-940-kit-tested",
@@ -623,6 +664,7 @@
         "total_sales_row_label": "TOP ASSY,ORION 950 KIT, TESTED",
         "weekly_meter_row_label": null,
         "sort_order": 268,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "top-assyorion-950-kit-tested",
@@ -638,6 +680,7 @@
         "total_sales_row_label": "METER REACH EXTENDER",
         "weekly_meter_row_label": null,
         "sort_order": 272,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "meter-reach-extender",
@@ -653,6 +696,7 @@
         "total_sales_row_label": "TOP ASSY, L5300",
         "weekly_meter_row_label": "L5300\/L722",
         "sort_order": 276,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "top-assy-l5300",
@@ -668,6 +712,7 @@
         "total_sales_row_label": "TOP ASSY.,L601-3 (DF),TSTD",
         "weekly_meter_row_label": "L5300\/L722",
         "sort_order": 280,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "top-assyl601-3-dftstd",
@@ -683,6 +728,7 @@
         "total_sales_row_label": "TOP ASSY,L722 LONG STACK PROBE,TESTED",
         "weekly_meter_row_label": "L5300\/L722",
         "sort_order": 284,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "top-assyl722-long-stack-probetested",
@@ -698,6 +744,7 @@
         "total_sales_row_label": "TOP ASSY,L722 SHORT STACK PROBE,TESTED",
         "weekly_meter_row_label": "L5300\/L722",
         "sort_order": 288,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "top-assyl722-short-stack-probetested",
@@ -713,6 +760,7 @@
         "total_sales_row_label": "KIT, L5300+L722 LONG STACK PROBE",
         "weekly_meter_row_label": "L5300\/L722",
         "sort_order": 292,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "kit-l5300l722-long-stack-probe",
@@ -728,6 +776,7 @@
         "total_sales_row_label": "RHP Unassigned",
         "weekly_meter_row_label": null,
         "sort_order": 11,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "rhp-unassigned",
@@ -743,6 +792,7 @@
         "total_sales_row_label": "WFP350+ Rapid RH® L6 Adv. Concrete Kit + DataGrabbers w\/BT",
         "weekly_meter_row_label": null,
         "sort_order": 243,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": {
             "slug": "wfp350-rapid-rh-l6-adv-concrete-kit-datagrabbers-wbt",
@@ -758,6 +808,7 @@
         "total_sales_row_label": null,
         "weekly_meter_row_label": null,
         "sort_order": 102,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": null
     },
@@ -770,6 +821,7 @@
         "total_sales_row_label": null,
         "weekly_meter_row_label": null,
         "sort_order": 120,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": null
     },
@@ -782,6 +834,7 @@
         "total_sales_row_label": null,
         "weekly_meter_row_label": null,
         "sort_order": 100,
+        "quantity_multiplier": 1,
         "is_active": true,
         "metadata": null
     }

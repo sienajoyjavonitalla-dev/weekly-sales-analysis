@@ -15,7 +15,7 @@ class SalesRowClassifierTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_zero_amount_rows_remain_on_raw_sheet_even_when_a_mapping_rule_matches(): void
+    public function test_zero_amount_rows_classify_into_buckets_when_a_mapping_rule_matches(): void
     {
         $user = User::query()->create([
             'first_name' => 'Ana',
@@ -33,7 +33,7 @@ class SalesRowClassifierTest extends TestCase
             'source_system' => 'Traverse Global',
         ]);
 
-        $category = ProductCategory::query()->create([
+        ProductCategory::query()->create([
             'code' => 'rhp_miscellaneous',
             'name' => 'RHP MISCELLANEOUS',
             'report_family' => 'rhp',
@@ -42,7 +42,7 @@ class SalesRowClassifierTest extends TestCase
             'is_active' => true,
         ]);
 
-        MappingRule::query()->create([
+        $rule = MappingRule::query()->create([
             'name' => 'rhp_unassigned → MISCELLANEOUS',
             'product_category_id' => null,
             'source_type' => 'sales_analysis',
@@ -63,7 +63,7 @@ class SalesRowClassifierTest extends TestCase
             'customer_id' => 'AIK001',
             'customer_name' => 'AIKEN, ADAM',
             'invoice_number' => '144848',
-            'quantity_ordered' => 0,
+            'quantity_ordered' => 2,
             'amount' => 0,
             'classification_status' => 'unmatched',
         ]);
@@ -72,9 +72,8 @@ class SalesRowClassifierTest extends TestCase
 
         $row->refresh();
 
-        $this->assertSame('raw', $row->source_bucket);
-        $this->assertNull($row->product_category_id);
-        $this->assertNull($row->mapping_rule_id);
+        $this->assertSame('rhp', $row->source_bucket);
+        $this->assertSame($rule->id, $row->mapping_rule_id);
         $this->assertSame('matched', $row->classification_status);
     }
 
