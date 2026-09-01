@@ -20,10 +20,12 @@ use App\Models\OrderRow;
 use App\Models\SalesRow;
 use App\Models\UploadedFile;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile as HttpUploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
 class WorkbookImportService
@@ -55,12 +57,13 @@ class WorkbookImportService
         return DB::transaction(function () use ($files, $importBatch, $weekStart, $weekEnding, $userId): array {
             [$resolvedWeekStart, $resolvedWeekEnding] = $this->resolveWeekRange($weekStart, $weekEnding, $files);
 
-            $importBatch ??= ImportBatch::query()->create([
-                'week_start' => $resolvedWeekStart,
-                'week_ending' => $resolvedWeekEnding,
-                'created_by_user_id' => $userId,
-                'status' => 'draft',
-            ]);
+            if ($importBatch === null) {
+                $importBatch = $this->createImportBatch(
+                    weekStart: $resolvedWeekStart,
+                    weekEnding: $resolvedWeekEnding,
+                    userId: $userId,
+                );
+            }
 
             $uploadedFiles = [];
             $summary = [];
@@ -97,6 +100,58 @@ class WorkbookImportService
                 'summary' => $summary,
             ];
         });
+    }
+
+    private function createImportBatch(?string $weekStart, string $weekEnding, ?int $userId): ImportBatch
+    {
+        $sourceSystem = 'Traverse Global';
+
+        $exists = ImportBatch::query()
+            ->whereDate('week_ending', $weekEnding)
+            ->where('source_system', $sourceSystem)
+            ->exists();
+
+        if ($exists) {
+            throw ValidationException::withMessages([
+                'week_ending' => [
+                    'This week was already uploaded. Open the existing batch for that week, or choose a different week.',
+                ],
+            ]);
+        }
+
+        try {
+            return ImportBatch::query()->create([
+                'week_start' => $weekStart,
+                'week_ending' => $weekEnding,
+                'created_by_user_id' => $userId,
+                'status' => 'draft',
+                'source_system' => $sourceSystem,
+            ]);
+        } catch (QueryException $exception) {
+            if ($this->isDuplicateWeekBatchException($exception)) {
+                throw ValidationException::withMessages([
+                    'week_ending' => [
+                        'This week was already uploaded. Open the existing batch for that week, or choose a different week.',
+                    ],
+                ]);
+            }
+
+            throw $exception;
+        }
+    }
+
+    private function isDuplicateWeekBatchException(QueryException $exception): bool
+    {
+        $sqlState = (string) ($exception->errorInfo[0] ?? '');
+        $driverCode = (int) ($exception->errorInfo[1] ?? 0);
+        $message = $exception->getMessage();
+
+        return $sqlState === '23000'
+            && (
+                $driverCode === 1062
+                || str_contains($message, 'import_batches_week_ending_source_system_unique')
+                || str_contains($message, 'Duplicate entry')
+            );
     }
 
     private function storeUploadedFile(

@@ -4371,7 +4371,20 @@ function currency(value) {
 }
 
 function messageFromError(error, fallback) {
-  return error?.response?.data?.message ?? fallback;
+  const data = error?.response?.data;
+  const validationErrors = data?.errors;
+
+  if (validationErrors && typeof validationErrors === 'object') {
+    const firstError = Object.values(validationErrors)
+      .flat()
+      .find((message) => typeof message === 'string' && message.trim() !== '');
+
+    if (firstError) {
+      return firstError;
+    }
+  }
+
+  return data?.message ?? fallback;
 }
 
 createRoot(document.getElementById('app')).render(
