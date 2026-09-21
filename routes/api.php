@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\ReportTotalController;
 use App\Http\Controllers\Api\UnmatchedSalesRowController;
 use App\Http\Controllers\Api\UploadedFileController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\WeeklyMeterReportController;
 use App\Http\Controllers\Api\WorkbookImportController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
@@ -46,6 +47,7 @@ Route::middleware(['web', 'auth', 'throttle:60,1'])->group(function (): void {
         ->parameters(['mapping-rules' => 'mappingRule'])
         ->except(['show']);
 
+    Route::get('/weekly-meter-report', WeeklyMeterReportController::class);
     Route::get('/import-batches', [ImportBatchController::class, 'index']);
     Route::post('/import-batches/discard-pending-reconciles', [ImportBatchController::class, 'discardPendingReconciles']);
     Route::get('/import-batches/{importBatch}', [ImportBatchController::class, 'show']);

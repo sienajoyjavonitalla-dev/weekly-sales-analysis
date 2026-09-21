@@ -61,6 +61,19 @@ function ExportIcon() {
   );
 }
 
+function MeterReportIcon() {
+  return (
+    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+      <path d="M4 19V5" />
+      <path d="M4 19h16" />
+      <path d="M8 16v-5" />
+      <path d="M12 16V8" />
+      <path d="M16 16v-3" />
+      <path d="M20 16v-8" />
+    </svg>
+  );
+}
+
 function SettingsIcon() {
   return (
     <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
@@ -167,6 +180,7 @@ const workflowTabs = [
   { id: 'rules', label: 'Mapping Rules', icon: RulesIcon },
   { id: 'reconcile', label: 'Reconcile', icon: ReconcileIcon },
   { id: 'exports', label: 'Exports', icon: ExportIcon },
+  { id: 'meter-report', label: 'Weekly Meter Report', icon: MeterReportIcon },
 ];
 
 const userRoleOptions = [
@@ -178,9 +192,66 @@ const workbookTypes = [
   { key: 'sales_analysis', label: 'Sales Analysis' },
   { key: 'income_statement', label: 'Income Statement' },
   { key: 'total_sales_report', label: 'Total Sales Report' },
-  { key: 'weekly_meter_report', label: 'Weekly Meter Report' },
   { key: 'open_orders', label: 'Open Orders' },
   { key: 'ptd_orders', label: 'PTD Orders' },
+];
+
+const generatedReportLabels = {
+  weekly_meter_report: 'Weekly Meter Report',
+};
+
+const weeklyMeterModelLabels = [
+  'RHP 4.0 Kits',
+  'RHP L6 Kits',
+  'RHP 4.0 Readr/Sens Pk',
+  'RHP L6 Readr/Sens Pk',
+  'RHP 4.0 5Pk Sensors*',
+  'RHP L6 5Pk Sensors*',
+  'RHP 4.0 Misc',
+  'RHP L6 Misc',
+  'BT Smart Loggers',
+  'RHP 4.0 Flooring Kits',
+  'RHP L6 Flooring Kits',
+  'True Remote Monitoring',
+  'Floor Sentry',
+  '5.0 RHP Prod',
+  'C555 Concrete Kits',
+  'C575',
+  'BI 2200',
+  'MMI 1100',
+  'MMC205',
+  'L607',
+  'MMC210',
+  'MMC220',
+  'Orion 910',
+  'Orion 920',
+  'Orion 930',
+  'Orion 940',
+  'Orion 950',
+  'Handmeter Misc',
+  'L5200/L5300',
+  'L601-3',
+  'L610/L620',
+  'L612/L622',
+  'L722-L',
+  'L722-S',
+  'L622/L722 Kits',
+  'L5300/L722',
+];
+
+const monthNames = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 const salesAnalysisBucketOptions = [
@@ -511,6 +582,7 @@ function App() {
               showNotice={showNotice}
             />
           ) : null}
+          {activeTab === 'meter-report' ? <WeeklyMeterReportScreen showNotice={showNotice} /> : null}
           {activeTab === 'how-to-use' ? <HowToUseScreen /> : null}
         </section>
       </div>
@@ -2087,6 +2159,7 @@ function UnmatchedItemsModal({
   const emptyCategoryForm = {
     name: '',
     sales_analysis_bucket: 'rhp',
+    weekly_meter_row_label: '',
     sort_order: 100,
     quantity_multiplier: 1,
     is_active: true,
@@ -2212,6 +2285,7 @@ function UnmatchedItemsModal({
         sort_order: Number(createCategoryForm.sort_order),
         quantity_multiplier: Math.max(1, Number(createCategoryForm.quantity_multiplier) || 1),
         sales_analysis_bucket: createCategoryForm.sales_analysis_bucket || null,
+        weekly_meter_row_label: createCategoryForm.weekly_meter_row_label || null,
         is_active: Boolean(createCategoryForm.is_active),
       });
       const category = response.data.data;
@@ -3062,10 +3136,206 @@ function UsersTable({ users, selectedUser, statusFilter, roleFilter, searchQuery
   );
 }
 
+function formatMeterNumber(value, fractionDigits = 0) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  return Number(value).toLocaleString(undefined, {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  });
+}
+
+function formatMeterPercent(value) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  return `${Number(value).toFixed(1)}%`;
+}
+
+function WeeklyMeterReportScreen({ showNotice }) {
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadReport = useCallback(async (nextYear, nextMonth) => {
+    setLoading(true);
+
+    try {
+      const response = await axios.get('/api/weekly-meter-report', {
+        params: { year: nextYear, month: nextMonth },
+      });
+      const data = response.data.data;
+      setReport(data);
+
+      if (Array.isArray(data.available_months) && data.available_months.length > 0 && !data.available_months.includes(nextMonth)) {
+        const fallbackMonth = data.available_months[data.available_months.length - 1];
+        setMonth(fallbackMonth);
+        return;
+      }
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to load the weekly meter report.'));
+    } finally {
+      setLoading(false);
+    }
+  }, [showNotice]);
+
+  useEffect(() => {
+    loadReport(year, month);
+  }, [year, month, loadReport]);
+
+  const years = report?.years ?? [now.getFullYear() - 1, now.getFullYear()];
+  const availableMonths = report?.available_months ?? [month];
+
+  return (
+    <section className="panel-grid">
+      <article className="panel panel-span">
+        <div className="section-heading section-heading-toolbar">
+          <div>
+            <p className="eyebrow">Weekly Meter Report</p>
+            <h2>Handmeter / RHP Shipments</h2>
+          </div>
+          <label className="status-filter">
+            Year
+            <select
+              value={year}
+              onChange={(event) => {
+                const nextYear = Number(event.target.value);
+                setYear(nextYear);
+                if (nextYear === now.getFullYear() && month > now.getMonth() + 1) {
+                  setMonth(now.getMonth() + 1);
+                }
+              }}
+            >
+              {years.map((optionYear) => (
+                <option key={optionYear} value={optionYear}>
+                  {optionYear}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="meter-month-tabs" role="tablist" aria-label="Report months">
+          {availableMonths.map((optionMonth) => (
+            <button
+              className={optionMonth === month ? 'meter-month-tab meter-month-tab-active' : 'meter-month-tab'}
+              key={optionMonth}
+              role="tab"
+              type="button"
+              aria-selected={optionMonth === month}
+              onClick={() => setMonth(optionMonth)}
+            >
+              {monthNames[optionMonth - 1]} {year}
+            </button>
+          ))}
+        </div>
+
+        {loading && !report ? <p>Loading weekly meter report...</p> : null}
+
+        {report ? (
+          <div className="meter-table-wrap">
+            <table className="meter-table">
+              <thead>
+                <tr>
+                  <th className="meter-title" colSpan={1 + (report.weeks.length * 2) + 2}>
+                    {report.title}
+                  </th>
+                </tr>
+                <tr>
+                  <th className="meter-corner" rowSpan={3}>MODEL</th>
+                  {report.weeks.map((week) => (
+                    <th
+                      className={week.index === 5 ? 'meter-week-head meter-week-5' : 'meter-week-head'}
+                      colSpan={2}
+                      key={`week-label-${week.index}`}
+                    >
+                      {week.label}
+                    </th>
+                  ))}
+                  <th className="meter-total-head" colSpan={2}>Total</th>
+                </tr>
+                <tr>
+                  {report.weeks.map((week) => (
+                    <th
+                      className={week.index === 5 ? 'meter-week-head meter-week-5' : 'meter-week-head'}
+                      colSpan={2}
+                      key={`week-range-${week.index}`}
+                    >
+                      {week.range}
+                    </th>
+                  ))}
+                  <th className="meter-total-head" colSpan={2}>Month to Date</th>
+                </tr>
+                <tr>
+                  {report.weeks.map((week) => (
+                    <Fragment key={`week-sub-${week.index}`}>
+                      <th className={week.index === 5 ? 'meter-week-sub meter-week-5' : 'meter-week-sub'}># OF UNITS</th>
+                      <th className={week.index === 5 ? 'meter-week-sub meter-week-5' : 'meter-week-sub'}>NET SALES $</th>
+                    </Fragment>
+                  ))}
+                  <th className="meter-total-sub"># OF UNITS</th>
+                  <th className="meter-total-sub">NET SALES $</th>
+                </tr>
+              </thead>
+              <tbody>
+                {report.rows.map((row) => (
+                  <tr key={row.label}>
+                    <td className="meter-model">{row.label}</td>
+                    {row.weeks.map((weekValues) => (
+                      <Fragment key={`${row.label}-${weekValues.index}`}>
+                        <td className="meter-num">
+                          {row.tracks_units ? formatMeterNumber(weekValues.units) : ''}
+                        </td>
+                        <td className="meter-num">
+                          {formatMeterNumber(weekValues.sales, 2)}
+                        </td>
+                      </Fragment>
+                    ))}
+                    <td className="meter-num meter-mtd">{row.tracks_units ? formatMeterNumber(row.mtd_units) : ''}</td>
+                    <td className="meter-num meter-mtd">{formatMeterNumber(row.mtd_sales, 2)}</td>
+                  </tr>
+                ))}
+                <tr className="meter-total-row">
+                  <td>TOTAL</td>
+                  {report.totals.weeks.map((weekValues) => (
+                    <Fragment key={`total-${weekValues.index}`}>
+                      <td className="meter-num">{formatMeterNumber(weekValues.units)}</td>
+                      <td className="meter-num">{formatMeterNumber(weekValues.sales, 2)}</td>
+                    </Fragment>
+                  ))}
+                  <td className="meter-num meter-mtd">{formatMeterNumber(report.totals.mtd_units)}</td>
+                  <td className="meter-num meter-mtd">{formatMeterNumber(report.totals.mtd_sales, 2)}</td>
+                </tr>
+                <tr className="meter-percent-row">
+                  <td />
+                  {report.totals.weeks.map((weekValues) => (
+                    <Fragment key={`percent-${weekValues.index}`}>
+                      <td />
+                      <td className="meter-num">{formatMeterPercent(weekValues.percent)}</td>
+                    </Fragment>
+                  ))}
+                  <td />
+                  <td className="meter-num meter-mtd">100%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </article>
+    </section>
+  );
+}
+
 function CategoriesScreen({ showNotice }) {
   const emptyForm = {
     name: '',
     sales_analysis_bucket: 'rhp',
+    weekly_meter_row_label: '',
     sort_order: 100,
     quantity_multiplier: 1,
     is_active: true,
@@ -3103,6 +3373,7 @@ function CategoriesScreen({ showNotice }) {
         category.code,
         category.sales_analysis_bucket,
         category.report_family,
+        category.weekly_meter_row_label,
       ]);
     });
   }, [categories, searchQuery, statusFilter]);
@@ -3151,6 +3422,7 @@ function CategoriesScreen({ showNotice }) {
       sort_order: Number(form.sort_order),
       quantity_multiplier: Math.max(1, Number(form.quantity_multiplier) || 1),
       sales_analysis_bucket: form.sales_analysis_bucket || null,
+      weekly_meter_row_label: form.weekly_meter_row_label || null,
       is_active: Boolean(form.is_active),
     };
   }
@@ -3324,6 +3596,7 @@ function categoryToForm(category) {
   return {
     name: category.name ?? '',
     sales_analysis_bucket: category.sales_analysis_bucket ?? '',
+    weekly_meter_row_label: category.weekly_meter_row_label ?? '',
     sort_order: category.sort_order ?? 100,
     quantity_multiplier: category.quantity_multiplier ?? 1,
     is_active: Boolean(category.is_active),
@@ -3356,6 +3629,20 @@ function CategoryForm({ children, form, isSubmitting = false, primaryLabel, setF
           {salesAnalysisBucketOptions.map((bucket) => (
             <option key={bucket.value} value={bucket.value}>
               {bucket.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Weekly Meter Model
+        <select
+          value={form.weekly_meter_row_label}
+          onChange={(event) => setForm({ ...form, weekly_meter_row_label: event.target.value })}
+        >
+          <option value="">None</option>
+          {weeklyMeterModelLabels.map((label) => (
+            <option key={label} value={label}>
+              {label}
             </option>
           ))}
         </select>
@@ -3708,6 +3995,7 @@ function CategoryTable({ categories, selectedCategory, statusFilter, searchQuery
           <tr>
             <th>Name</th>
             <th>Bucket</th>
+            <th>Meter Model</th>
           </tr>
         </thead>
         <tbody>
@@ -3719,6 +4007,7 @@ function CategoryTable({ categories, selectedCategory, statusFilter, searchQuery
             >
               <td>{category.name}</td>
               <td>{category.sales_analysis_bucket ? salesAnalysisBucketLabel(category.sales_analysis_bucket) : 'None'}</td>
+              <td>{category.weekly_meter_row_label || '—'}</td>
             </tr>
           ))}
         </tbody>
@@ -4251,7 +4540,9 @@ function ExportBatchReportsPanel({ reports }) {
 }
 
 function generatedReportLabel(reportType) {
-  return workbookTypes.find((type) => type.key === reportType)?.label ?? reportType;
+  return workbookTypes.find((type) => type.key === reportType)?.label
+    ?? generatedReportLabels[reportType]
+    ?? reportType;
 }
 
 function SimpleList({ items }) {

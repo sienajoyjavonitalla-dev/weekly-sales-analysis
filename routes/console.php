@@ -112,7 +112,7 @@ Artisan::command('weekly-analysis:validate-workbooks
         $this->line(json_encode($result->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         return $result->isValid() ? self::SUCCESS : self::FAILURE;
-    })->purpose('Validate the six weekly sales analysis workbooks');
+    })->purpose('Validate the weekly sales analysis workbooks');
 
 Artisan::command('weekly-analysis:classify-sales-rows {importBatchId : Import batch ID to classify}', function (
     int $importBatchId,

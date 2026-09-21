@@ -11,7 +11,6 @@ use App\Domain\WeeklyAnalysis\Imports\Parsers\OpenOrdersWorkbookParser;
 use App\Domain\WeeklyAnalysis\Imports\Parsers\PtdOrdersWorkbookParser;
 use App\Domain\WeeklyAnalysis\Imports\Parsers\SalesAnalysisWorkbookParser;
 use App\Domain\WeeklyAnalysis\Imports\Parsers\TotalSalesReportWorkbookParser;
-use App\Domain\WeeklyAnalysis\Imports\Parsers\WeeklyMeterReportWorkbookParser;
 
 class WeeklyWorkbookSetValidator
 {
@@ -26,7 +25,6 @@ class WeeklyWorkbookSetValidator
             new SalesAnalysisWorkbookParser(),
             new IncomeStatementWorkbookParser(),
             new TotalSalesReportWorkbookParser(),
-            new WeeklyMeterReportWorkbookParser(),
             new OpenOrdersWorkbookParser(),
             new PtdOrdersWorkbookParser(),
         ]);
@@ -41,6 +39,10 @@ class WeeklyWorkbookSetValidator
         $issues = [];
 
         foreach (WorkbookType::cases() as $type) {
+            if ($type === WorkbookType::WeeklyMeterReport) {
+                continue;
+            }
+
             $path = $pathsByType[$type->value] ?? null;
 
             if ($path === null || $path === '') {

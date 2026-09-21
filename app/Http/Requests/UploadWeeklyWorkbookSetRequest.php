@@ -26,7 +26,6 @@ class UploadWeeklyWorkbookSetRequest extends FormRequest
             'sales_analysis' => $fileRule,
             'income_statement' => $fileRule,
             'total_sales_report' => $fileRule,
-            'weekly_meter_report' => $fileRule,
             'open_orders' => $fileRule,
             'ptd_orders' => $fileRule,
         ];

@@ -37,6 +37,7 @@ class WorkbookImportService
 
     public function __construct(
         private readonly SalesRowClassifier $salesRowClassifier,
+        private readonly UploadedFileDeletionService $uploadedFileDeletionService,
     ) {
         $this->parsers = $this->buildParserMap([
             new SalesAnalysisWorkbookParser(),
@@ -54,6 +55,14 @@ class WorkbookImportService
      */
     public function import(array $files, ?ImportBatch $importBatch = null, ?string $weekStart = null, ?string $weekEnding = null, ?int $userId = null): array
     {
+        $this->uploadedFileDeletionService->deleteEmptyDraftBatches();
+
+        if ($files === []) {
+            throw ValidationException::withMessages([
+                'workbooks' => ['Upload at least one workbook.'],
+            ]);
+        }
+
         return DB::transaction(function () use ($files, $importBatch, $weekStart, $weekEnding, $userId): array {
             [$resolvedWeekStart, $resolvedWeekEnding] = $this->resolveWeekRange($weekStart, $weekEnding, $files);
 
@@ -109,6 +118,7 @@ class WorkbookImportService
         $exists = ImportBatch::query()
             ->whereDate('week_ending', $weekEnding)
             ->where('source_system', $sourceSystem)
+            ->whereHas('uploadedFiles')
             ->exists();
 
         if ($exists) {

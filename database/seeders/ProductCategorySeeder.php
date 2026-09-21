@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Domain\WeeklyAnalysis\Reports\WeeklyMeterModelCatalog;
 use App\Models\MappingRule;
 use App\Models\ProductCategory;
 use Illuminate\Database\Schema\Blueprint;
@@ -17,7 +18,8 @@ class ProductCategorySeeder extends Seeder
         $this->ensureProductCategoryForeignKeys();
 
         if (ProductCategory::query()->exists() || MappingRule::query()->exists()) {
-            $this->command?->info('product_categories or mapping_rules already has data; skipping.');
+            $updated = $this->syncWeeklyMeterRowLabels();
+            $this->command?->info("product_categories or mapping_rules already has data; synced {$updated} weekly_meter_row_label values.");
 
             return;
         }
@@ -65,7 +67,8 @@ class ProductCategorySeeder extends Seeder
                 'report_family' => $category['report_family'],
                 'sales_analysis_bucket' => $category['sales_analysis_bucket'] ?: null,
                 'total_sales_row_label' => $category['total_sales_row_label'] ?: null,
-                'weekly_meter_row_label' => $category['weekly_meter_row_label'] ?: null,
+                'weekly_meter_row_label' => $category['weekly_meter_row_label']
+                    ?: (WeeklyMeterModelCatalog::defaultCategoryCodeLabels()[$categoryCode] ?? null),
                 'sort_order' => (int) $category['sort_order'],
                 'quantity_multiplier' => max(1, (int) ($category['quantity_multiplier'] ?? 1)),
                 'is_active' => (bool) $category['is_active'],
@@ -99,6 +102,22 @@ class ProductCategorySeeder extends Seeder
         }
 
         $this->command?->info('Seeded '.count($categories)." product categories and {$ruleCount} mapping rules.");
+    }
+
+    /**
+     * Apply default weekly meter MODEL labels to existing categories.
+     */
+    private function syncWeeklyMeterRowLabels(): int
+    {
+        $updated = 0;
+
+        foreach (WeeklyMeterModelCatalog::defaultCategoryCodeLabels() as $code => $label) {
+            $updated += ProductCategory::query()
+                ->where('code', $code)
+                ->update(['weekly_meter_row_label' => $label]);
+        }
+
+        return $updated;
     }
 
     /**

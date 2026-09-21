@@ -12,7 +12,6 @@ return [
             'sales_analysis',
             'income_statement',
             'total_sales_report',
-            'weekly_meter_report',
             'open_orders',
             'ptd_orders',
         ],

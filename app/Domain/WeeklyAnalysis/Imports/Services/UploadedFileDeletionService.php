@@ -72,6 +72,24 @@ class UploadedFileDeletionService
         return $files->count();
     }
 
+    public function deleteEmptyDraftBatches(): int
+    {
+        $batches = ImportBatch::query()
+            ->where('status', 'draft')
+            ->whereDoesntHave('uploadedFiles')
+            ->get();
+
+        foreach ($batches as $batch) {
+            if (Storage::disk('local')->exists('uploads/'.$batch->id)) {
+                Storage::disk('local')->deleteDirectory('uploads/'.$batch->id);
+            }
+
+            $batch->delete();
+        }
+
+        return $batches->count();
+    }
+
     public function confirmSalesAnalysisReconcile(ImportBatch $importBatch): void
     {
         $importBatch->uploadedFiles()
