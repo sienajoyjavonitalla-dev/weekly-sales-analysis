@@ -2333,13 +2333,19 @@ td {
 }
 
 .meter-table-wrap {
-  overflow-x: auto;
+  --meter-title-h: 2.5rem;
+  --meter-head-row-h: 1.85rem;
+  overflow: auto;
+  max-height: min(70vh, calc(100dvh - 15rem));
+  border: 1px solid var(--border);
+  border-radius: 10px;
 }
 
 .meter-table {
   width: 100%;
   min-width: 1100px;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 0.78rem;
 }
 
@@ -2351,6 +2357,10 @@ td {
 }
 
 .meter-title {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  height: var(--meter-title-h);
   background: #1f4e79;
   color: #fff;
   font-size: 1rem;
@@ -2361,23 +2371,89 @@ td {
 .meter-model {
   text-align: left;
   min-width: 180px;
+  max-width: 220px;
   white-space: normal;
 }
 
-.meter-week-head,
-.meter-week-sub {
+.meter-corner {
+  position: sticky;
+  left: 0;
+  z-index: 6;
+  background: var(--surface);
+  box-shadow: 1px 0 0 #7d8aa0;
+}
+
+.meter-corner-top {
+  top: var(--meter-title-h);
+  border-bottom-color: transparent;
+}
+
+.meter-corner-mid {
+  top: calc(var(--meter-title-h) + var(--meter-head-row-h));
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  text-align: center;
+  font-weight: 700;
+}
+
+.meter-corner-bottom {
+  top: calc(var(--meter-title-h) + (2 * var(--meter-head-row-h)));
+  border-top-color: transparent;
+  box-shadow: 1px 0 0 #7d8aa0, 0 1px 0 #7d8aa0;
+}
+
+.meter-model,
+.meter-total-row td:first-child,
+.meter-percent-row td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--surface);
+  box-shadow: 1px 0 0 #7d8aa0;
+}
+
+.meter-table thead tr:nth-child(2) > th {
+  position: sticky;
+  top: var(--meter-title-h);
+  z-index: 4;
+  height: var(--meter-head-row-h);
+}
+
+.meter-table thead tr:nth-child(3) > th {
+  position: sticky;
+  top: calc(var(--meter-title-h) + var(--meter-head-row-h));
+  z-index: 4;
+  height: var(--meter-head-row-h);
+}
+
+.meter-table thead tr:nth-child(4) > th {
+  position: sticky;
+  top: calc(var(--meter-title-h) + (2 * var(--meter-head-row-h)));
+  z-index: 4;
+  height: var(--meter-head-row-h);
+  box-shadow: 0 1px 0 #7d8aa0;
+}
+
+.meter-table thead tr:nth-child(2) > th.meter-corner,
+.meter-table thead tr:nth-child(3) > th.meter-corner,
+.meter-table thead tr:nth-child(4) > th.meter-corner {
+  z-index: 6;
+}
+
+.meter-table .meter-week-head,
+.meter-table .meter-week-sub {
   background: #4f81bd;
   color: #fff;
   text-align: center;
 }
 
-.meter-week-5 {
+.meter-table .meter-week-5 {
   background: #c459b5;
 }
 
-.meter-total-head,
-.meter-total-sub,
-.meter-mtd {
+.meter-table .meter-total-head,
+.meter-table .meter-total-sub,
+.meter-table .meter-mtd {
   background: #70ad47;
   color: #fff;
   text-align: center;
@@ -2386,6 +2462,10 @@ td {
 .meter-num {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+.meter-num.meter-sales[title] {
+  cursor: help;
 }
 
 .meter-total-row td,

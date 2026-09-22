@@ -6,6 +6,7 @@ use App\Domain\WeeklyAnalysis\Classification\Services\SalesRowClassifier;
 use App\Domain\WeeklyAnalysis\Reconciliation\Services\WeeklyReconciliationService;
 use App\Models\GeneratedReport;
 use App\Models\ImportBatch;
+use Illuminate\Support\Collection;
 use Throwable;
 
 class WeeklyReportExportService
@@ -27,14 +28,57 @@ class WeeklyReportExportService
         ?int $generatedByUserId = null,
         bool $includeState = false,
     ): array {
-        $this->classifier->classifyBatch($importBatch);
+        $monthBatches = $this->batchesInSameMonth($importBatch);
+
+        foreach ($monthBatches as $batch) {
+            $this->classifier->classifyBatch($batch);
+        }
+
         $this->reconciliationService->reconcile($importBatch->refresh());
 
-        return [
-            $this->salesAnalysisExporter->export($importBatch->refresh(), $generatedByUserId, $includeState),
-            $this->attemptTemplateExport($importBatch->refresh(), 'total_sales_report', $generatedByUserId),
-            $this->attemptTemplateExport($importBatch->refresh(), 'weekly_meter_report', $generatedByUserId),
-        ];
+        $salesAnalysis = $this->salesAnalysisExporter->export(
+            $importBatch->refresh(),
+            $generatedByUserId,
+            $includeState,
+        );
+        $totalSales = $this->attemptTemplateExport(
+            $importBatch->refresh(),
+            'total_sales_report',
+            $generatedByUserId,
+        );
+        $weeklyMeter = $this->attemptTemplateExport(
+            $importBatch->refresh(),
+            'weekly_meter_report',
+            $generatedByUserId,
+        );
+
+        foreach ($monthBatches as $sibling) {
+            if ($sibling->id === $importBatch->id) {
+                continue;
+            }
+
+            $this->attemptTemplateExport(
+                $sibling->refresh(),
+                'weekly_meter_report',
+                $generatedByUserId,
+            );
+        }
+
+        return [$salesAnalysis, $totalSales, $weeklyMeter];
+    }
+
+    /**
+     * @return Collection<int, ImportBatch>
+     */
+    private function batchesInSameMonth(ImportBatch $importBatch): Collection
+    {
+        $weekEnding = $importBatch->week_ending;
+
+        return ImportBatch::query()
+            ->whereYear('week_ending', $weekEnding->year)
+            ->whereMonth('week_ending', $weekEnding->month)
+            ->orderBy('week_ending')
+            ->get();
     }
 
     private function attemptTemplateExport(ImportBatch $importBatch, string $reportType, ?int $generatedByUserId): GeneratedReport

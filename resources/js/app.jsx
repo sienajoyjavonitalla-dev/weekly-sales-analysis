@@ -3155,6 +3155,88 @@ function formatMeterPercent(value) {
   return `${Number(value).toFixed(1)}%`;
 }
 
+function formatMeterMoney(value) {
+  return formatMeterNumber(value, 2);
+}
+
+function priorMeterWeekWithData(weeks, weekIndex) {
+  return [...weeks]
+    .filter((week) => week.has_data && week.index < weekIndex && week.raw_sales !== null && week.raw_sales !== undefined)
+    .at(-1);
+}
+
+function meterWeekSalesTitle(weekValues, rowWeeks) {
+  if (!weekValues?.has_data || weekValues.sales === null || weekValues.sales === undefined) {
+    return undefined;
+  }
+
+  const displayed = formatMeterMoney(weekValues.sales);
+  const raw = weekValues.raw_sales;
+
+  if (weekValues.index === 1 || raw === null || raw === undefined) {
+    return `Week ${weekValues.index} sales analysis total: ${displayed}`;
+  }
+
+  const priorWeek = priorMeterWeekWithData(rowWeeks, weekValues.index);
+
+  if (!priorWeek) {
+    return `Week ${weekValues.index} sales analysis total: ${displayed}`;
+  }
+
+  return [
+    `${formatMeterMoney(raw)} − ${formatMeterMoney(priorWeek.raw_sales)} = ${displayed}`,
+    `This week's sales analysis total minus week ${priorWeek.index}'s sales analysis total`,
+  ].join('\n');
+}
+
+function meterMtdSalesTitle(row) {
+  if (row.mtd_sales === null || row.mtd_sales === undefined) {
+    return undefined;
+  }
+
+  const parts = row.weeks
+    .filter((week) => week.has_data && week.sales !== null && week.sales !== undefined)
+    .map((week) => formatMeterMoney(week.sales));
+
+  if (parts.length === 0) {
+    return undefined;
+  }
+
+  return `${parts.join(' + ')} = ${formatMeterMoney(row.mtd_sales)}\nSum of weekly net sales`;
+}
+
+function meterTotalWeekSalesTitle(weekValues) {
+  if (!weekValues?.has_data || weekValues.sales === null || weekValues.sales === undefined) {
+    return undefined;
+  }
+
+  return `Sum of all model net sales for week ${weekValues.index}: ${formatMeterMoney(weekValues.sales)}`;
+}
+
+function meterTotalMtdSalesTitle(totals) {
+  if (totals.mtd_sales === null || totals.mtd_sales === undefined) {
+    return undefined;
+  }
+
+  const parts = totals.weeks
+    .filter((week) => week.has_data && week.sales !== null && week.sales !== undefined)
+    .map((week) => formatMeterMoney(week.sales));
+
+  if (parts.length === 0) {
+    return undefined;
+  }
+
+  return `${parts.join(' + ')} = ${formatMeterMoney(totals.mtd_sales)}\nSum of weekly total net sales`;
+}
+
+function meterPercentTitle(weekValues, mtdSales) {
+  if (!weekValues?.has_data || weekValues.percent === null || weekValues.percent === undefined || !mtdSales) {
+    return undefined;
+  }
+
+  return `(${formatMeterMoney(weekValues.sales)} ÷ ${formatMeterMoney(mtdSales)}) × 100 = ${formatMeterPercent(weekValues.percent)}`;
+}
+
 function WeeklyMeterReportScreen({ showNotice }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -3247,7 +3329,7 @@ function WeeklyMeterReportScreen({ showNotice }) {
                   </th>
                 </tr>
                 <tr>
-                  <th className="meter-corner" rowSpan={3}>MODEL</th>
+                  <th className="meter-corner meter-corner-top" aria-hidden="true" />
                   {report.weeks.map((week) => (
                     <th
                       className={week.index === 5 ? 'meter-week-head meter-week-5' : 'meter-week-head'}
@@ -3260,6 +3342,7 @@ function WeeklyMeterReportScreen({ showNotice }) {
                   <th className="meter-total-head" colSpan={2}>Total</th>
                 </tr>
                 <tr>
+                  <th className="meter-corner meter-corner-mid">MODEL</th>
                   {report.weeks.map((week) => (
                     <th
                       className={week.index === 5 ? 'meter-week-head meter-week-5' : 'meter-week-head'}
@@ -3272,6 +3355,7 @@ function WeeklyMeterReportScreen({ showNotice }) {
                   <th className="meter-total-head" colSpan={2}>Month to Date</th>
                 </tr>
                 <tr>
+                  <th className="meter-corner meter-corner-bottom" aria-hidden="true" />
                   {report.weeks.map((week) => (
                     <Fragment key={`week-sub-${week.index}`}>
                       <th className={week.index === 5 ? 'meter-week-sub meter-week-5' : 'meter-week-sub'}># OF UNITS</th>
@@ -3291,13 +3375,15 @@ function WeeklyMeterReportScreen({ showNotice }) {
                         <td className="meter-num">
                           {row.tracks_units ? formatMeterNumber(weekValues.units) : ''}
                         </td>
-                        <td className="meter-num">
+                        <td className="meter-num meter-sales" title={meterWeekSalesTitle(weekValues, row.weeks)}>
                           {formatMeterNumber(weekValues.sales, 2)}
                         </td>
                       </Fragment>
                     ))}
                     <td className="meter-num meter-mtd">{row.tracks_units ? formatMeterNumber(row.mtd_units) : ''}</td>
-                    <td className="meter-num meter-mtd">{formatMeterNumber(row.mtd_sales, 2)}</td>
+                    <td className="meter-num meter-mtd meter-sales" title={meterMtdSalesTitle(row)}>
+                      {formatMeterNumber(row.mtd_sales, 2)}
+                    </td>
                   </tr>
                 ))}
                 <tr className="meter-total-row">
@@ -3305,18 +3391,24 @@ function WeeklyMeterReportScreen({ showNotice }) {
                   {report.totals.weeks.map((weekValues) => (
                     <Fragment key={`total-${weekValues.index}`}>
                       <td className="meter-num">{formatMeterNumber(weekValues.units)}</td>
-                      <td className="meter-num">{formatMeterNumber(weekValues.sales, 2)}</td>
+                      <td className="meter-num meter-sales" title={meterTotalWeekSalesTitle(weekValues)}>
+                        {formatMeterNumber(weekValues.sales, 2)}
+                      </td>
                     </Fragment>
                   ))}
                   <td className="meter-num meter-mtd">{formatMeterNumber(report.totals.mtd_units)}</td>
-                  <td className="meter-num meter-mtd">{formatMeterNumber(report.totals.mtd_sales, 2)}</td>
+                  <td className="meter-num meter-mtd meter-sales" title={meterTotalMtdSalesTitle(report.totals)}>
+                    {formatMeterNumber(report.totals.mtd_sales, 2)}
+                  </td>
                 </tr>
                 <tr className="meter-percent-row">
                   <td />
                   {report.totals.weeks.map((weekValues) => (
                     <Fragment key={`percent-${weekValues.index}`}>
                       <td />
-                      <td className="meter-num">{formatMeterPercent(weekValues.percent)}</td>
+                      <td className="meter-num meter-sales" title={meterPercentTitle(weekValues, report.totals.mtd_sales)}>
+                        {formatMeterPercent(weekValues.percent)}
+                      </td>
                     </Fragment>
                   ))}
                   <td />
@@ -4246,7 +4338,7 @@ const howToUseSteps = [
   },
   {
     title: 'Generate reports on Exports',
-    body: 'Go to the Exports page, find the week range for the newly uploaded workbook, then click Generate Reports and wait for generation to finish.',
+    body: 'Go to the Exports page, find the week range for the newly uploaded workbook, then click Generate Report. Generation reapplies current mapping rules and refreshes Sales Analysis, Total Sales, and the weekly meter for that month.',
     image: '/images/5.png',
   },
   {
@@ -4341,14 +4433,14 @@ function ExportsScreen({ batches, batchesLoading, showNotice }) {
     setGeneratingBatchId(batchId);
 
     try {
-      const response = await axios.post(`/api/import-batches/${batchId}/generated-reports`, {
+      await axios.post(`/api/import-batches/${batchId}/generated-reports`, {
         include_state: includeState,
       });
-      setReportsByBatchId((current) => ({
-        ...current,
-        [String(batchId)]: response.data.data ?? [],
-      }));
-      showNotice('success', `Reports generated for batch #${batchId}.`);
+      await loadReports();
+      showNotice(
+        'success',
+        `Reports generated for batch #${batchId}. Mapping rules were reapplied and same-month weekly meter files were refreshed.`,
+      );
     } catch (error) {
       showNotice('error', messageFromError(error, `Unable to generate reports for batch #${batchId}.`));
     } finally {
