@@ -99,6 +99,110 @@ class WeeklyMeterReportTest extends TestCase
         $this->assertSame('RHP L6 Kits', $sheet->getCell('A7')->getValue());
         $this->assertSame(26.0, (float) $sheet->getCell('F7')->getCalculatedValue());
         $this->assertSame(17533.0, (float) $sheet->getCell('G7')->getCalculatedValue());
+        $this->assertSame("ADDT'L FEES", $sheet->getCell('L2')->getValue());
+        $this->assertSame(17533.0, (float) $sheet->getCell('N7')->getCalculatedValue());
+    }
+
+    public function test_additional_fees_are_included_in_row_mtd_and_totals(): void
+    {
+        $user = $this->createAnalyst();
+        $category = $this->createStarterKitCategory();
+        $this->createWeekSales($user, '2026-04-03', $category, 2, 1246.00, 1);
+
+        \App\Models\WeeklyMeterAdditionalFee::query()->create([
+            'year' => 2026,
+            'month' => 4,
+            'model_label' => 'RHP L6 Kits',
+            'amount' => 100.50,
+            'sort_order' => 0,
+            'created_by_user_id' => $user->id,
+        ]);
+        \App\Models\WeeklyMeterAdditionalFee::query()->create([
+            'year' => 2026,
+            'month' => 4,
+            'model_label' => 'RHP L6 Kits',
+            'amount' => -25.25,
+            'sort_order' => 1,
+            'created_by_user_id' => $user->id,
+        ]);
+
+        $report = app(WeeklyMeterReportBuilder::class)->build(2026, 4, CarbonImmutable::parse('2026-09-21'));
+        $row = collect($report['rows'])->firstWhere('label', 'RHP L6 Kits');
+
+        $this->assertSame(75.25, $row['additional_fees_total']);
+        $this->assertCount(2, $row['additional_fees']);
+        $this->assertSame(1321.25, $row['mtd_sales']);
+        $this->assertSame(75.25, $report['totals']['additional_fees_total']);
+        $this->assertSame(1321.25, $report['totals']['mtd_sales']);
+    }
+
+    public function test_analyst_can_replace_and_clear_additional_fees(): void
+    {
+        $user = $this->createAnalyst();
+
+        $this->actingAs($user)
+            ->putJson('/api/weekly-meter-report/additional-fees', [
+                'year' => 2026,
+                'month' => 4,
+                'model_label' => 'RHP L6 Kits',
+                'fees' => [
+                    ['amount' => 50],
+                    ['amount' => -10.5],
+                ],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.totals.additional_fees_total', 39.5);
+
+        $this->assertDatabaseCount('weekly_meter_additional_fees', 2);
+
+        $this->actingAs($user)
+            ->putJson('/api/weekly-meter-report/additional-fees', [
+                'year' => 2026,
+                'month' => 4,
+                'model_label' => 'RHP L6 Kits',
+                'fees' => [],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.totals.additional_fees_total', 0);
+
+        $this->assertDatabaseCount('weekly_meter_additional_fees', 0);
+    }
+
+    public function test_additional_fees_reject_unknown_model_label(): void
+    {
+        $user = $this->createAnalyst();
+
+        $this->actingAs($user)
+            ->putJson('/api/weekly-meter-report/additional-fees', [
+                'year' => 2026,
+                'month' => 4,
+                'model_label' => 'Not A Real Model',
+                'fees' => [['amount' => 10]],
+            ])
+            ->assertStatus(422);
+    }
+
+    public function test_exporter_includes_additional_fees_column(): void
+    {
+        $user = $this->createAnalyst();
+        $category = $this->createStarterKitCategory();
+        $batch = $this->createWeekSales($user, '2026-04-17', $category, 26, 17533.00, 3);
+
+        \App\Models\WeeklyMeterAdditionalFee::query()->create([
+            'year' => 2026,
+            'month' => 4,
+            'model_label' => 'RHP L6 Kits',
+            'amount' => 200,
+            'sort_order' => 0,
+            'created_by_user_id' => $user->id,
+        ]);
+
+        $generated = app(WeeklyMeterReportExporter::class)->export($batch, $user->id);
+        $sheet = IOFactory::load(storage_path('app/private/'.$generated->storage_path))->getActiveSheet();
+
+        $this->assertSame("ADDT'L FEES", $sheet->getCell('L2')->getValue());
+        $this->assertSame(200.0, (float) $sheet->getCell('L7')->getCalculatedValue());
+        $this->assertSame(17733.0, (float) $sheet->getCell('N7')->getCalculatedValue());
     }
 
     private function createAnalyst(): User

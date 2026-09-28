@@ -20,6 +20,8 @@ class WeeklyMeterReportExporter
 
     private const WEEK_FIVE_FILL = 'C459B5';
 
+    private const FEES_FILL = 'ED7D31';
+
     private const TOTAL_FILL = '70AD47';
 
     private const TITLE_FILL = '1F4E79';
@@ -67,7 +69,10 @@ class WeeklyMeterReportExporter
             ->setTitle((string) $report['title']);
 
         $weekCount = count($report['weeks']);
-        $lastColumn = $this->columnLetter(1 + ($weekCount * 2) + 2);
+        $feesColumn = $this->columnLetter(2 + ($weekCount * 2));
+        $totalUnitsColumn = $this->columnLetter(3 + ($weekCount * 2));
+        $totalSalesColumn = $this->columnLetter(4 + ($weekCount * 2));
+        $lastColumn = $totalSalesColumn;
 
         $sheet->mergeCells('A1:'.$lastColumn.'1');
         $sheet->setCellValue('A1', $report['title']);
@@ -95,8 +100,12 @@ class WeeklyMeterReportExporter
             $sheet->getStyle($unitsColumn.'2:'.$salesColumn.'5')->applyFromArray($this->headerStyle($fill));
         }
 
-        $totalUnitsColumn = $this->columnLetter(2 + ($weekCount * 2));
-        $totalSalesColumn = $this->columnLetter(3 + ($weekCount * 2));
+        $sheet->mergeCells($feesColumn.'2:'.$feesColumn.'3');
+        $sheet->setCellValue($feesColumn.'2', "ADDT'L FEES");
+        $sheet->setCellValue($feesColumn.'4', 'NET');
+        $sheet->setCellValue($feesColumn.'5', 'SALES $');
+        $sheet->getStyle($feesColumn.'2:'.$feesColumn.'5')->applyFromArray($this->headerStyle(self::FEES_FILL));
+
         $sheet->mergeCells($totalUnitsColumn.'2:'.$totalSalesColumn.'2');
         $sheet->setCellValue($totalUnitsColumn.'2', 'Total');
         $sheet->mergeCells($totalUnitsColumn.'3:'.$totalSalesColumn.'3');
@@ -113,6 +122,11 @@ class WeeklyMeterReportExporter
             $sheet->setCellValue('A'.$rowNumber, $modelRow['label']);
             $this->writeWeekValues($sheet, $rowNumber, $modelRow['weeks'], $modelRow['tracks_units']);
 
+            if ((float) ($modelRow['additional_fees_total'] ?? 0) !== 0.0 || ! empty($modelRow['additional_fees'])) {
+                $sheet->setCellValue($feesColumn.$rowNumber, $modelRow['additional_fees_total']);
+                $sheet->getStyle($feesColumn.$rowNumber)->getNumberFormat()->setFormatCode(self::ACCOUNTING_FORMAT);
+            }
+
             if ($modelRow['tracks_units'] && $modelRow['mtd_units'] !== null) {
                 $sheet->setCellValue($totalUnitsColumn.$rowNumber, $modelRow['mtd_units']);
             }
@@ -128,6 +142,8 @@ class WeeklyMeterReportExporter
         $sheet->setCellValue('A'.$rowNumber, 'TOTAL');
         $sheet->getStyle('A'.$rowNumber.':'.$lastColumn.$rowNumber)->getFont()->setBold(true);
         $this->writeWeekValues($sheet, $rowNumber, $report['totals']['weeks'], true);
+        $sheet->setCellValue($feesColumn.$rowNumber, $report['totals']['additional_fees_total'] ?? 0);
+        $sheet->getStyle($feesColumn.$rowNumber)->getNumberFormat()->setFormatCode(self::ACCOUNTING_FORMAT);
         $sheet->setCellValue($totalUnitsColumn.$rowNumber, $report['totals']['mtd_units']);
         $sheet->setCellValue($totalSalesColumn.$rowNumber, $report['totals']['mtd_sales']);
         $sheet->getStyle($totalSalesColumn.$rowNumber)->getNumberFormat()->setFormatCode(self::ACCOUNTING_FORMAT);
@@ -145,7 +161,7 @@ class WeeklyMeterReportExporter
         $sheet->setCellValue($totalSalesColumn.$rowNumber, '100%');
 
         $sheet->getColumnDimension('A')->setWidth(32);
-        for ($column = 2; $column <= 1 + ($weekCount * 2) + 2; $column++) {
+        for ($column = 2; $column <= 1 + ($weekCount * 2) + 3; $column++) {
             $sheet->getColumnDimension($this->columnLetter($column))->setWidth(12);
         }
 

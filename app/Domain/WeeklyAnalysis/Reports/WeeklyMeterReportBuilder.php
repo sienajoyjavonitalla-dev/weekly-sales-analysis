@@ -4,6 +4,7 @@ namespace App\Domain\WeeklyAnalysis\Reports;
 
 use App\Models\ImportBatch;
 use App\Models\SalesRow;
+use App\Models\WeeklyMeterAdditionalFee;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 
@@ -24,6 +25,7 @@ class WeeklyMeterReportBuilder
         $batches = $this->batchesForMonth($year, $month);
         $batchWeekIndex = $this->batchWeekIndex($batches, $weeks);
         $rawByLabelAndWeek = $this->rawTotalsByLabelAndWeek($batches, $batchWeekIndex);
+        $feesByLabel = $this->additionalFeesByLabel($year, $month);
         $weekHasData = [];
 
         foreach ($weeks as $week) {
@@ -37,6 +39,7 @@ class WeeklyMeterReportBuilder
         $totalWeekSales = array_fill_keys(array_column($weeks, 'index'), 0.0);
         $mtdUnits = 0.0;
         $mtdSales = 0.0;
+        $additionalFeesTotal = 0.0;
 
         foreach (WeeklyMeterModelCatalog::rows() as $model) {
             $row = $this->buildRow(
@@ -45,6 +48,7 @@ class WeeklyMeterReportBuilder
                 weeks: $weeks,
                 weekHasData: $weekHasData,
                 rawByWeek: $rawByLabelAndWeek[$model['label']] ?? [],
+                additionalFees: $feesByLabel[$model['label']] ?? [],
             );
 
             $rows[] = $row;
@@ -68,6 +72,7 @@ class WeeklyMeterReportBuilder
             }
 
             $mtdSales += (float) $row['mtd_sales'];
+            $additionalFeesTotal += (float) $row['additional_fees_total'];
         }
 
         $totalWeeks = [];
@@ -113,6 +118,7 @@ class WeeklyMeterReportBuilder
             'rows' => $rows,
             'totals' => [
                 'weeks' => $totalWeeks,
+                'additional_fees_total' => round($additionalFeesTotal, 2),
                 'mtd_units' => round($mtdUnits, 4),
                 'mtd_sales' => round($mtdSales, 2),
                 'percent' => 100,
@@ -124,6 +130,7 @@ class WeeklyMeterReportBuilder
      * @param  list<array{index:int, start:string, end:string, range:string, label:string}>  $weeks
      * @param  array<int, bool>  $weekHasData
      * @param  array<int, array{quantity:float, amount:float}>  $rawByWeek
+     * @param  list<array{amount:float, sort_order:int}>  $additionalFees
      * @return array<string, mixed>
      */
     private function buildRow(
@@ -132,6 +139,7 @@ class WeeklyMeterReportBuilder
         array $weeks,
         array $weekHasData,
         array $rawByWeek,
+        array $additionalFees,
     ): array {
         $displayedWeeks = [];
         $priorUnits = 0.0;
@@ -176,13 +184,43 @@ class WeeklyMeterReportBuilder
             ];
         }
 
+        $feesTotal = round(array_sum(array_column($additionalFees, 'amount')), 2);
+        $mtdSales = round($mtdSales + $feesTotal, 2);
+
         return [
             'label' => $label,
             'tracks_units' => $tracksUnits,
             'weeks' => $displayedWeeks,
+            'additional_fees' => $additionalFees,
+            'additional_fees_total' => $feesTotal,
             'mtd_units' => $tracksUnits ? round($mtdUnits, 4) : null,
-            'mtd_sales' => round($mtdSales, 2),
+            'mtd_sales' => $mtdSales,
         ];
+    }
+
+    /**
+     * @return array<string, list<array{amount:float, sort_order:int}>>
+     */
+    private function additionalFeesByLabel(int $year, int $month): array
+    {
+        $fees = WeeklyMeterAdditionalFee::query()
+            ->where('year', $year)
+            ->where('month', $month)
+            ->orderBy('model_label')
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        $grouped = [];
+
+        foreach ($fees as $fee) {
+            $grouped[$fee->model_label][] = [
+                'amount' => round((float) $fee->amount, 2),
+                'sort_order' => (int) $fee->sort_order,
+            ];
+        }
+
+        return $grouped;
     }
 
     /**

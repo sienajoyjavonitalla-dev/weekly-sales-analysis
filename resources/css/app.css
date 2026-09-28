@@ -2451,6 +2451,13 @@ td {
   background: #c459b5;
 }
 
+.meter-table .meter-fees-head,
+.meter-table .meter-fees-sub {
+  background: #ed7d31;
+  color: #fff;
+  text-align: center;
+}
+
 .meter-table .meter-total-head,
 .meter-table .meter-total-sub,
 .meter-table .meter-mtd {
@@ -2466,6 +2473,70 @@ td {
 
 .meter-num.meter-sales[title] {
   cursor: help;
+}
+
+.meter-fees-cell {
+  text-align: right;
+  white-space: nowrap;
+  min-width: 7.5rem;
+}
+
+.meter-fee-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-left: 4px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text);
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.meter-fee-edit .button-icon {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.meter-fee-edit:hover {
+  border-color: var(--primary-border);
+  color: var(--primary);
+}
+
+.meter-fee-lines {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 18px;
+}
+
+.meter-fee-line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.meter-fee-actions {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.modal-card-meter-fees {
+  width: min(420px, 100%);
+}
+
+.modal-card-meter-fees .muted {
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+
+.modal-card-meter-fees .form-error {
+  color: #f87171;
+  margin: 0 0 8px;
 }
 
 .meter-total-row td,
