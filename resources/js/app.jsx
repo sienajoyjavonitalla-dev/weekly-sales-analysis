@@ -3345,17 +3345,15 @@ function WeeklyMeterAdditionalFeesModal({
                 onChange={(event) => updateLine(index, event.target.value)}
               />
             </label>
-            {lines.length > 1 ? (
-              <button
-                aria-label={`Remove amount ${index + 1}`}
-                className="meter-fee-edit"
-                disabled={saving}
-                type="button"
-                onClick={() => removeLine(index)}
-              >
-                <ActionIcon name="delete" />
-              </button>
-            ) : null}
+            <button
+              aria-label={`Remove amount ${index + 1}`}
+              className="meter-fee-edit"
+              disabled={saving}
+              type="button"
+              onClick={() => removeLine(index)}
+            >
+              <ActionIcon name="delete" />
+            </button>
           </div>
         ))}
       </div>
