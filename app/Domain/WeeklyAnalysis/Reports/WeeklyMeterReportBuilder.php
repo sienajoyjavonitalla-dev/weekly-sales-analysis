@@ -75,6 +75,10 @@ class WeeklyMeterReportBuilder
             $additionalFeesTotal += (float) $row['additional_fees_total'];
         }
 
+        $roundedAdditionalFeesTotal = round($additionalFeesTotal, 2);
+        $additionalFeesPercent = $mtdSales > 0
+            ? round(($roundedAdditionalFeesTotal / $mtdSales) * 100, 1)
+            : null;
         $totalWeeks = [];
 
         foreach ($weeks as $week) {
@@ -118,7 +122,8 @@ class WeeklyMeterReportBuilder
             'rows' => $rows,
             'totals' => [
                 'weeks' => $totalWeeks,
-                'additional_fees_total' => round($additionalFeesTotal, 2),
+                'additional_fees_total' => $roundedAdditionalFeesTotal,
+                'additional_fees_percent' => $additionalFeesPercent,
                 'mtd_units' => round($mtdUnits, 4),
                 'mtd_sales' => round($mtdSales, 2),
                 'percent' => 100,
@@ -273,7 +278,7 @@ class WeeklyMeterReportBuilder
         }
 
         $rows = SalesRow::query()
-            ->selectRaw('sales_rows.import_batch_id, product_categories.weekly_meter_row_label as label, SUM(sales_rows.quantity_ordered) as quantity, SUM(sales_rows.amount) as amount')
+            ->selectRaw('sales_rows.import_batch_id, product_categories.weekly_meter_row_label as label, SUM(sales_rows.quantity_ordered * CASE WHEN COALESCE(product_categories.quantity_multiplier, 1) < 1 THEN 1 ELSE COALESCE(product_categories.quantity_multiplier, 1) END) as quantity, SUM(sales_rows.amount) as amount')
             ->join('product_categories', 'product_categories.id', '=', 'sales_rows.product_category_id')
             ->whereIn('sales_rows.import_batch_id', $batches->pluck('id'))
             ->whereNotNull('sales_rows.product_category_id')

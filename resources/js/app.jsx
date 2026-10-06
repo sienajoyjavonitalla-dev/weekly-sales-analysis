@@ -3269,6 +3269,17 @@ function meterPercentTitle(weekValues, mtdSales) {
   return `(${formatMeterMoney(weekValues.sales)} ÷ ${formatMeterMoney(mtdSales)}) × 100 = ${formatMeterPercent(weekValues.percent)}`;
 }
 
+function meterAdditionalFeesPercentTitle(totals) {
+  const percent = totals?.additional_fees_percent;
+  const mtdSales = totals?.mtd_sales;
+
+  if (percent === null || percent === undefined || !mtdSales) {
+    return undefined;
+  }
+
+  return `(${formatMeterMoney(totals.additional_fees_total ?? 0)} ÷ ${formatMeterMoney(mtdSales)}) × 100 = ${formatMeterPercent(percent)}`;
+}
+
 function formatMeterFeeDisplay(total, fees) {
   if (!fees?.length) {
     return '—';
@@ -3593,7 +3604,9 @@ function WeeklyMeterReportScreen({ showNotice }) {
                       </td>
                     </Fragment>
                   ))}
-                  <td />
+                  <td className="meter-num meter-sales" title={meterAdditionalFeesPercentTitle(report.totals)}>
+                    {formatMeterPercent(report.totals.additional_fees_percent)}
+                  </td>
                   <td />
                   <td className="meter-num meter-mtd">100%</td>
                 </tr>

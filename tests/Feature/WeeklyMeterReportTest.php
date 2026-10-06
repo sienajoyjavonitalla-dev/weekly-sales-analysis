@@ -64,6 +64,7 @@ class WeeklyMeterReportTest extends TestCase
         $this->assertNull($row['weeks'][0]['units']);
         $this->assertNull($row['weeks'][0]['sales']);
         $this->assertSame(0.0, $row['mtd_sales']);
+        $this->assertNull($report['totals']['additional_fees_percent']);
     }
 
     public function test_analyst_can_fetch_weekly_meter_report_payload(): void
@@ -133,6 +134,7 @@ class WeeklyMeterReportTest extends TestCase
         $this->assertCount(2, $row['additional_fees']);
         $this->assertSame(1321.25, $row['mtd_sales']);
         $this->assertSame(75.25, $report['totals']['additional_fees_total']);
+        $this->assertSame(5.7, $report['totals']['additional_fees_percent']);
         $this->assertSame(1321.25, $report['totals']['mtd_sales']);
     }
 
@@ -200,9 +202,61 @@ class WeeklyMeterReportTest extends TestCase
         $generated = app(WeeklyMeterReportExporter::class)->export($batch, $user->id);
         $sheet = IOFactory::load(storage_path('app/private/'.$generated->storage_path))->getActiveSheet();
 
+        $percentRow = 6 + count(\App\Domain\WeeklyAnalysis\Reports\WeeklyMeterModelCatalog::rows()) + 1;
+
         $this->assertSame("ADDT'L FEES", $sheet->getCell('L2')->getValue());
         $this->assertSame(200.0, (float) $sheet->getCell('L7')->getCalculatedValue());
         $this->assertSame(17733.0, (float) $sheet->getCell('N7')->getCalculatedValue());
+        $this->assertEqualsWithDelta(0.011, (float) $sheet->getCell('L'.$percentRow)->getCalculatedValue(), 0.00001);
+    }
+
+    public function test_multi_category_meter_model_applies_quantity_multipliers_and_week_deltas(): void
+    {
+        $user = $this->createAnalyst();
+
+        $pack5 = ProductCategory::query()->create([
+            'code' => 'pack_5_rapid_rh_l6_smart_sensor',
+            'name' => 'PACK, 5 ,RAPID RH L6, SMART SENSOR',
+            'report_family' => 'rhp',
+            'sales_analysis_bucket' => 'rhp',
+            'weekly_meter_row_label' => 'RHP L6 5Pk Sensors*',
+            'sort_order' => 32,
+            'quantity_multiplier' => 1,
+            'is_active' => true,
+        ]);
+
+        $valuePack25 = ProductCategory::query()->create([
+            'code' => 'value_pack_25pc_rhp_l6_smart_sensor',
+            'name' => 'VALUE PACK, 25PC, RHP L6 SMART SENSOR',
+            'report_family' => 'rhp',
+            'sales_analysis_bucket' => 'rhp',
+            'weekly_meter_row_label' => 'RHP L6 5Pk Sensors*',
+            'sort_order' => 34,
+            'quantity_multiplier' => 5,
+            'is_active' => true,
+        ]);
+
+        $weekOne = $this->createBatch($user, '2026-04-03');
+        $this->addSalesRow($weekOne, $pack5, 10, 1000.00, 1);
+        $this->addSalesRow($weekOne, $valuePack25, 10, 2000.00, 2);
+
+        $weekTwo = $this->createBatch($user, '2026-04-10');
+        $this->addSalesRow($weekTwo, $pack5, 20, 1500.00, 1);
+        $this->addSalesRow($weekTwo, $valuePack25, 12, 2500.00, 2);
+
+        $report = app(WeeklyMeterReportBuilder::class)->build(2026, 4, CarbonImmutable::parse('2026-09-21'));
+        $row = collect($report['rows'])->firstWhere('label', 'RHP L6 5Pk Sensors*');
+
+        // Week 1 raw: (10×1) + (10×5) = 60
+        $this->assertSame(60.0, $row['weeks'][0]['units']);
+        $this->assertSame(3000.0, $row['weeks'][0]['sales']);
+
+        // Week 2 raw: (20×1) + (12×5) = 80; displayed: 80 − 60 = 20
+        $this->assertSame(20.0, $row['weeks'][1]['units']);
+        $this->assertSame(1000.0, $row['weeks'][1]['sales']);
+
+        $this->assertSame(80.0, $row['mtd_units']);
+        $this->assertSame(4000.0, $row['mtd_sales']);
     }
 
     private function createAnalyst(): User
@@ -229,6 +283,38 @@ class WeeklyMeterReportTest extends TestCase
         ]);
     }
 
+    private function createBatch(User $user, string $weekEnding): ImportBatch
+    {
+        return ImportBatch::query()->create([
+            'week_start' => date('Y-m-d', strtotime($weekEnding.' -6 days')),
+            'week_ending' => $weekEnding,
+            'status' => 'draft',
+            'created_by_user_id' => $user->id,
+            'source_system' => 'Traverse Global '.$weekEnding,
+        ]);
+    }
+
+    private function addSalesRow(
+        ImportBatch $batch,
+        ProductCategory $category,
+        float $quantity,
+        float $amount,
+        int $sourceRow,
+    ): SalesRow {
+        return SalesRow::query()->create([
+            'import_batch_id' => $batch->id,
+            'product_category_id' => $category->id,
+            'source_sheet' => 'Sheet',
+            'source_row_number' => $sourceRow,
+            'source_bucket' => 'rhp',
+            'item_id' => '880-R0002-012',
+            'description' => $category->name,
+            'quantity_ordered' => $quantity,
+            'amount' => $amount,
+            'classification_status' => 'matched',
+        ]);
+    }
+
     private function createWeekSales(
         User $user,
         string $weekEnding,
@@ -237,26 +323,8 @@ class WeeklyMeterReportTest extends TestCase
         float $amount,
         int $sourceRow,
     ): ImportBatch {
-        $batch = ImportBatch::query()->create([
-            'week_start' => date('Y-m-d', strtotime($weekEnding.' -6 days')),
-            'week_ending' => $weekEnding,
-            'status' => 'draft',
-            'created_by_user_id' => $user->id,
-            'source_system' => 'Traverse Global '.$weekEnding,
-        ]);
-
-        SalesRow::query()->create([
-            'import_batch_id' => $batch->id,
-            'product_category_id' => $category->id,
-            'source_sheet' => 'Sheet',
-            'source_row_number' => $sourceRow,
-            'source_bucket' => 'rhp',
-            'item_id' => '880-R0002-012',
-            'description' => 'KIT, RAPID RH L6 STARTER KIT PLUS-FAHRENHEIT',
-            'quantity_ordered' => $quantity,
-            'amount' => $amount,
-            'classification_status' => 'matched',
-        ]);
+        $batch = $this->createBatch($user, $weekEnding);
+        $this->addSalesRow($batch, $category, $quantity, $amount, $sourceRow);
 
         return $batch;
     }

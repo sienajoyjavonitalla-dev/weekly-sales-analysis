@@ -158,6 +158,12 @@ class WeeklyMeterReportExporter
                 $sheet->getStyle($salesColumn.$rowNumber)->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_PERCENTAGE_00);
             }
         }
+
+        if (($report['totals']['additional_fees_percent'] ?? null) !== null) {
+            $sheet->setCellValue($feesColumn.$rowNumber, ($report['totals']['additional_fees_percent'] / 100));
+            $sheet->getStyle($feesColumn.$rowNumber)->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_PERCENTAGE_00);
+        }
+
         $sheet->setCellValue($totalSalesColumn.$rowNumber, '100%');
 
         $sheet->getColumnDimension('A')->setWidth(32);
