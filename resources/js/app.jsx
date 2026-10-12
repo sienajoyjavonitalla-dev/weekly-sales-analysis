@@ -180,7 +180,7 @@ const workflowTabs = [
   { id: 'rules', label: 'Mapping Rules', icon: RulesIcon },
   { id: 'reconcile', label: 'Reconcile', icon: ReconcileIcon },
   { id: 'exports', label: 'Exports', icon: ExportIcon },
-  { id: 'meter-report', label: 'Weekly Meter Report', icon: MeterReportIcon },
+  { id: 'meter-report', label: 'Meter Report', icon: MeterReportIcon },
 ];
 
 const userRoleOptions = [
@@ -197,7 +197,7 @@ const workbookTypes = [
 ];
 
 const generatedReportLabels = {
-  weekly_meter_report: 'Weekly Meter Report',
+  weekly_meter_report: 'Meter Report',
 };
 
 const weeklyMeterModelLabels = [
