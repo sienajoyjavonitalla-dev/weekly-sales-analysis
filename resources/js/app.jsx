@@ -3450,11 +3450,11 @@ function WeeklyMeterReportScreen({ showNotice }) {
   }
 
   return (
-    <section className="panel-grid">
-      <article className="panel panel-span">
+    <section className="panel-grid meter-report-grid">
+      <article className="panel panel-span panel-legend meter-report-panel">
+        <p className="eyebrow">Meter Report</p>
         <div className="section-heading section-heading-toolbar">
           <div>
-            <p className="eyebrow">Weekly Meter Report</p>
             <h2>Handmeter / RHP Shipments</h2>
           </div>
           <label className="status-filter">
@@ -4434,27 +4434,28 @@ function ReconciliationScreen({ batchId, batches, batchesLoading, setBatchId, sh
 
   return (
     <section className="panel-grid">
-      <article className="panel panel-span">
-        <BatchSelect
-          batchId={batchId}
-          batches={batches}
-          batchesLoading={batchesLoading}
-          onChange={setBatchId}
-        />
+      <article className="panel panel-span panel-legend">
+        <p className="eyebrow">Reconciliation</p>
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Reconciliation</p>
-            <h2>Balance Sales Analysis to Income Statement</h2>
+            <p>Balance Sales Analysis to Income Statement</p>
           </div>
           <button className="primary-button" disabled={!canLoad || running} type="button" onClick={runReconciliation}>
             <ButtonContent icon="run" loading={running}>{running ? 'Running...' : 'Run Reconciliation'}</ButtonContent>
           </button>
         </div>
         {!canLoad ? <p>Select a batch to continue.</p> : null}
+        <BatchSelect
+          batchId={batchId}
+          batches={batches}
+          batchesLoading={batchesLoading}
+          onChange={setBatchId}
+        />
         {result ? <SummaryCards result={result} /> : null}
       </article>
 
-      <article className="panel">
+      <article className="panel panel-legend">
+        <p className="eyebrow">Fees</p>
         <h2>Marketplace Fees</h2>
         <form className="stacked-form" onSubmit={addFee}>
           <fieldset className="form-fieldset" disabled={addingFee}>
@@ -4493,7 +4494,8 @@ function ReconciliationScreen({ batchId, batches, batchesLoading, setBatchId, sh
         <SimpleList items={fees.map((fee) => `${fee.marketplace}: ${currency(fee.amount)}`)} />
       </article>
 
-      <article className="panel">
+      <article className="panel panel-legend">
+        <p className="eyebrow">Metrics</p>
         <h2>Report Metrics</h2>
         <SimpleList items={totals.map((total) => `${total.metric_key}: ${currency(total.amount)}`)} />
       </article>
@@ -4661,10 +4663,10 @@ function ExportsScreen({ batches, batchesLoading, showNotice }) {
 
   return (
     <section className="panel-grid">
-      <article className="panel panel-span">
+      <article className="panel panel-span panel-legend">
+        <p className="eyebrow">Exports</p>
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Exports</p>
             <h2>Generated Excel Reports</h2>
           </div>
           <div className="button-row">
