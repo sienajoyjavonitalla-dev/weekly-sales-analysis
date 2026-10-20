@@ -18,6 +18,15 @@ class TotalSalesReportExporter extends AbstractTemplateReportExporter
     ) {
     }
 
+    /**
+     * The Total Sales Report is filled into an uploaded template, so it can only be generated
+     * for batches that include that template.
+     */
+    public function hasTemplate(ImportBatch $importBatch): bool
+    {
+        return $this->templatePathResolver->resolve($importBatch, WorkbookType::TotalSalesReport->value) !== null;
+    }
+
     public function export(ImportBatch $importBatch, ?int $generatedByUserId = null): GeneratedReport
     {
         $templatePath = $this->templatePathResolver->resolve($importBatch, WorkbookType::TotalSalesReport->value);

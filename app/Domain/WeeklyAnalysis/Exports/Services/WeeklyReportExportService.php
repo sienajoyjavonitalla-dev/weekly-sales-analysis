@@ -41,11 +41,7 @@ class WeeklyReportExportService
             $generatedByUserId,
             $includeState,
         );
-        $totalSales = $this->attemptTemplateExport(
-            $importBatch->refresh(),
-            'total_sales_report',
-            $generatedByUserId,
-        );
+        $totalSales = $this->exportTotalSalesIfTemplateUploaded($importBatch->refresh(), $generatedByUserId);
         $weeklyMeter = $this->attemptTemplateExport(
             $importBatch->refresh(),
             'weekly_meter_report',
@@ -64,7 +60,28 @@ class WeeklyReportExportService
             );
         }
 
-        return [$salesAnalysis, $totalSales, $weeklyMeter];
+        // The Total Sales Report is optional: it is left out when no template was uploaded.
+        return array_values(array_filter([$salesAnalysis, $totalSales, $weeklyMeter]));
+    }
+
+    /**
+     * Total Sales Report needs an uploaded template. Without one there is nothing to generate,
+     * so it is skipped (and any stale "template not found" failure from earlier runs is cleared)
+     * instead of being reported as a failure on every upload.
+     */
+    private function exportTotalSalesIfTemplateUploaded(ImportBatch $importBatch, ?int $generatedByUserId): ?GeneratedReport
+    {
+        if (! $this->totalSalesReportExporter->hasTemplate($importBatch)) {
+            GeneratedReport::query()
+                ->where('import_batch_id', $importBatch->id)
+                ->where('report_type', 'total_sales_report')
+                ->where('status', 'failed')
+                ->delete();
+
+            return null;
+        }
+
+        return $this->attemptTemplateExport($importBatch, 'total_sales_report', $generatedByUserId);
     }
 
     /**

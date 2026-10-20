@@ -61,7 +61,9 @@ class WeeklyReportExportServiceTest extends TestCase
         $this->assertSame($category->id, $weekTwoRow->product_category_id);
         $this->assertSame('rhp', $weekTwoRow->source_bucket);
 
-        $this->assertCount(3, $reports);
+        // Total Sales Report is skipped (not failed) because no template was uploaded.
+        $this->assertSame(['sales_analysis', 'weekly_meter_report'], collect($reports)->pluck('report_type')->all());
+        $this->assertSame(0, GeneratedReport::query()->where('report_type', 'total_sales_report')->count());
 
         $weekOneMeter = GeneratedReport::query()
             ->where('import_batch_id', $weekOne->id)
@@ -116,7 +118,7 @@ class WeeklyReportExportServiceTest extends TestCase
 
         $first = app(WeeklyReportExportService::class)->exportAll($batch, $user->id);
         $salesAnalysisId = $first[0]->id;
-        $meterId = $first[2]->id;
+        $meterId = $first[1]->id;
         $firstChecksum = $first[0]->sha256_checksum;
 
         SalesRow::query()->where('import_batch_id', $batch->id)->update([
@@ -130,7 +132,7 @@ class WeeklyReportExportServiceTest extends TestCase
         $second = app(WeeklyReportExportService::class)->exportAll($batch->refresh(), $user->id);
 
         $this->assertSame($salesAnalysisId, $second[0]->id);
-        $this->assertSame($meterId, $second[2]->id);
+        $this->assertSame($meterId, $second[1]->id);
         $this->assertNotSame($firstChecksum, $second[0]->sha256_checksum);
         $this->assertSame(1, GeneratedReport::query()
             ->where('import_batch_id', $batch->id)
@@ -140,6 +142,28 @@ class WeeklyReportExportServiceTest extends TestCase
             ->where('import_batch_id', $batch->id)
             ->where('report_type', 'weekly_meter_report')
             ->count());
+    }
+
+    public function test_stale_total_sales_failure_is_cleared_when_no_template_was_uploaded(): void
+    {
+        $user = $this->createAnalyst();
+        $batch = $this->createBatch($user, '2026-04-17');
+
+        GeneratedReport::query()->create([
+            'import_batch_id' => $batch->id,
+            'report_type' => 'total_sales_report',
+            'status' => 'failed',
+            'errors' => [['message' => 'Total Sales Report template was not found for this import batch.']],
+        ]);
+
+        $reports = app(WeeklyReportExportService::class)->exportAll($batch, $user->id);
+
+        $this->assertNotContains('total_sales_report', collect($reports)->pluck('report_type')->all());
+        $this->assertSame(0, GeneratedReport::query()
+            ->where('import_batch_id', $batch->id)
+            ->where('report_type', 'total_sales_report')
+            ->count());
+        $this->assertFalse(collect($reports)->contains(fn (GeneratedReport $report): bool => $report->status === 'failed'));
     }
 
     private function createAnalyst(): User
