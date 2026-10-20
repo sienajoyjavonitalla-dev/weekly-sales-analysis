@@ -531,7 +531,8 @@ function App() {
       return undefined;
     }
 
-    const timeout = window.setTimeout(() => setNotice(null), 3000);
+    // Errors carry details worth reading, so they stay up longer than success messages.
+    const timeout = window.setTimeout(() => setNotice(null), notice.type === 'error' ? 12000 : 3000);
 
     return () => window.clearTimeout(timeout);
   }, [notice]);
@@ -1226,7 +1227,7 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
       if (hasFailedReports(reports)) {
         showNotice(
           'error',
-          `Reports for batch #${targetBatchId} were generated, but some failed. Check the Calendar for details.`,
+          `Reports for batch #${targetBatchId} were generated, but some failed. ${failedReportDetails(reports)}`,
         );
       } else {
         showNotice('success', `Reports generated for batch #${targetBatchId}. Open the Calendar to view them.`);
@@ -2213,6 +2214,28 @@ async function requestGeneratedReports(batchId, includeState = false) {
 
 function hasFailedReports(reports) {
   return (reports ?? []).some((report) => report?.status === 'failed');
+}
+
+const REPORT_TYPE_LABELS = {
+  sales_analysis: 'Sales Analysis',
+  total_sales_report: 'Total Sales Report',
+  weekly_meter_report: 'Meter Report',
+};
+
+// "Total Sales Report: <reason>; Meter Report: <reason>" for every report that failed to generate.
+function failedReportDetails(reports) {
+  return (reports ?? [])
+    .filter((report) => report?.status === 'failed')
+    .map((report) => {
+      const label = REPORT_TYPE_LABELS[report.report_type] ?? report.report_type;
+      const reason = (report.errors ?? [])
+        .map((error) => error?.message)
+        .filter(Boolean)
+        .join(' ');
+
+      return `${label}: ${reason || 'No error details were recorded.'}`;
+    })
+    .join(' | ');
 }
 
 function shouldOpenUnmatchedModal(result, salesAnalysisIncluded) {
