@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\WeeklyAnalysis\Exports\Services\GeneratedReportRefresher;
 use App\Domain\WeeklyAnalysis\Security\Services\AuditLogger;
 use App\Http\Requests\StoreProductCategoryRequest;
 use App\Http\Requests\UpdateProductCategoryRequest;
@@ -34,6 +35,7 @@ class ProductCategoryController
         $category = ProductCategory::query()->create($payload);
         $auditLogger->log('product_category.created', $request, $category);
 
+        // A new category is not used by any rule or sales row yet, so no report changes.
         return response()->json(['data' => $category], 201);
     }
 
@@ -41,6 +43,7 @@ class ProductCategoryController
         UpdateProductCategoryRequest $request,
         ProductCategory $productCategory,
         AuditLogger $auditLogger,
+        GeneratedReportRefresher $refresher,
     ): JsonResponse {
         Gate::authorize('update', $productCategory);
 
@@ -48,17 +51,30 @@ class ProductCategoryController
         $productCategory->update($payload);
         $auditLogger->log('product_category.updated', $request, $productCategory);
 
-        return response()->json(['data' => $productCategory->refresh()]);
+        $changed = $productCategory->wasChanged();
+
+        return response()->json([
+            'data' => $productCategory->refresh(),
+            'meta' => [
+                'reports_refreshed' => $changed ? $refresher->refreshAll($request->user()?->id) : 0,
+            ],
+        ]);
     }
 
-    public function destroy(Request $request, ProductCategory $productCategory, AuditLogger $auditLogger): JsonResponse
-    {
+    public function destroy(
+        Request $request,
+        ProductCategory $productCategory,
+        AuditLogger $auditLogger,
+        GeneratedReportRefresher $refresher,
+    ): JsonResponse {
         Gate::authorize('delete', $productCategory);
 
         $auditLogger->log('product_category.deleted', $request, $productCategory);
         $productCategory->delete();
 
-        return response()->json(null, 204);
+        return response()->json([
+            'meta' => ['reports_refreshed' => $refresher->refreshAll($request->user()?->id)],
+        ]);
     }
 
     /**

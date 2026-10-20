@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\MappingRuleController;
 use App\Http\Controllers\Api\MarketplaceFeeController;
 use App\Http\Controllers\Api\ProductCategoryController;
 use App\Http\Controllers\Api\ReconciliationController;
+use App\Http\Controllers\Api\ReportCalendarController;
 use App\Http\Controllers\Api\ReportTotalController;
 use App\Http\Controllers\Api\UnmatchedSalesRowController;
 use App\Http\Controllers\Api\UploadedFileController;
@@ -48,6 +49,7 @@ Route::middleware(['web', 'auth', 'throttle:60,1'])->group(function (): void {
         ->parameters(['mapping-rules' => 'mappingRule'])
         ->except(['show']);
 
+    Route::get('/report-calendar', ReportCalendarController::class);
     Route::get('/weekly-meter-report', WeeklyMeterReportController::class);
     Route::put('/weekly-meter-report/additional-fees', [WeeklyMeterAdditionalFeeController::class, 'update']);
     Route::get('/import-batches', [ImportBatchController::class, 'index']);
@@ -68,6 +70,7 @@ Route::middleware(['web', 'auth', 'throttle:60,1'])->group(function (): void {
     Route::delete('/marketplace-fees/{marketplaceFee}', [MarketplaceFeeController::class, 'destroy']);
     Route::get('/uploaded-files/{uploadedFile}/download', [UploadedFileController::class, 'download']);
     Route::delete('/uploaded-files/{uploadedFile}', [UploadedFileController::class, 'destroy']);
+    Route::get('/generated-reports/{generatedReport}/preview', [GeneratedReportController::class, 'preview']);
     Route::get('/generated-reports/{generatedReport}/download', [GeneratedReportController::class, 'download']);
     Route::patch('/sales-rows/{salesRow}/classification', [UnmatchedSalesRowController::class, 'update']);
 });

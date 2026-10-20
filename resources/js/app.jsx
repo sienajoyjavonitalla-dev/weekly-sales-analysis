@@ -50,13 +50,15 @@ function ReconcileIcon() {
   );
 }
 
-function ExportIcon() {
+function CalendarIcon() {
   return (
     <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
-      <path d="M6 4h9l3 3v13H6z" />
-      <path d="M14 4v4h4" />
-      <path d="M12 11v6" />
-      <path d="M9 14l3 3 3-3" />
+      <path d="M7 4v3" />
+      <path d="M17 4v3" />
+      <path d="M5 6h14a1 1 0 011 1v12a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1z" />
+      <path d="M4 10h16" />
+      <path d="M8 14h2" />
+      <path d="M14 14h2" />
     </svg>
   );
 }
@@ -128,6 +130,7 @@ function ActionIcon({ name }) {
     delete: ['M5 7h14', 'M10 11v6', 'M14 11v6', 'M8 7l1-3h6l1 3', 'M7 7l1 13h8l1-13'],
     download: ['M12 4v10', 'M8 10l4 4 4-4', 'M5 20h14'],
     edit: ['M5 19l4-1 9-9-3-3-9 9-1 4z', 'M14 6l3 3'],
+    eye: ['M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z', 'M12 15a3 3 0 100-6 3 3 0 000 6z'],
     export: ['M6 4h9l3 3v13H6z', 'M14 4v4h4', 'M12 11v6', 'M9 14l3 3 3-3'],
     info: ['M12 22a10 10 0 110-20 10 10 0 010 20z', 'M12 16v-4', 'M12 8h.01'],
     login: ['M14 6h4v12h-4', 'M10 8l4 4-4 4', 'M4 12h10'],
@@ -175,12 +178,12 @@ const themes = [
 ];
 
 const workflowTabs = [
+  { id: 'calendar', label: 'Calendar', icon: CalendarIcon },
   { id: 'upload', label: 'Upload', icon: UploadIcon },
+  { id: 'meter-report', label: 'Meter Report', icon: MeterReportIcon },
   { id: 'categories', label: 'Categories', icon: CategoriesIcon },
   { id: 'rules', label: 'Mapping Rules', icon: RulesIcon },
   { id: 'reconcile', label: 'Reconcile', icon: ReconcileIcon },
-  { id: 'exports', label: 'Exports', icon: ExportIcon },
-  { id: 'meter-report', label: 'Meter Report', icon: MeterReportIcon },
 ];
 
 const userRoleOptions = [
@@ -195,10 +198,6 @@ const workbookTypes = [
   { key: 'open_orders', label: 'Open Orders' },
   { key: 'ptd_orders', label: 'PTD Orders' },
 ];
-
-const generatedReportLabels = {
-  weekly_meter_report: 'Meter Report',
-};
 
 const weeklyMeterModelLabels = [
   'RHP 4.0 Kits',
@@ -294,6 +293,17 @@ function salesAnalysisBucketLabel(bucket) {
   return salesAnalysisBucketOptions.find((option) => option.value === bucket)?.label ?? bucket;
 }
 
+// Saving a category or mapping rule re-applies it to every generated report; tell the user when that happened.
+function reportsRefreshedSuffix(response) {
+  const count = response?.data?.meta?.reports_refreshed ?? 0;
+
+  if (count <= 0) {
+    return '';
+  }
+
+  return ` Sales Analysis and Meter Report refreshed for ${count} ${count === 1 ? 'week' : 'weeks'}.`;
+}
+
 async function copyTextToClipboard(text) {
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(text);
@@ -312,8 +322,32 @@ async function copyTextToClipboard(text) {
   document.body.removeChild(textarea);
 }
 
+const SALES_ANALYSIS_ROUTE_PATTERN = /^\/sales-analysis\/(\d+)\/?$/;
+
+function parseSalesAnalysisReportId(pathname) {
+  return pathname.match(SALES_ANALYSIS_ROUTE_PATTERN)?.[1] ?? null;
+}
+
+function salesAnalysisReportPath(reportId) {
+  return `/sales-analysis/${reportId}`;
+}
+
+function navigateTo(path) {
+  if (window.location.pathname !== path) {
+    window.history.pushState({}, '', path);
+  }
+
+  window.dispatchEvent(new PopStateEvent('popstate'));
+}
+
 function App() {
-  const [activeTab, setActiveTab] = useState('upload');
+  const [activeTab, setActiveTab] = useState('calendar');
+  const [meterReportTarget, setMeterReportTarget] = useState(null);
+  // Month last shown on the calendar ({ year, month } with a 0-based month), so returning to it restores the view.
+  const [calendarMonth, setCalendarMonth] = useState(null);
+  const [salesAnalysisReportId, setSalesAnalysisReportId] = useState(() =>
+    parseSalesAnalysisReportId(window.location.pathname),
+  );
   const [batchId, setBatchId] = useState('');
   const [batches, setBatches] = useState([]);
   const [batchesLoading, setBatchesLoading] = useState(false);
@@ -353,6 +387,52 @@ function App() {
   }, [showNotice]);
 
   const batchesWithUploads = useMemo(() => batches.filter(batchHasUploads), [batches]);
+
+  useEffect(() => {
+    function syncRouteFromLocation() {
+      setSalesAnalysisReportId(parseSalesAnalysisReportId(window.location.pathname));
+    }
+
+    window.addEventListener('popstate', syncRouteFromLocation);
+
+    return () => window.removeEventListener('popstate', syncRouteFromLocation);
+  }, []);
+
+  const selectTab = useCallback((tabId) => {
+    if (parseSalesAnalysisReportId(window.location.pathname)) {
+      navigateTo('/');
+    }
+
+    setMeterReportTarget(null);
+    setActiveTab(tabId);
+    setIsSettingsOpen(false);
+  }, []);
+
+  // When a Sales Analysis is opened directly (no calendar visit yet), fall back to that report's month.
+  const handleSalesAnalysisLoaded = useCallback((report) => {
+    const weekEnding = report?.import_batch?.week_ending;
+
+    if (!weekEnding) {
+      return;
+    }
+
+    const date = parseIsoDate(weekEnding);
+
+    setCalendarMonth((current) => current ?? { year: date.getFullYear(), month: date.getMonth() });
+  }, []);
+
+  const openSalesAnalysisFromCalendar = useCallback((reportId) => {
+    navigateTo(salesAnalysisReportPath(reportId));
+  }, []);
+
+  const openMeterReportFromCalendar = useCallback((year, month) => {
+    setMeterReportTarget({ year, month });
+    setActiveTab('meter-report');
+  }, []);
+
+  // Sales Analysis is opened from the calendar, so the calendar is where "Back" returns to.
+  const sidebarActiveTab = salesAnalysisReportId ? 'calendar' : activeTab;
+  const visibleTab = salesAnalysisReportId ? null : activeTab;
 
   useEffect(() => {
     if (user && user.role !== 'admin' && activeTab === 'users') {
@@ -414,7 +494,7 @@ function App() {
       return;
     }
 
-    if (['upload', 'reconcile', 'exports'].includes(activeTab)) {
+    if (['upload', 'reconcile'].includes(activeTab)) {
       loadBatches();
     }
   }, [activeTab, loadBatches, user]);
@@ -487,13 +567,10 @@ function App() {
 
                 return (
                   <button
-                    className={activeTab === tab.id ? 'sidebar-link sidebar-link-active' : 'sidebar-link'}
+                    className={sidebarActiveTab === tab.id ? 'sidebar-link sidebar-link-active' : 'sidebar-link'}
                     key={tab.id}
                     type="button"
-                    onClick={() => {
-                      setActiveTab(tab.id);
-                      setIsSettingsOpen(false);
-                    }}
+                    onClick={() => selectTab(tab.id)}
                   >
                     <span className="sidebar-link-icon" aria-hidden="true">
                       <Icon />
@@ -520,12 +597,9 @@ function App() {
               </div>
               {user?.role === 'admin' ? (
                 <button
-                  className={activeTab === 'users' ? 'sidebar-link sidebar-link-active' : 'sidebar-link'}
+                  className={sidebarActiveTab === 'users' ? 'sidebar-link sidebar-link-active' : 'sidebar-link'}
                   type="button"
-                  onClick={() => {
-                    setActiveTab('users');
-                    setIsSettingsOpen(false);
-                  }}
+                  onClick={() => selectTab('users')}
                 >
                   <span className="sidebar-link-icon" aria-hidden="true">
                     <UsersIcon />
@@ -536,12 +610,9 @@ function App() {
             </div>
             <div className="sidebar-nav-footer">
               <button
-                className={activeTab === 'how-to-use' ? 'sidebar-link sidebar-link-active' : 'sidebar-link'}
+                className={sidebarActiveTab === 'how-to-use' ? 'sidebar-link sidebar-link-active' : 'sidebar-link'}
                 type="button"
-                onClick={() => {
-                  setActiveTab('how-to-use');
-                  setIsSettingsOpen(false);
-                }}
+                onClick={() => selectTab('how-to-use')}
               >
                 <span className="sidebar-link-icon" aria-hidden="true">
                   <HowToUseIcon />
@@ -553,7 +624,28 @@ function App() {
         </aside>
 
         <section className="workspace">
-          {activeTab === 'upload' ? (
+          {salesAnalysisReportId ? (
+            <SalesAnalysisReportScreen
+              key={salesAnalysisReportId}
+              reportId={salesAnalysisReportId}
+              showNotice={showNotice}
+              onLoaded={handleSalesAnalysisLoaded}
+              onBack={() => {
+                setActiveTab('calendar');
+                navigateTo('/');
+              }}
+            />
+          ) : null}
+          {visibleTab === 'calendar' ? (
+            <ReportCalendarScreen
+              initialMonth={calendarMonth}
+              showNotice={showNotice}
+              onMonthChange={setCalendarMonth}
+              onOpenMeterReport={openMeterReportFromCalendar}
+              onOpenSalesAnalysis={openSalesAnalysisFromCalendar}
+            />
+          ) : null}
+          {visibleTab === 'upload' ? (
             <UploadScreen
               batchId={batchId}
               batches={batchesWithUploads}
@@ -563,10 +655,10 @@ function App() {
               showNotice={showNotice}
             />
           ) : null}
-          {activeTab === 'rules' ? <MappingRulesScreen showNotice={showNotice} /> : null}
-          {activeTab === 'categories' ? <CategoriesScreen showNotice={showNotice} /> : null}
-          {activeTab === 'users' ? <UsersScreen currentUser={user} showNotice={showNotice} /> : null}
-          {activeTab === 'reconcile' ? (
+          {visibleTab === 'rules' ? <MappingRulesScreen showNotice={showNotice} /> : null}
+          {visibleTab === 'categories' ? <CategoriesScreen showNotice={showNotice} /> : null}
+          {visibleTab === 'users' ? <UsersScreen currentUser={user} showNotice={showNotice} /> : null}
+          {visibleTab === 'reconcile' ? (
             <ReconciliationScreen
               batchId={batchId}
               batches={batchesWithUploads}
@@ -575,15 +667,23 @@ function App() {
               showNotice={showNotice}
             />
           ) : null}
-          {activeTab === 'exports' ? (
-            <ExportsScreen
-              batches={batchesWithUploads}
-              batchesLoading={batchesLoading}
+          {visibleTab === 'meter-report' ? (
+            <WeeklyMeterReportScreen
+              initialMonth={meterReportTarget?.month}
+              initialYear={meterReportTarget?.year}
+              key={meterReportTarget ? `${meterReportTarget.year}-${meterReportTarget.month}` : 'current'}
               showNotice={showNotice}
+              onBackToCalendar={
+                meterReportTarget
+                  ? () => {
+                      setMeterReportTarget(null);
+                      setActiveTab('calendar');
+                    }
+                  : undefined
+              }
             />
           ) : null}
-          {activeTab === 'meter-report' ? <WeeklyMeterReportScreen showNotice={showNotice} /> : null}
-          {activeTab === 'how-to-use' ? <HowToUseScreen /> : null}
+          {visibleTab === 'how-to-use' ? <HowToUseScreen /> : null}
         </section>
       </div>
     </main>
@@ -1076,10 +1176,39 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
   const [weekRangeEnd, setWeekRangeEnd] = useState('');
   const [unmatchedModal, setUnmatchedModal] = useState(null);
   const [preparingUnmatched, setPreparingUnmatched] = useState(false);
+  const [includeState, setIncludeState] = useState(false);
+  const [generatingReports, setGeneratingReports] = useState(false);
 
   const closeUnmatchedModal = useCallback(() => {
     setUnmatchedModal(null);
   }, []);
+
+  const autoGenerateReports = useCallback(async (targetBatchId) => {
+    setGeneratingReports(true);
+
+    try {
+      const reports = await requestGeneratedReports(targetBatchId, includeState);
+
+      if (hasFailedReports(reports)) {
+        showNotice(
+          'error',
+          `Reports for batch #${targetBatchId} were generated, but some failed. Check the Calendar for details.`,
+        );
+      } else {
+        showNotice('success', `Reports generated for batch #${targetBatchId}. Open the Calendar to view them.`);
+      }
+    } catch (error) {
+      showNotice(
+        'error',
+        messageFromError(
+          error,
+          `Upload succeeded but report generation failed for batch #${targetBatchId}.`,
+        ),
+      );
+    } finally {
+      setGeneratingReports(false);
+    }
+  }, [includeState, showNotice]);
 
   const openUnmatchedModal = useCallback(async (nextBatchId) => {
     setPreparingUnmatched(true);
@@ -1089,6 +1218,7 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
 
       if ((data.itemGroups ?? []).length === 0) {
         showNotice('success', 'Sales Analysis uploaded successfully with no unmatched rows.');
+        await autoGenerateReports(nextBatchId);
 
         return;
       }
@@ -1103,7 +1233,7 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
     } finally {
       setPreparingUnmatched(false);
     }
-  }, [showNotice]);
+  }, [autoGenerateReports, showNotice]);
 
   const selectedBatch = useMemo(
     () => batches.find((batch) => String(batch.id) === String(batchId)),
@@ -1118,6 +1248,7 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
   }, [selectedBatch, weekRangeEnd, weekRangeStart]);
 
   const hasFiles = Object.values(selectedFiles).some(Boolean);
+  const isUploadBusy = uploading || preparingUnmatched || generatingReports;
 
   async function handleUploadClick() {
     if (!hasFiles) {
@@ -1166,6 +1297,8 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
 
       if (shouldOpenUnmatchedModal(result, includedSalesAnalysis)) {
         await openUnmatchedModal(nextBatchId);
+      } else if (includedSalesAnalysis) {
+        await autoGenerateReports(nextBatchId);
       }
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to upload and import the selected files.'));
@@ -1185,6 +1318,7 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
           salesAnalysisFileId={unmatchedModal.salesAnalysisFileId}
           showNotice={showNotice}
           onClose={closeUnmatchedModal}
+          onResolved={autoGenerateReports}
         />
       ) : null}
     <section className="panel-grid">
@@ -1213,25 +1347,44 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
         </div>
         <div className="file-grid">
           {workbookTypes.map((type) => (
-            <label className="file-card" key={type.key}>
-              <span>{type.label}</span>
-              <input
-                accept=".xlsx"
-                type="file"
-                onChange={(event) => {
-                  setSelectedFiles({
-                    ...selectedFiles,
-                    [type.key]: event.target.files?.[0] ?? null,
-                  });
-                }}
-              />
-            </label>
+            <div className="file-card" key={type.key}>
+              <label className="file-card-field">
+                <span>{type.label}</span>
+                <input
+                  accept=".xlsx"
+                  type="file"
+                  onChange={(event) => {
+                    setSelectedFiles({
+                      ...selectedFiles,
+                      [type.key]: event.target.files?.[0] ?? null,
+                    });
+                  }}
+                />
+              </label>
+              {type.key === 'sales_analysis' ? (
+                <label className="checkbox-label file-card-option">
+                  <input
+                    checked={includeState}
+                    disabled={isUploadBusy}
+                    type="checkbox"
+                    onChange={(event) => setIncludeState(event.target.checked)}
+                  />
+                  Include State
+                </label>
+              ) : null}
+            </div>
           ))}
         </div>
         <div className="upload-actions">
-          <button className="primary-button" disabled={uploading || preparingUnmatched} type="button" onClick={handleUploadClick}>
-            <ButtonContent icon="upload" loading={uploading || preparingUnmatched}>
-              {uploading ? 'Importing...' : preparingUnmatched ? 'Preparing reconcile...' : 'Upload / Import Selected Files'}
+          <button className="primary-button" disabled={isUploadBusy} type="button" onClick={handleUploadClick}>
+            <ButtonContent icon="upload" loading={isUploadBusy}>
+              {generatingReports
+                ? 'Generating reports...'
+                : uploading
+                  ? 'Importing...'
+                  : preparingUnmatched
+                    ? 'Preparing reconcile...'
+                    : 'Upload / Import Selected Files'}
             </ButtonContent>
           </button>
         </div>
@@ -1255,6 +1408,7 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
             loadBatches={loadBatches}
             setBatchId={setBatchId}
             showNotice={showNotice}
+            onGenerateReports={autoGenerateReports}
             onUnmatchedItems={openUnmatchedModal}
           />
         ) : null}
@@ -1264,7 +1418,7 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
   );
 }
 
-function UploadedBatchesTable({ batches, loadBatches, onUnmatchedItems, setBatchId, showNotice }) {
+function UploadedBatchesTable({ batches, loadBatches, onGenerateReports, onUnmatchedItems, setBatchId, showNotice }) {
   const [uploadingCell, setUploadingCell] = useState('');
   const [reclassifyingBatchId, setReclassifyingBatchId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -1297,8 +1451,12 @@ function UploadedBatchesTable({ batches, loadBatches, onUnmatchedItems, setBatch
       showNotice('success', successMessage);
       await loadBatches();
 
-      if (fileType === 'sales_analysis' && shouldOpenUnmatchedModal(result, true)) {
-        await onUnmatchedItems?.(nextBatchId);
+      if (fileType === 'sales_analysis') {
+        if (shouldOpenUnmatchedModal(result, true)) {
+          await onUnmatchedItems?.(nextBatchId);
+        } else {
+          await onGenerateReports?.(nextBatchId);
+        }
       }
     } catch (error) {
       showNotice('error', messageFromError(error, `Unable to upload ${fileTypeLabel}.`));
@@ -1585,7 +1743,7 @@ function MappingRulesScreen({ showNotice }) {
     try {
       const response = await axios.post('/api/mapping-rules', rulePayload(createForm));
 
-      showNotice('success', 'Mapping rule created.');
+      showNotice('success', `Mapping rule created.${reportsRefreshedSuffix(response)}`);
       setCreateForm(emptyMappingRuleForm());
       setIsCreateOpen(false);
       await loadRules();
@@ -1609,7 +1767,7 @@ function MappingRulesScreen({ showNotice }) {
     try {
       const response = await axios.patch(`/api/mapping-rules/${selectedRule.id}`, rulePayload(editForm));
 
-      showNotice('success', 'Mapping rule updated.');
+      showNotice('success', `Mapping rule updated.${reportsRefreshedSuffix(response)}`);
       await loadRules();
       setSelectedRule(response.data.data);
     } catch (error) {
@@ -1627,8 +1785,8 @@ function MappingRulesScreen({ showNotice }) {
     setDeleting(true);
 
     try {
-      await axios.delete(`/api/mapping-rules/${selectedRule.id}`);
-      showNotice('success', 'Mapping rule deleted.');
+      const response = await axios.delete(`/api/mapping-rules/${selectedRule.id}`);
+      showNotice('success', `Mapping rule deleted.${reportsRefreshedSuffix(response)}`);
       setSelectedRule(null);
       setIsDeleteConfirmOpen(false);
       await loadRules();
@@ -1966,7 +2124,7 @@ function ConfirmDialog({
   );
 }
 
-function Modal({ children, title, className = '', isBusy = false, onClose }) {
+function Modal({ children, title, className = '', eyebrow = 'Create', isBusy = false, onClose }) {
   return (
     <div
       className="modal-backdrop"
@@ -2001,7 +2159,7 @@ function Modal({ children, title, className = '', isBusy = false, onClose }) {
         </button>
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Create</p>
+            <p className="eyebrow">{eyebrow}</p>
             <h2>{title}</h2>
           </div>
         </div>
@@ -2009,6 +2167,18 @@ function Modal({ children, title, className = '', isBusy = false, onClose }) {
       </section>
     </div>
   );
+}
+
+async function requestGeneratedReports(batchId, includeState = false) {
+  const response = await axios.post(`/api/import-batches/${batchId}/generated-reports`, {
+    include_state: Boolean(includeState),
+  });
+
+  return response.data.data ?? [];
+}
+
+function hasFailedReports(reports) {
+  return (reports ?? []).some((report) => report?.status === 'failed');
 }
 
 function shouldOpenUnmatchedModal(result, salesAnalysisIncluded) {
@@ -2153,6 +2323,7 @@ function UnmatchedItemsModal({
   itemGroups: initialItemGroups,
   loadBatches,
   onClose,
+  onResolved,
   salesAnalysisFileId: initialSalesAnalysisFileId,
   showNotice,
 }) {
@@ -2318,7 +2489,7 @@ function UnmatchedItemsModal({
     setCreatingRule(true);
 
     try {
-      await axios.post('/api/mapping-rules', mappingRulePayload(createRuleForm));
+      await axios.post('/api/mapping-rules', { ...mappingRulePayload(createRuleForm), skip_report_refresh: true });
       showNoticeRef.current('success', 'Mapping rule created.');
 
       await axios.post(`/api/import-batches/${batchId}/classify-sales-rows`);
@@ -2336,6 +2507,7 @@ function UnmatchedItemsModal({
         await loadBatches?.();
         showNoticeRef.current('success', 'All unmatched items were classified by mapping rules.');
         onClose();
+        onResolved?.(batchId);
         return;
       }
 
@@ -2396,6 +2568,7 @@ function UnmatchedItemsModal({
       clearReconcileSession();
       await loadBatches?.();
       onClose();
+      onResolved?.(batchId);
     } catch (error) {
       const status = error?.response?.status;
       const missingBatch = status === 404;
@@ -3385,10 +3558,10 @@ function WeeklyMeterAdditionalFeesModal({
   );
 }
 
-function WeeklyMeterReportScreen({ showNotice }) {
+function WeeklyMeterReportScreen({ initialYear, initialMonth, showNotice, onBackToCalendar }) {
   const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [year, setYear] = useState(initialYear ?? now.getFullYear());
+  const [month, setMonth] = useState(initialMonth ?? now.getMonth() + 1);
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [feeEditor, setFeeEditor] = useState(null);
@@ -3457,25 +3630,32 @@ function WeeklyMeterReportScreen({ showNotice }) {
           <div>
             <h2>Handmeter / RHP Shipments</h2>
           </div>
-          <label className="status-filter">
-            Year
-            <select
-              value={year}
-              onChange={(event) => {
-                const nextYear = Number(event.target.value);
-                setYear(nextYear);
-                if (nextYear === now.getFullYear() && month > now.getMonth() + 1) {
-                  setMonth(now.getMonth() + 1);
-                }
-              }}
-            >
-              {years.map((optionYear) => (
-                <option key={optionYear} value={optionYear}>
-                  {optionYear}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="meter-heading-actions">
+            {onBackToCalendar ? (
+              <button className="secondary-button" type="button" onClick={onBackToCalendar}>
+                <ButtonContent icon="back">Back to Calendar</ButtonContent>
+              </button>
+            ) : null}
+            <label className="status-filter">
+              Year
+              <select
+                value={year}
+                onChange={(event) => {
+                  const nextYear = Number(event.target.value);
+                  setYear(nextYear);
+                  if (nextYear === now.getFullYear() && month > now.getMonth() + 1) {
+                    setMonth(now.getMonth() + 1);
+                  }
+                }}
+              >
+                {years.map((optionYear) => (
+                  <option key={optionYear} value={optionYear}>
+                    {optionYear}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
 
         <div className="meter-month-tabs" role="tablist" aria-label="Report months">
@@ -3634,6 +3814,401 @@ function WeeklyMeterReportScreen({ showNotice }) {
   );
 }
 
+const CALENDAR_REPORT_ROWS = [
+  { type: 'sales_analysis', label: 'Sales Analysis' },
+  { type: 'weekly_meter_report', label: 'Meter Report' },
+];
+
+const CALENDAR_WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function buildCalendarCells(viewDate) {
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const leadingDays = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cellCount = Math.ceil((leadingDays + daysInMonth) / 7) * 7;
+
+  return Array.from({ length: cellCount }, (_, index) => {
+    const date = new Date(year, month, 1 - leadingDays + index);
+
+    return {
+      iso: toIsoDateString(date),
+      day: date.getDate(),
+      inMonth: date.getMonth() === month,
+    };
+  });
+}
+
+// Clicking the month title opens a quick jump: step the year, then pick a month.
+function CalendarMonthPicker({ label, viewDate, onSelect }) {
+  const containerRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [pickerYear, setPickerYear] = useState(viewDate.getFullYear());
+  const viewYear = viewDate.getFullYear();
+  const viewMonth = viewDate.getMonth();
+  const now = new Date();
+
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    function handlePointerDown(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
+  function toggleOpen() {
+    if (!isOpen) {
+      setPickerYear(viewYear);
+    }
+
+    setIsOpen((current) => !current);
+  }
+
+  return (
+    <div className="calendar-month-picker" ref={containerRef}>
+      <button
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
+        className="calendar-month-label calendar-month-trigger"
+        title="Jump to a month or year"
+        type="button"
+        onClick={toggleOpen}
+      >
+        <span aria-live="polite">{label}</span>
+        <ActionIcon name="chevron" />
+      </button>
+      {isOpen ? (
+        <div aria-label="Choose month and year" className="calendar-month-popover" role="dialog">
+          <div className="calendar-month-popover-header">
+            <button aria-label="Previous year" className="calendar-nav-button" type="button" onClick={() => setPickerYear((current) => current - 1)}>
+              ‹
+            </button>
+            <strong>{pickerYear}</strong>
+            <button aria-label="Next year" className="calendar-nav-button" type="button" onClick={() => setPickerYear((current) => current + 1)}>
+              ›
+            </button>
+          </div>
+          <div className="calendar-month-options">
+            {monthNames.map((name, index) => {
+              const isSelected = pickerYear === viewYear && index === viewMonth;
+              const isCurrent = pickerYear === now.getFullYear() && index === now.getMonth();
+
+              return (
+                <button
+                  aria-pressed={isSelected}
+                  className={[
+                    'calendar-month-option',
+                    isSelected ? 'calendar-month-option-selected' : '',
+                    isCurrent ? 'calendar-month-option-current' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  key={name}
+                  type="button"
+                  onClick={() => {
+                    onSelect(pickerYear, index);
+                    setIsOpen(false);
+                  }}
+                >
+                  {name.slice(0, 3)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function calendarWeekReadyReportCount(week) {
+  return week.reports.filter((report) => report.status === 'completed').length;
+}
+
+function ReportCalendarScreen({ initialMonth, showNotice, onMonthChange, onOpenMeterReport, onOpenSalesAnalysis }) {
+  const [viewDate, setViewDate] = useState(() => {
+    if (initialMonth) {
+      return new Date(initialMonth.year, initialMonth.month, 1);
+    }
+
+    const now = new Date();
+
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+  const [weeks, setWeeks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedWeekId, setSelectedWeekId] = useState(null);
+  const [hoveredWeekId, setHoveredWeekId] = useState(null);
+
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+
+  useEffect(() => {
+    onMonthChange?.({ year, month });
+  }, [year, month, onMonthChange]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    setLoading(true);
+
+    axios
+      .get('/api/report-calendar', { params: { year, month: month + 1 } })
+      .then((response) => {
+        if (!cancelled) {
+          setWeeks(response.data.data?.weeks ?? []);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setWeeks([]);
+          showNotice('error', messageFromError(error, 'Unable to load the report calendar.'));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [year, month, showNotice]);
+
+  const cells = useMemo(() => buildCalendarCells(viewDate), [viewDate]);
+  const selectedWeek = weeks.find((week) => week.id === selectedWeekId) ?? null;
+  const todayIso = toIsoDateString(new Date());
+  const monthLabel = viewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+
+  function shiftMonth(offset) {
+    setHoveredWeekId(null);
+    setViewDate(new Date(year, month + offset, 1));
+  }
+
+  function jumpToMonth(targetYear, targetMonth) {
+    setHoveredWeekId(null);
+    setViewDate(new Date(targetYear, targetMonth, 1));
+  }
+
+  function goToToday() {
+    const now = new Date();
+
+    setHoveredWeekId(null);
+    setViewDate(new Date(now.getFullYear(), now.getMonth(), 1));
+  }
+
+  function weekForDay(iso) {
+    return weeks.find((week) => iso >= week.week_start && iso <= week.week_ending) ?? null;
+  }
+
+  return (
+    <section className="panel-grid">
+      <article className="panel panel-span panel-legend report-calendar-panel">
+        <p className="eyebrow">Calendar</p>
+        <div className="section-heading section-heading-toolbar">
+          <div>
+            <h2>Weekly Reports</h2>
+            <p className="calendar-subtitle">Select a highlighted week to see its reports.</p>
+          </div>
+          <div className="calendar-toolbar">
+            <button aria-label="Previous month" className="calendar-nav-button" type="button" onClick={() => shiftMonth(-1)}>
+              ‹
+            </button>
+            <CalendarMonthPicker label={monthLabel} viewDate={viewDate} onSelect={jumpToMonth} />
+            <button aria-label="Next month" className="calendar-nav-button" type="button" onClick={() => shiftMonth(1)}>
+              ›
+            </button>
+            <button className="secondary-button" type="button" onClick={goToToday}>
+              Today
+            </button>
+          </div>
+        </div>
+
+        <div className="calendar-legend" aria-hidden="true">
+          <span className="calendar-legend-item">
+            <span className="calendar-legend-swatch calendar-legend-swatch-ready" />
+            Reports generated
+          </span>
+          <span className="calendar-legend-item">
+            <span className="calendar-legend-swatch calendar-legend-swatch-pending" />
+            Uploaded, no reports yet
+          </span>
+        </div>
+
+        <div className={loading ? 'calendar calendar-loading' : 'calendar'}>
+          <div className="calendar-weekdays">
+            {CALENDAR_WEEKDAY_LABELS.map((label) => (
+              <span key={label}>{label}</span>
+            ))}
+          </div>
+          <div className="calendar-grid">
+            {cells.map((cell, index) => {
+              const week = weekForDay(cell.iso);
+              const classes = [
+                'calendar-day',
+                cell.inMonth ? '' : 'calendar-day-outside',
+                cell.iso === todayIso ? 'calendar-day-today' : '',
+              ];
+
+              if (!week) {
+                return (
+                  <div className={classes.filter(Boolean).join(' ')} key={cell.iso}>
+                    <span className="calendar-day-number">{cell.day}</span>
+                  </div>
+                );
+              }
+
+              const readyCount = calendarWeekReadyReportCount(week);
+              const column = index % 7;
+              const weekRange = formatWeekRange(week.week_start, week.week_ending);
+
+              classes.push(
+                'calendar-day-week',
+                readyCount > 0 ? 'calendar-day-week-ready' : 'calendar-day-week-pending',
+                cell.iso === week.week_start || column === 0 ? 'calendar-day-week-start' : '',
+                cell.iso === week.week_ending || column === 6 ? 'calendar-day-week-end' : '',
+                hoveredWeekId === week.id ? 'calendar-day-week-hover' : '',
+              );
+
+              return (
+                <button
+                  aria-label={`${weekRange}, ${readyCount} ${readyCount === 1 ? 'report' : 'reports'} generated`}
+                  className={classes.filter(Boolean).join(' ')}
+                  key={cell.iso}
+                  title={`${weekRange} — ${readyCount > 0 ? 'click to view reports' : 'no reports generated yet'}`}
+                  type="button"
+                  onBlur={() => setHoveredWeekId(null)}
+                  onClick={() => setSelectedWeekId(week.id)}
+                  onFocus={() => setHoveredWeekId(week.id)}
+                  onMouseEnter={() => setHoveredWeekId(week.id)}
+                  onMouseLeave={() => setHoveredWeekId(null)}
+                >
+                  <span className="calendar-day-number">{cell.day}</span>
+                  {cell.iso === week.week_ending ? (
+                    <span className="calendar-day-badge">
+                      {readyCount > 0 ? `${readyCount} ${readyCount === 1 ? 'report' : 'reports'}` : 'Uploaded'}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {!loading && weeks.length === 0 ? (
+          <p className="calendar-empty">No uploaded workbooks for {monthLabel}.</p>
+        ) : null}
+
+        {selectedWeek ? (
+          <CalendarWeekModal
+            week={selectedWeek}
+            onClose={() => setSelectedWeekId(null)}
+            onOpenMeterReport={(targetYear, targetMonth) => {
+              // "Back to Calendar" should land on the month of the week that was opened.
+              onMonthChange?.({ year: targetYear, month: targetMonth - 1 });
+              setSelectedWeekId(null);
+              onOpenMeterReport(targetYear, targetMonth);
+            }}
+            onOpenSalesAnalysis={(reportId) => {
+              // "Back to Calendar" should land on the month of the week that was opened.
+              const weekEnding = parseIsoDate(selectedWeek.week_ending);
+
+              onMonthChange?.({ year: weekEnding.getFullYear(), month: weekEnding.getMonth() });
+              setSelectedWeekId(null);
+              onOpenSalesAnalysis(reportId);
+            }}
+          />
+        ) : null}
+      </article>
+    </section>
+  );
+}
+
+function CalendarWeekModal({ week, onClose, onOpenMeterReport, onOpenSalesAnalysis }) {
+  const meterMonthLabel = `${monthNames[week.meter_month - 1]} ${week.meter_year}`;
+  const hasAnyReport = calendarWeekReadyReportCount(week) > 0;
+
+  return (
+    <Modal className="modal-card-calendar" eyebrow="Week Reports" title={formatWeekRange(week.week_start, week.week_ending)} onClose={onClose}>
+      <div className="table-wrap">
+        <table className="calendar-reports-table">
+          <thead>
+            <tr>
+              <th>Report</th>
+              <th className="calendar-total-column">Total Sales</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {CALENDAR_REPORT_ROWS.map((row) => {
+              const report = week.reports.find((candidate) => candidate.report_type === row.type);
+              const isReady = report?.status === 'completed';
+              const isMeter = row.type === 'weekly_meter_report';
+
+              return (
+                <tr key={row.type}>
+                  <td>{row.label}</td>
+                  <td className="calendar-total-column">
+                    {isReady && report.total !== null && report.total !== undefined
+                      ? formatMeterMoney(report.total)
+                      : '—'}
+                  </td>
+                  <td>
+                    {isReady ? (
+                      <button
+                        className="secondary-button"
+                        title={isMeter ? `Open the Meter Report for ${meterMonthLabel}` : undefined}
+                        type="button"
+                        onClick={() =>
+                          isMeter
+                            ? onOpenMeterReport(week.meter_year, week.meter_month)
+                            : onOpenSalesAnalysis(report.id)
+                        }
+                      >
+                        <ButtonContent icon="eye">View</ButtonContent>
+                      </button>
+                    ) : (
+                      <span className="exports-details-unavailable">
+                        {report?.status === 'failed' ? 'Failed' : 'Not generated'}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {hasAnyReport ? (
+        <p className="calendar-modal-note">The Meter Report opens on {meterMonthLabel}.</p>
+      ) : (
+        <p className="calendar-modal-note">
+          No reports have been generated for this week yet. They are generated automatically after the Sales Analysis upload.
+        </p>
+      )}
+    </Modal>
+  );
+}
+
 function CategoriesScreen({ showNotice }) {
   const emptyForm = {
     name: '',
@@ -3761,7 +4336,7 @@ function CategoriesScreen({ showNotice }) {
     try {
       const response = await axios.patch(`/api/product-categories/${selectedCategory.id}`, categoryPayload(editForm));
 
-      showNotice('success', 'Category updated.');
+      showNotice('success', `Category updated.${reportsRefreshedSuffix(response)}`);
       await loadCategories();
       setSelectedCategory(response.data.data);
     } catch (error) {
@@ -3779,8 +4354,8 @@ function CategoriesScreen({ showNotice }) {
     setDeleting(true);
 
     try {
-      await axios.delete(`/api/product-categories/${selectedCategory.id}`);
-      showNotice('success', 'Category deleted.');
+      const response = await axios.delete(`/api/product-categories/${selectedCategory.id}`);
+      showNotice('success', `Category deleted.${reportsRefreshedSuffix(response)}`);
       setSelectedCategory(null);
       setIsDeleteConfirmOpen(false);
       await loadCategories();
@@ -4550,8 +5125,8 @@ const howToUseSteps = [
     image: '/images/4.png',
   },
   {
-    title: 'Generate reports on Exports',
-    body: 'Go to the Exports page, find the week range for the newly uploaded workbook, then click Generate Report. Generation reapplies current mapping rules and refreshes Sales Analysis, Total Sales, and the weekly meter for that month.',
+    title: 'Reports are generated automatically',
+    body: 'After the Sales Analysis upload has no unmatched rows left (or after you resolve them), reports are generated automatically. Tick Include State under the Sales Analysis file input if you want State included. Open the Calendar and click the week to view them.',
     image: '/images/5.png',
   },
   {
@@ -4599,124 +5174,6 @@ function HowToUseScreen() {
   );
 }
 
-function ExportsScreen({ batches, batchesLoading, showNotice }) {
-  const [reportsByBatchId, setReportsByBatchId] = useState({});
-  const [generatingBatchId, setGeneratingBatchId] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const [includeState, setIncludeState] = useState(false);
-  const isBusy = refreshing || generatingBatchId != null;
-
-  const loadReports = useCallback(async ({ showLoading = false } = {}) => {
-    if (batches.length === 0) {
-      setReportsByBatchId({});
-      return;
-    }
-
-    if (showLoading) {
-      setRefreshing(true);
-    }
-
-    try {
-      const entries = await Promise.all(
-        batches.map(async (batch) => {
-          try {
-            const response = await axios.get(`/api/import-batches/${batch.id}/generated-reports`);
-            return [String(batch.id), response.data.data ?? []];
-          } catch {
-            return [String(batch.id), []];
-          }
-        }),
-      );
-
-      setReportsByBatchId(Object.fromEntries(entries));
-    } catch (error) {
-      showNotice('error', messageFromError(error, 'Unable to load generated reports.'));
-    } finally {
-      if (showLoading) {
-        setRefreshing(false);
-      }
-    }
-  }, [batches, showNotice]);
-
-  useEffect(() => {
-    loadReports();
-  }, [loadReports]);
-
-  async function generateReportsForBatch(batchId) {
-    setGeneratingBatchId(batchId);
-
-    try {
-      await axios.post(`/api/import-batches/${batchId}/generated-reports`, {
-        include_state: includeState,
-      });
-      await loadReports();
-      showNotice(
-        'success',
-        `Reports generated for batch #${batchId}. Mapping rules were reapplied and same-month weekly meter files were refreshed.`,
-      );
-    } catch (error) {
-      showNotice('error', messageFromError(error, `Unable to generate reports for batch #${batchId}.`));
-    } finally {
-      setGeneratingBatchId(null);
-    }
-  }
-
-  return (
-    <section className="panel-grid">
-      <article className="panel panel-span panel-legend">
-        <p className="eyebrow">Exports</p>
-        <div className="section-heading">
-          <div>
-            <h2>Generated Excel Reports</h2>
-          </div>
-          <div className="button-row">
-            <div className="exports-include-state">
-              <label className="checkbox-label">
-                <input
-                  checked={includeState}
-                  disabled={isBusy}
-                  type="checkbox"
-                  onChange={(event) => setIncludeState(event.target.checked)}
-                />
-                Include State
-              </label>
-              <button
-                aria-label="Click Generate Report on a batch after changing this to update the downloadable file."
-                className="exports-include-state-info"
-                data-tooltip="Click Generate Report on a batch after changing this to update the downloadable file."
-                type="button"
-              >
-                <ActionIcon name="info" />
-              </button>
-            </div>
-            <button
-              className="secondary-button"
-              disabled={batches.length === 0 || isBusy}
-              type="button"
-              onClick={() => loadReports({ showLoading: true })}
-            >
-              <ButtonContent icon="refresh" loading={refreshing}>
-                {refreshing ? 'Refreshing...' : 'Refresh'}
-              </ButtonContent>
-            </button>
-          </div>
-        </div>
-        {batchesLoading ? <p>Loading batches...</p> : null}
-        {!batchesLoading && batches.length === 0 ? <p>No batches with uploads yet.</p> : null}
-        {!batchesLoading && batches.length > 0 ? (
-          <ExportsBatchesTable
-            batches={batches}
-            generatingBatchId={generatingBatchId}
-            isBusy={isBusy}
-            reportsByBatchId={reportsByBatchId}
-            onGenerate={generateReportsForBatch}
-          />
-        ) : null}
-      </article>
-    </section>
-  );
-}
-
 function SettingsPopup({ selectedTheme, onThemeChange }) {
   return (
     <div className="settings-popup">
@@ -4740,114 +5197,365 @@ function SettingsPopup({ selectedTheme, onThemeChange }) {
   );
 }
 
-function ExportsBatchesTable({ batches, generatingBatchId, isBusy, reportsByBatchId, onGenerate }) {
-  const pagination = usePagination(batches);
-  const [expandedBatchId, setExpandedBatchId] = useState(null);
+const SALES_ANALYSIS_HIDDEN_COLUMNS_KEY = 'salesAnalysisHiddenColumns';
+// Sales Rep 1 ID, Country, Bill to State
+const SALES_ANALYSIS_DEFAULT_HIDDEN_COLUMNS = ['F', 'G', 'H'];
 
-  function toggleExpanded(batchId) {
-    setExpandedBatchId((current) => (current === batchId ? null : batchId));
+function loadSalesAnalysisHiddenColumns() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(SALES_ANALYSIS_HIDDEN_COLUMNS_KEY));
+
+    if (Array.isArray(stored) && stored.every((letter) => typeof letter === 'string')) {
+      return stored;
+    }
+  } catch {
+    // Fall back to the defaults when the stored value is missing or malformed.
   }
 
-  return (
-    <>
-      <div className="table-wrap">
-        <table className="exports-batches-table">
-          <thead>
-            <tr>
-              <th>Batch</th>
-              <th>Week Range</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pagination.paginatedItems.map((batch) => {
-              const batchId = String(batch.id);
-              const reports = reportsByBatchId[batchId] ?? [];
-              const isGenerating = generatingBatchId === batch.id || generatingBatchId === batchId;
-              const isExpanded = expandedBatchId === batchId;
-
-              return (
-                <Fragment key={batch.id}>
-                  <tr className={isExpanded ? 'exports-batch-row-expanded' : undefined}>
-                    <td>
-                      <div className="exports-batch-cell">
-                        <button
-                          aria-expanded={isExpanded}
-                          aria-label={isExpanded ? `Collapse batch #${batch.id} reports` : `Expand batch #${batch.id} reports`}
-                          className={isExpanded ? 'exports-expand-button exports-expand-button-open' : 'exports-expand-button'}
-                          type="button"
-                          onClick={() => toggleExpanded(batchId)}
-                        >
-                          <ActionIcon name="chevron" />
-                        </button>
-                        <span>#{batch.id}</span>
-                      </div>
-                    </td>
-                    <td>{formatWeekRange(batch.week_start, batch.week_ending)}</td>
-                    <td>{batch.status}</td>
-                    <td>
-                      <button
-                        className="primary-button"
-                        disabled={isBusy}
-                        type="button"
-                        onClick={() => onGenerate(batch.id)}
-                      >
-                        <ButtonContent icon="export" loading={isGenerating}>
-                          {isGenerating ? 'Generating...' : 'Generate Report'}
-                        </ButtonContent>
-                      </button>
-                    </td>
-                  </tr>
-                  {isExpanded ? (
-                    <tr className="exports-batch-details-row">
-                      <td colSpan={4}>
-                        <ExportBatchReportsPanel reports={reports} />
-                      </td>
-                    </tr>
-                  ) : null}
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-      <PaginationControls {...pagination} />
-    </>
-  );
+  return SALES_ANALYSIS_DEFAULT_HIDDEN_COLUMNS;
 }
 
-function ExportBatchReportsPanel({ reports }) {
-  if (reports.length === 0) {
-    return <p className="exports-details-empty">No generated reports yet.</p>;
+// Letters of the columns that contain at least one value on the sheet.
+// Columns that are blank on every row (e.g. the adjusted-quantity column when
+// no category uses a multiplier) are never shown.
+function salesAnalysisUsedColumnLetters(sheet) {
+  const used = new Set();
+
+  sheet.rows.forEach((row) => {
+    let columnIndex = 0;
+
+    row.cells.forEach((cell) => {
+      if (cell.v !== '' && cell.v != null) {
+        used.add(sheet.column_letters[columnIndex]);
+      }
+
+      columnIndex += cell.colspan ?? 1;
+    });
+  });
+
+  return used;
+}
+
+function SalesAnalysisColumnPicker({ columns, hiddenColumns, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef(null);
+  const visibleCount = columns.filter((column) => !hiddenColumns.includes(column.letter)).length;
+  const hiddenCount = columns.length - visibleCount;
+
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    function handlePointerDown(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
+  function toggleColumn(letter) {
+    if (hiddenColumns.includes(letter)) {
+      onChange(hiddenColumns.filter((hidden) => hidden !== letter));
+    } else if (visibleCount > 1) {
+      onChange([...hiddenColumns, letter]);
+    }
   }
 
   return (
-    <div className="exports-details-list">
-      {reports.map((report) => (
-        <div className="exports-details-row" key={report.id ?? report.report_type}>
-          <div className="exports-details-meta">
-            <strong>{generatedReportLabel(report.report_type)}</strong>
-            <span>{report.status}</span>
-            <span>{report.file_name ?? 'n/a'}</span>
+    <div className="sa-column-picker" ref={containerRef}>
+      <button
+        aria-expanded={isOpen}
+        aria-haspopup="true"
+        className="secondary-button"
+        type="button"
+        onClick={() => setIsOpen((current) => !current)}
+      >
+        <ButtonContent icon="eye">{hiddenCount > 0 ? `Columns (${hiddenCount} hidden)` : 'Columns'}</ButtonContent>
+      </button>
+      {isOpen ? (
+        <div className="sa-column-menu" role="group" aria-label="Show or hide columns">
+          <div className="sa-column-menu-actions">
+            <button className="link-button" type="button" onClick={() => onChange([])}>
+              Show all
+            </button>
+            <button
+              className="link-button"
+              type="button"
+              onClick={() => onChange(SALES_ANALYSIS_DEFAULT_HIDDEN_COLUMNS)}
+            >
+              Reset to default
+            </button>
           </div>
-          {report.status === 'completed' ? (
-            <a className="secondary-button" href={`/api/generated-reports/${report.id}/download`}>
-              <ButtonContent icon="download">Download</ButtonContent>
-            </a>
-          ) : (
-            <span className="exports-details-unavailable">Unavailable</span>
-          )}
+          {columns.map((column) => {
+            const isVisible = !hiddenColumns.includes(column.letter);
+
+            return (
+              <label className="sa-column-option" key={column.letter}>
+                <input
+                  checked={isVisible}
+                  disabled={isVisible && visibleCount <= 1}
+                  type="checkbox"
+                  onChange={() => toggleColumn(column.letter)}
+                />
+                <span>{column.label}</span>
+              </label>
+            );
+          })}
         </div>
-      ))}
+      ) : null}
     </div>
   );
 }
 
-function generatedReportLabel(reportType) {
-  return workbookTypes.find((type) => type.key === reportType)?.label
-    ?? generatedReportLabels[reportType]
-    ?? reportType;
+function SalesAnalysisReportScreen({ reportId, showNotice, onLoaded, onBack }) {
+  const [hiddenColumns, setHiddenColumns] = useState(loadSalesAnalysisHiddenColumns);
+  const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [activeSheetIndex, setActiveSheetIndex] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    setLoading(true);
+    setErrorMessage('');
+    setPreview(null);
+    setActiveSheetIndex(0);
+
+    axios
+      .get(`/api/generated-reports/${reportId}/preview`)
+      .then((response) => {
+        if (!cancelled) {
+          setPreview(response.data.data);
+          onLoaded?.(response.data.data?.report);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          const message = messageFromError(error, 'Unable to load this Sales Analysis.');
+
+          setErrorMessage(message);
+          showNotice('error', message);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [reportId, showNotice, onLoaded]);
+
+  const report = preview?.report;
+  const sheets = preview?.sheets ?? [];
+  const activeSheet = sheets[activeSheetIndex] ?? sheets[0] ?? null;
+  const generatedAt = report?.generated_at ? new Date(report.generated_at).toLocaleString() : null;
+
+  const columns = useMemo(() => {
+    if (!activeSheet) {
+      return [];
+    }
+
+    const usedLetters = salesAnalysisUsedColumnLetters(activeSheet);
+
+    return activeSheet.column_letters
+      .map((letter, index) => ({
+        letter,
+        label: activeSheet.rows[0]?.cells[index]?.v || `Column ${letter}`,
+      }))
+      .filter((column) => usedLetters.has(column.letter));
+  }, [activeSheet]);
+
+  function updateHiddenColumns(nextHiddenColumns) {
+    setHiddenColumns(nextHiddenColumns);
+
+    try {
+      localStorage.setItem(SALES_ANALYSIS_HIDDEN_COLUMNS_KEY, JSON.stringify(nextHiddenColumns));
+    } catch {
+      // Preferences simply won't persist if storage is unavailable.
+    }
+  }
+
+  return (
+    <section className="panel-grid">
+      <article className="panel panel-span panel-legend">
+        <p className="eyebrow">Sales Analysis</p>
+        <div className="section-heading">
+          <div>
+            <h2>
+              {report
+                ? formatWeekRange(report.import_batch.week_start, report.import_batch.week_ending)
+                : 'Sales Analysis'}
+            </h2>
+            {report ? (
+              <p className="sa-report-meta">
+                Batch #{report.import_batch.id} · {report.file_name}
+                {generatedAt ? ` · Generated ${generatedAt}` : ''}
+              </p>
+            ) : null}
+          </div>
+          <div className="button-row">
+            <button className="secondary-button" type="button" onClick={onBack}>
+              <ButtonContent icon="back">Back to Calendar</ButtonContent>
+            </button>
+            {report ? (
+              <a className="secondary-button" href={`/api/generated-reports/${report.id}/download`}>
+                <ButtonContent icon="download">Download</ButtonContent>
+              </a>
+            ) : null}
+          </div>
+        </div>
+
+        {loading ? <p>Loading Sales Analysis...</p> : null}
+        {!loading && errorMessage ? <p className="sa-report-error">{errorMessage}</p> : null}
+
+        {!loading && activeSheet ? (
+          <>
+            <div className="sa-toolbar">
+              <div className="sa-tabs" role="tablist" aria-label="Sales Analysis sheets">
+                {sheets.map((sheet, index) => (
+                  <button
+                    aria-selected={sheet === activeSheet}
+                    className={sheet === activeSheet ? 'sa-tab sa-tab-active' : 'sa-tab'}
+                    key={sheet.title}
+                    role="tab"
+                    type="button"
+                    onClick={() => setActiveSheetIndex(index)}
+                  >
+                    {sheet.title}
+                  </button>
+                ))}
+              </div>
+              <SalesAnalysisColumnPicker
+                columns={columns}
+                hiddenColumns={hiddenColumns}
+                onChange={updateHiddenColumns}
+              />
+            </div>
+            <SalesAnalysisSheetTable
+              hiddenColumns={hiddenColumns}
+              key={activeSheet.title}
+              sheet={activeSheet}
+            />
+          </>
+        ) : null}
+      </article>
+    </section>
+  );
+}
+
+function SalesAnalysisSheetTable({ sheet, hiddenColumns }) {
+  const usedLetters = salesAnalysisUsedColumnLetters(sheet);
+  const isColumnHidden = sheet.column_letters.map(
+    (letter) => hiddenColumns.includes(letter) || !usedLetters.has(letter),
+  );
+  const visibleColumnIndexes = sheet.column_letters
+    .map((_, index) => index)
+    .filter((index) => !isColumnHidden[index]);
+  const widthsInPixels = sheet.column_widths.map((width) => Math.round(width * 7 + 5));
+  const tableWidth = visibleColumnIndexes.reduce((total, index) => total + widthsInPixels[index], 0);
+  const [headerRow, ...bodyRows] = sheet.rows;
+
+  // Cells carry no column index (merged cells are collapsed), so walk each row
+  // accumulating colspans. Merged cells shrink to their visible columns and
+  // disappear when every column they span is hidden.
+  function visibleCells(row) {
+    let columnIndex = 0;
+    const result = [];
+
+    row.cells.forEach((cell, index) => {
+      const span = cell.colspan ?? 1;
+      let visibleSpan = 0;
+
+      for (let offset = 0; offset < span; offset += 1) {
+        if (!isColumnHidden[columnIndex + offset]) {
+          visibleSpan += 1;
+        }
+      }
+
+      columnIndex += span;
+
+      if (visibleSpan > 0) {
+        result.push({ cell, index, colSpan: visibleSpan > 1 ? visibleSpan : undefined });
+      }
+    });
+
+    return result;
+  }
+
+  function renderCell({ cell, index, colSpan }, rowNumber, Tag) {
+    const style = sheet.styles[cell.s] ?? {};
+    const inlineStyle = { textAlign: style.align ?? 'left' };
+
+    if (style.fill) {
+      inlineStyle.backgroundColor = `#${style.fill}`;
+      inlineStyle.color = '#000000';
+    }
+
+    if (style.bold) {
+      inlineStyle.fontWeight = 700;
+    }
+
+    if (style.italic) {
+      inlineStyle.fontStyle = 'italic';
+    }
+
+    if (style.size) {
+      inlineStyle.fontSize = `${style.size / 11}em`;
+    }
+
+    return (
+      <Tag
+        colSpan={colSpan}
+        key={`${rowNumber}-${index}`}
+        rowSpan={cell.rowspan}
+        style={inlineStyle}
+        title={cell.v || undefined}
+      >
+        {cell.v}
+      </Tag>
+    );
+  }
+
+  return (
+    <div className="sa-sheet-wrap">
+      <table className="sa-sheet-table" style={{ width: tableWidth }}>
+        <colgroup>
+          {visibleColumnIndexes.map((index) => (
+            <col key={sheet.column_letters[index]} style={{ width: widthsInPixels[index] }} />
+          ))}
+        </colgroup>
+        {headerRow ? (
+          <thead>
+            <tr>{visibleCells(headerRow).map((entry) => renderCell(entry, headerRow.n, 'th'))}</tr>
+          </thead>
+        ) : null}
+        <tbody>
+          {bodyRows.map((row) => (
+            <tr key={row.n}>{visibleCells(row).map((entry) => renderCell(entry, row.n, 'td'))}</tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 function SimpleList({ items }) {

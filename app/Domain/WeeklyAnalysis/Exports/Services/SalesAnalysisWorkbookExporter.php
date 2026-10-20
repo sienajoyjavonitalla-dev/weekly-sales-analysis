@@ -94,6 +94,7 @@ class SalesAnalysisWorkbookExporter
             spreadsheet: $spreadsheet,
             generatedByUserId: $generatedByUserId,
             summary: [
+                'include_state' => $includeState,
                 'rhp_rows' => $this->rowCount($importBatch, 'rhp'),
                 'parts_tsd_rows' => $this->rowCount($importBatch, 'parts_tsd'),
                 'state_rows' => $includeState
