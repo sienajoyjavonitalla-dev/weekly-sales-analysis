@@ -4514,6 +4514,7 @@ function ReportCalendarScreen({ initialMonth, showNotice, onMonthChange, onOpenM
   });
   const [weeks, setWeeks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [selectedWeekId, setSelectedWeekId] = useState(null);
   const [hoveredWeekId, setHoveredWeekId] = useState(null);
 
@@ -4534,12 +4535,16 @@ function ReportCalendarScreen({ initialMonth, showNotice, onMonthChange, onOpenM
       .then((response) => {
         if (!cancelled) {
           setWeeks(response.data.data?.weeks ?? []);
+          setLoadError(null);
         }
       })
       .catch((error) => {
         if (!cancelled) {
+          const message = messageFromError(error, 'Unable to load the report calendar.');
+
           setWeeks([]);
-          showNotice('error', messageFromError(error, 'Unable to load the report calendar.'));
+          setLoadError(message);
+          showNotice('error', message);
         }
       })
       .finally(() => {
@@ -4673,7 +4678,13 @@ function ReportCalendarScreen({ initialMonth, showNotice, onMonthChange, onOpenM
           </div>
         </div>
 
-        {!loading && weeks.length === 0 ? (
+        {!loading && loadError ? (
+          <p className="calendar-empty calendar-error" role="alert">
+            Could not load the calendar for {monthLabel}: {loadError}
+          </p>
+        ) : null}
+
+        {!loading && !loadError && weeks.length === 0 ? (
           <p className="calendar-empty">No uploaded workbooks for {monthLabel}.</p>
         ) : null}
 

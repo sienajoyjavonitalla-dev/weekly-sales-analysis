@@ -1456,6 +1456,10 @@ input:disabled {
   font-size: 0.88rem;
 }
 
+.calendar-empty.calendar-error {
+  color: var(--danger-text);
+}
+
 .modal-card-calendar {
   width: min(520px, 100%);
 }
