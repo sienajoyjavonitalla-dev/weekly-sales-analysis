@@ -1456,6 +1456,72 @@ input:disabled {
   font-size: 0.88rem;
 }
 
+.calendar-diagnostics {
+  margin-top: 16px;
+  padding: 10px 14px;
+  border: 1px dashed var(--border-2);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.calendar-diagnostics > summary {
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.calendar-diagnostics-summary {
+  margin-left: 8px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.calendar-diagnostics-list {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 14px;
+  margin: 10px 0 0;
+}
+
+.calendar-diagnostics-list dt {
+  color: var(--text-soft);
+  font-weight: 600;
+}
+
+.calendar-diagnostics-list dd {
+  margin: 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.calendar-diagnostics .calendar-diagnostics-note {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+}
+
+.calendar-diagnostics-table th,
+.calendar-diagnostics-table td {
+  padding: 6px 8px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.calendar-diagnostics .table-wrap {
+  margin-top: 10px;
+}
+
+.calendar-diagnostics-error {
+  margin: 10px 0 0;
+  padding: 10px;
+  overflow: auto;
+  border-radius: 6px;
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  white-space: pre-wrap;
+}
+
 .calendar-empty.calendar-error {
   color: var(--danger-text);
 }

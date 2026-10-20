@@ -5,6 +5,7 @@ namespace App\Domain\WeeklyAnalysis\Reports;
 use App\Models\GeneratedReport;
 use App\Models\ImportBatch;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 
 class ReportCalendarBuilder
 {
@@ -91,6 +92,61 @@ class ReportCalendarBuilder
             'year' => $year,
             'month' => $month,
             'weeks' => $weeks,
+            'diagnostics' => $this->diagnostics($rangeStart, $rangeEnd, count($weeks)),
+        ];
+    }
+
+    /**
+     * Describes what the server can see for the requested window, including batches that are
+     * left out of the calendar (for example because they have no uploaded files).
+     *
+     * @return array<string, mixed>
+     */
+    private function diagnostics(CarbonImmutable $rangeStart, CarbonImmutable $rangeEnd, int $weeksReturned): array
+    {
+        $windowBatches = ImportBatch::query()
+            ->withCount('uploadedFiles')
+            ->with('generatedReports:id,import_batch_id,report_type,status')
+            ->whereDate('week_ending', '>=', $rangeStart->toDateString())
+            ->where(function ($query) use ($rangeEnd): void {
+                $query->whereNull('week_start')
+                    ->orWhereDate('week_start', '<=', $rangeEnd->toDateString());
+            })
+            ->orderBy('week_ending')
+            ->orderBy('id')
+            ->limit(25)
+            ->get();
+
+        $latest = ImportBatch::query()->orderByDesc('id')->first(['id', 'week_start', 'week_ending']);
+
+        return [
+            'server_time' => CarbonImmutable::now()->toIso8601String(),
+            'timezone' => (string) config('app.timezone'),
+            'environment' => (string) config('app.env'),
+            'database' => DB::connection()->getDatabaseName(),
+            'window' => [
+                'from' => $rangeStart->toDateString(),
+                'to' => $rangeEnd->toDateString(),
+            ],
+            'weeks_returned' => $weeksReturned,
+            'total_batches' => ImportBatch::query()->count(),
+            'latest_batch' => $latest === null ? null : [
+                'id' => $latest->id,
+                'week_start' => $latest->week_start?->toDateString(),
+                'week_ending' => $latest->week_ending?->toDateString(),
+            ],
+            'batches_in_window' => $windowBatches->map(fn (ImportBatch $batch): array => [
+                'id' => $batch->id,
+                'week_start' => $batch->week_start?->toDateString(),
+                'week_ending' => $batch->week_ending?->toDateString(),
+                'status' => $batch->status,
+                'uploaded_files' => (int) $batch->uploaded_files_count,
+                'shown_in_calendar' => $batch->uploaded_files_count > 0,
+                'reports' => $batch->generatedReports
+                    ->map(fn (GeneratedReport $report): string => $report->report_type.':'.$report->status)
+                    ->values()
+                    ->all(),
+            ])->values()->all(),
         ];
     }
 

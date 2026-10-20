@@ -67,6 +67,28 @@ class ReportCalendarTest extends TestCase
             ->assertJsonPath('data.weeks.0.reports', []);
     }
 
+    public function test_calendar_diagnostics_explain_which_batches_are_left_out(): void
+    {
+        $user = $this->createAnalyst();
+        $shown = $this->createBatch($user, '2026-04-10');
+        $hidden = $this->createBatch($user, '2026-04-17', withUpload: false);
+
+        $response = $this->actingAs($user)
+            ->getJson('/api/report-calendar?year=2026&month=4')
+            ->assertOk()
+            ->assertJsonPath('data.diagnostics.weeks_returned', 1)
+            ->assertJsonPath('data.diagnostics.total_batches', 2)
+            ->assertJsonPath('data.diagnostics.latest_batch.id', $hidden->id)
+            ->assertJsonCount(2, 'data.diagnostics.batches_in_window');
+
+        $batches = collect($response->json('data.diagnostics.batches_in_window'))->keyBy('id');
+
+        $this->assertTrue($batches[$shown->id]['shown_in_calendar']);
+        $this->assertFalse($batches[$hidden->id]['shown_in_calendar']);
+        $this->assertSame(0, $batches[$hidden->id]['uploaded_files']);
+        $this->assertNotEmpty($response->json('data.diagnostics.database'));
+    }
+
     public function test_calendar_ignores_batches_without_uploads(): void
     {
         $user = $this->createAnalyst();

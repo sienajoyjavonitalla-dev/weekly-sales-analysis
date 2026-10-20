@@ -4502,6 +4502,104 @@ function calendarWeekReadyReportCount(week) {
   return week.reports.filter((report) => report.status === 'completed').length;
 }
 
+// Collapsible troubleshooting panel: shows what this browser asked for and what the server answered.
+function CalendarDiagnostics({ requestLog, loading }) {
+  const server = requestLog?.server;
+  const buildTime = typeof __APP_BUILD_TIME__ === 'string' ? __APP_BUILD_TIME__ : 'unknown (dev server)';
+  const summary = !requestLog
+    ? 'Waiting for the first request...'
+    : requestLog.ok
+      ? `HTTP ${requestLog.status}, ${requestLog.weeksReturned} week(s) returned`
+      : `FAILED${requestLog.status ? ` (HTTP ${requestLog.status})` : ''}`;
+
+  return (
+    <details className="calendar-diagnostics">
+      <summary>
+        Diagnostics <span className="calendar-diagnostics-summary">{loading ? 'loading...' : summary}</span>
+      </summary>
+      <dl className="calendar-diagnostics-list">
+        <dt>UI build</dt>
+        <dd>{buildTime}</dd>
+        <dt>Page URL</dt>
+        <dd>{window.location.href}</dd>
+        <dt>Browser time</dt>
+        <dd>
+          {new Date().toString()} ({Intl.DateTimeFormat().resolvedOptions().timeZone})
+        </dd>
+        {requestLog ? (
+          <>
+            <dt>Request</dt>
+            <dd>
+              GET /api/report-calendar?year={requestLog.params.year}&amp;month={requestLog.params.month} at{' '}
+              {requestLog.at} ({requestLog.durationMs} ms)
+            </dd>
+            <dt>Result</dt>
+            <dd>{summary}</dd>
+          </>
+        ) : null}
+        {server ? (
+          <>
+            <dt>Server</dt>
+            <dd>
+              env={server.environment}, database={server.database}, timezone={server.timezone}, time={server.server_time}
+            </dd>
+            <dt>Window searched</dt>
+            <dd>
+              week_ending on/after {server.window.from}, week_start on/before {server.window.to}
+            </dd>
+            <dt>Batches in database</dt>
+            <dd>
+              {server.total_batches} total
+              {server.latest_batch
+                ? `, latest is #${server.latest_batch.id} (${server.latest_batch.week_start ?? '?'} to ${server.latest_batch.week_ending ?? '?'})`
+                : ''}
+            </dd>
+          </>
+        ) : null}
+      </dl>
+      {server ? (
+        server.batches_in_window.length === 0 ? (
+          <p className="calendar-diagnostics-note">The server found no batches in this window.</p>
+        ) : (
+          <div className="table-wrap">
+            <table className="calendar-diagnostics-table">
+              <thead>
+                <tr>
+                  <th>Batch</th>
+                  <th>Week start</th>
+                  <th>Week ending</th>
+                  <th>Status</th>
+                  <th>Files</th>
+                  <th>Shown</th>
+                  <th>Reports</th>
+                </tr>
+              </thead>
+              <tbody>
+                {server.batches_in_window.map((batch) => (
+                  <tr key={batch.id}>
+                    <td>#{batch.id}</td>
+                    <td>{batch.week_start ?? '—'}</td>
+                    <td>{batch.week_ending ?? '—'}</td>
+                    <td>{batch.status}</td>
+                    <td>{batch.uploaded_files}</td>
+                    <td>{batch.shown_in_calendar ? 'yes' : 'NO (no uploaded files)'}</td>
+                    <td>{batch.reports.length > 0 ? batch.reports.join(', ') : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      ) : null}
+      {requestLog && !requestLog.ok ? (
+        <pre className="calendar-diagnostics-error">
+          {typeof requestLog.errorBody === 'string' ? requestLog.errorBody : JSON.stringify(requestLog.errorBody, null, 2)}
+        </pre>
+      ) : null}
+    </details>
+  );
+}
+
 function ReportCalendarScreen({ initialMonth, showNotice, onMonthChange, onOpenMeterReport, onOpenSalesAnalysis }) {
   const [viewDate, setViewDate] = useState(() => {
     if (initialMonth) {
@@ -4515,6 +4613,7 @@ function ReportCalendarScreen({ initialMonth, showNotice, onMonthChange, onOpenM
   const [weeks, setWeeks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [requestLog, setRequestLog] = useState(null);
   const [selectedWeekId, setSelectedWeekId] = useState(null);
   const [hoveredWeekId, setHoveredWeekId] = useState(null);
 
@@ -4530,12 +4629,25 @@ function ReportCalendarScreen({ initialMonth, showNotice, onMonthChange, onOpenM
 
     setLoading(true);
 
+    const params = { year, month: month + 1 };
+    const startedAt = Date.now();
+
     axios
-      .get('/api/report-calendar', { params: { year, month: month + 1 } })
+      .get('/api/report-calendar', { params })
       .then((response) => {
         if (!cancelled) {
           setWeeks(response.data.data?.weeks ?? []);
           setLoadError(null);
+          setRequestLog({
+            at: new Date().toISOString(),
+            params,
+            ok: true,
+            status: response.status,
+            durationMs: Date.now() - startedAt,
+            weeksReturned: response.data.data?.weeks?.length ?? 0,
+            server: response.data.data?.diagnostics ?? null,
+            errorBody: null,
+          });
         }
       })
       .catch((error) => {
@@ -4544,6 +4656,16 @@ function ReportCalendarScreen({ initialMonth, showNotice, onMonthChange, onOpenM
 
           setWeeks([]);
           setLoadError(message);
+          setRequestLog({
+            at: new Date().toISOString(),
+            params,
+            ok: false,
+            status: error?.response?.status ?? null,
+            durationMs: Date.now() - startedAt,
+            weeksReturned: 0,
+            server: null,
+            errorBody: error?.response?.data ?? error?.message ?? null,
+          });
           showNotice('error', message);
         }
       })
@@ -4687,6 +4809,9 @@ function ReportCalendarScreen({ initialMonth, showNotice, onMonthChange, onOpenM
         {!loading && !loadError && weeks.length === 0 ? (
           <p className="calendar-empty">No uploaded workbooks for {monthLabel}.</p>
         ) : null}
+
+        <CalendarDiagnostics requestLog={requestLog} loading={loading} />
+
 
         {selectedWeek ? (
           <CalendarWeekModal

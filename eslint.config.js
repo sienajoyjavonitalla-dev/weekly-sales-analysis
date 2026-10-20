@@ -11,6 +11,7 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.es2024,
+        __APP_BUILD_TIME__: 'readonly',
       },
       parserOptions: {
         ecmaFeatures: {
