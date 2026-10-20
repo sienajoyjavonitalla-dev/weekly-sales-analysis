@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BatchClassificationController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\GeneratedReportController;
 use App\Http\Controllers\Api\ImportBatchController;
 use App\Http\Controllers\Api\MappingRuleController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Api\UploadedFileController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\WeeklyMeterAdditionalFeeController;
 use App\Http\Controllers\Api\WeeklyMeterReportController;
+use App\Http\Controllers\Api\WeeklyMeterReportDownloadController;
 use App\Http\Controllers\Api\WorkbookImportController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
@@ -49,8 +51,10 @@ Route::middleware(['web', 'auth', 'throttle:60,1'])->group(function (): void {
         ->parameters(['mapping-rules' => 'mappingRule'])
         ->except(['show']);
 
+    Route::get('/dashboard', DashboardController::class);
     Route::get('/report-calendar', ReportCalendarController::class);
     Route::get('/weekly-meter-report', WeeklyMeterReportController::class);
+    Route::get('/weekly-meter-report/download', WeeklyMeterReportDownloadController::class);
     Route::put('/weekly-meter-report/additional-fees', [WeeklyMeterAdditionalFeeController::class, 'update']);
     Route::get('/import-batches', [ImportBatchController::class, 'index']);
     Route::post('/import-batches/discard-pending-reconciles', [ImportBatchController::class, 'discardPendingReconciles']);

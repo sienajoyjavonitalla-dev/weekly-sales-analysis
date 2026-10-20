@@ -2,8 +2,34 @@ import axios from 'axios';
 import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
+function DashboardIcon() {
+  return (
+    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+      <path d="M4 4h7v9H4z" />
+      <path d="M13 4h7v5h-7z" />
+      <path d="M13 11h7v9h-7z" />
+      <path d="M4 15h7v5H4z" />
+    </svg>
+  );
+}
 
 function UploadIcon() {
   return (
@@ -178,6 +204,7 @@ const themes = [
 ];
 
 const workflowTabs = [
+  { id: 'dashboard', label: 'Dashboard', icon: DashboardIcon },
   { id: 'calendar', label: 'Calendar', icon: CalendarIcon },
   { id: 'upload', label: 'Upload', icon: UploadIcon },
   { id: 'meter-report', label: 'Meter Report', icon: MeterReportIcon },
@@ -341,7 +368,7 @@ function navigateTo(path) {
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState('calendar');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [meterReportTarget, setMeterReportTarget] = useState(null);
   // Month last shown on the calendar ({ year, month } with a 0-based month), so returning to it restores the view.
   const [calendarMonth, setCalendarMonth] = useState(null);
@@ -634,6 +661,13 @@ function App() {
                 setActiveTab('calendar');
                 navigateTo('/');
               }}
+            />
+          ) : null}
+          {visibleTab === 'dashboard' ? (
+            <DashboardScreen
+              showNotice={showNotice}
+              onOpenCalendar={() => selectTab('calendar')}
+              onOpenMeterReport={openMeterReportFromCalendar}
             />
           ) : null}
           {visibleTab === 'calendar' ? (
@@ -3566,6 +3600,7 @@ function WeeklyMeterReportScreen({ initialYear, initialMonth, showNotice, onBack
   const [loading, setLoading] = useState(true);
   const [feeEditor, setFeeEditor] = useState(null);
   const [savingFees, setSavingFees] = useState(false);
+  const [downloadingYear, setDownloadingYear] = useState(false);
 
   const loadReport = useCallback(async (nextYear, nextMonth) => {
     setLoading(true);
@@ -3597,6 +3632,41 @@ function WeeklyMeterReportScreen({ initialYear, initialMonth, showNotice, onBack
   const availableMonths = report?.available_months ?? [month];
   const monthLabel = `${monthNames[month - 1]} ${year}`;
   const titleColSpan = 1 + ((report?.weeks.length ?? 0) * 2) + 1 + 2;
+
+  async function downloadYearReport() {
+    setDownloadingYear(true);
+
+    try {
+      const response = await axios.get('/api/weekly-meter-report/download', {
+        params: { year },
+        responseType: 'blob',
+      });
+      const url = URL.createObjectURL(response.data);
+      const link = document.createElement('a');
+
+      link.href = url;
+      link.download = `${year}-weekly-meter-report.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      // With a blob response type, error bodies arrive as a Blob and need to be parsed manually.
+      let message = 'Unable to download the weekly meter report.';
+
+      if (error?.response?.data instanceof Blob) {
+        try {
+          message = JSON.parse(await error.response.data.text()).message ?? message;
+        } catch {
+          // Keep the fallback message when the body is not JSON.
+        }
+      }
+
+      showNotice('error', message);
+    } finally {
+      setDownloadingYear(false);
+    }
+  }
 
   async function saveAdditionalFees(fees) {
     if (!feeEditor) {
@@ -3636,6 +3706,17 @@ function WeeklyMeterReportScreen({ initialYear, initialMonth, showNotice, onBack
                 <ButtonContent icon="back">Back to Calendar</ButtonContent>
               </button>
             ) : null}
+            <button
+              className="secondary-button"
+              disabled={downloadingYear}
+              title={`Download the ${year} Meter Report (all 12 months, one sheet per month)`}
+              type="button"
+              onClick={downloadYearReport}
+            >
+              <ButtonContent icon="download" loading={downloadingYear}>
+                Download {year}
+              </ButtonContent>
+            </button>
             <label className="status-filter">
               Year
               <select
@@ -3808,6 +3889,461 @@ function WeeklyMeterReportScreen({ initialYear, initialMonth, showNotice, onBack
             }}
             onSave={saveAdditionalFees}
           />
+        ) : null}
+      </article>
+    </section>
+  );
+}
+
+const DASHBOARD_PALETTE = [
+  'var(--primary)',
+  'var(--icon)',
+  'var(--success-text)',
+  'var(--warning-text)',
+  'var(--danger-text)',
+  'var(--text-muted)',
+];
+
+const DASHBOARD_TOOLTIP_PROPS = {
+  contentStyle: {
+    background: 'var(--surface-2)',
+    border: '1px solid var(--border-2)',
+    borderRadius: 8,
+    color: 'var(--text)',
+    fontSize: '0.82rem',
+  },
+  labelStyle: { color: 'var(--text-strong)', fontWeight: 700 },
+  itemStyle: { color: 'var(--text)' },
+  cursor: { fill: 'var(--surface-3)', fillOpacity: 0.5 },
+};
+
+const DASHBOARD_AXIS_TICK = { fill: 'var(--text-muted)', fontSize: 12 };
+
+function compactCurrency(value) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(Number(value ?? 0));
+}
+
+function truncateLabel(value, maxLength = 24) {
+  const text = String(value ?? '');
+
+  return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
+}
+
+function DashboardDelta({ percent }) {
+  if (percent === null || percent === undefined) {
+    return <small className="dashboard-delta dashboard-delta-flat">No prior month data</small>;
+  }
+
+  const direction = percent > 0 ? 'up' : percent < 0 ? 'down' : 'flat';
+  const arrow = direction === 'up' ? '▲' : direction === 'down' ? '▼' : '■';
+
+  return (
+    <small className={`dashboard-delta dashboard-delta-${direction}`}>
+      {arrow} {Math.abs(percent).toFixed(1)}% vs prev. month
+    </small>
+  );
+}
+
+function DashboardKpi({ label, value, children, tone }) {
+  return (
+    <div className={tone ? `summary-card dashboard-kpi dashboard-kpi-${tone}` : 'summary-card dashboard-kpi'}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+      {children}
+    </div>
+  );
+}
+
+function DashboardChartCard({ title, subtitle, className = '', children }) {
+  return (
+    <section className={`dashboard-card ${className}`.trim()}>
+      <header className="dashboard-card-header">
+        <h3>{title}</h3>
+        {subtitle ? <small>{subtitle}</small> : null}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+function DashboardEmptyChart({ message = 'No data for this month.' }) {
+  return <p className="dashboard-empty">{message}</p>;
+}
+
+function DashboardHorizontalBars({ data, dataKey, valueFormatter, color = 'var(--primary)', labelWidth = 150 }) {
+  if (data.length === 0) {
+    return <DashboardEmptyChart />;
+  }
+
+  return (
+    <ResponsiveContainer height={Math.max(180, data.length * 34 + 30)} width="100%">
+      <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 4 }}>
+        <CartesianGrid horizontal={false} stroke="var(--border)" strokeDasharray="3 3" />
+        <XAxis axisLine={false} tick={DASHBOARD_AXIS_TICK} tickFormatter={valueFormatter} tickLine={false} type="number" />
+        <YAxis
+          axisLine={false}
+          dataKey="label"
+          tick={DASHBOARD_AXIS_TICK}
+          tickFormatter={(value) => truncateLabel(value, Math.floor(labelWidth / 7))}
+          tickLine={false}
+          type="category"
+          width={labelWidth}
+        />
+        <Tooltip {...DASHBOARD_TOOLTIP_PROPS} formatter={(value) => [valueFormatter(value), 'Amount']} />
+        <Bar dataKey={dataKey} fill={color} radius={[0, 4, 4, 0]} />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+function DashboardScreen({ showNotice, onOpenCalendar, onOpenMeterReport }) {
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [result, setResult] = useState(null);
+
+  const requestKey = `${year}-${month}`;
+  const years = [now.getFullYear() - 1, now.getFullYear()];
+  const lastMonth = year === now.getFullYear() ? now.getMonth() + 1 : 12;
+  const availableMonths = Array.from({ length: lastMonth }, (_, index) => index + 1);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    axios
+      .get('/api/dashboard', { params: { year, month } })
+      .then((response) => {
+        if (!cancelled) {
+          setResult({ key: `${year}-${month}`, data: response.data.data });
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setResult({ key: `${year}-${month}`, data: null });
+          showNotice('error', messageFromError(error, 'Unable to load the dashboard.'));
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [year, month, showNotice]);
+
+  const loading = result?.key !== requestKey;
+  // Keep showing the previous month (dimmed) while the next one loads.
+  const data = result?.data ?? null;
+  const sales = data?.sales_analysis;
+  const meter = data?.meter;
+  const health = data?.health;
+  const hasData = (health?.weeks_with_data ?? 0) > 0;
+
+  const weekChartData = useMemo(
+    () =>
+      (data?.weeks ?? []).map((week) => ({
+        name: `W${week.index}`,
+        range: week.range,
+        salesAnalysis: week.sales_analysis_weekly,
+        meterSales: week.meter_sales,
+        meterUnits: week.meter_units,
+      })),
+    [data],
+  );
+
+  const modelSalesData = useMemo(
+    () => (meter?.top_models_by_sales ?? []).map((model) => ({ label: model.label, value: model.sales })),
+    [meter],
+  );
+  const modelUnitsData = useMemo(
+    () => (meter?.top_models_by_units ?? []).map((model) => ({ label: model.label, value: model.units ?? 0 })),
+    [meter],
+  );
+  const categoryData = useMemo(
+    () => (sales?.top_categories ?? []).map((category) => ({ label: category.name, value: category.amount })),
+    [sales],
+  );
+
+  const unmatchedRows = health?.unmatched_rows ?? 0;
+  const reconciledWeeks = health?.reconciled_weeks ?? 0;
+  const reportCounts = health?.reports_by_status ?? {};
+
+  return (
+    <section className="panel-grid meter-report-grid">
+      <article className="panel panel-span panel-legend dashboard-panel">
+        <p className="eyebrow">Dashboard</p>
+        <div className="section-heading section-heading-toolbar">
+          <div>
+            <h2>Sales Analysis &amp; Meter Report</h2>
+            <p className="dashboard-subtitle">Statistics for {data?.title ?? `${monthNames[month - 1]} ${year}`}</p>
+          </div>
+          <div className="meter-heading-actions">
+            <button className="secondary-button" type="button" onClick={onOpenCalendar}>
+              <ButtonContent icon="back">Calendar</ButtonContent>
+            </button>
+            <button className="secondary-button" type="button" onClick={() => onOpenMeterReport(year, month)}>
+              <ButtonContent>Open Meter Report</ButtonContent>
+            </button>
+            <label className="status-filter">
+              Year
+              <select
+                value={year}
+                onChange={(event) => {
+                  const nextYear = Number(event.target.value);
+                  setYear(nextYear);
+
+                  if (nextYear === now.getFullYear() && month > now.getMonth() + 1) {
+                    setMonth(now.getMonth() + 1);
+                  }
+                }}
+              >
+                {years.map((optionYear) => (
+                  <option key={optionYear} value={optionYear}>
+                    {optionYear}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div className="meter-month-tabs" role="tablist" aria-label="Dashboard months">
+          {availableMonths.map((optionMonth) => (
+            <button
+              className={optionMonth === month ? 'meter-month-tab meter-month-tab-active' : 'meter-month-tab'}
+              key={optionMonth}
+              role="tab"
+              type="button"
+              aria-selected={optionMonth === month}
+              onClick={() => setMonth(optionMonth)}
+            >
+              {monthNames[optionMonth - 1]} {year}
+            </button>
+          ))}
+        </div>
+
+        {loading && !data ? <p>Loading dashboard...</p> : null}
+
+        {data ? (
+          <div className={loading ? 'dashboard-body dashboard-body-loading' : 'dashboard-body'}>
+            <div className="dashboard-kpi-grid">
+              <DashboardKpi label="Sales Analysis (MTD)" value={currency(sales.mtd_total)}>
+                <DashboardDelta percent={sales.change_percent} />
+              </DashboardKpi>
+              <DashboardKpi label="Meter Sales (MTD)" value={currency(meter.mtd_sales)}>
+                <DashboardDelta percent={meter.sales_change_percent} />
+              </DashboardKpi>
+              <DashboardKpi label="Meter Units (MTD)" value={formatMeterNumber(meter.mtd_units)}>
+                <DashboardDelta percent={meter.units_change_percent} />
+              </DashboardKpi>
+              <DashboardKpi label="Weeks Uploaded" value={`${health.weeks_with_data} / ${health.weeks_in_month}`}>
+                <small className="dashboard-delta dashboard-delta-flat">Weeks with a Sales Analysis upload</small>
+              </DashboardKpi>
+              <DashboardKpi label="Unmatched Rows" value={formatMeterNumber(unmatchedRows)} tone={unmatchedRows > 0 ? 'warning' : 'success'}>
+                <small className="dashboard-delta dashboard-delta-flat">
+                  {unmatchedRows > 0 ? 'Resolve them to include in totals' : 'All rows classified'}
+                </small>
+              </DashboardKpi>
+              <DashboardKpi
+                label="Reconciliation"
+                value={reconciledWeeks > 0 ? `${health.balanced_weeks} / ${reconciledWeeks} balanced` : 'Not reconciled'}
+                tone={reconciledWeeks === 0 ? undefined : health.unbalanced_weeks > 0 ? 'warning' : 'success'}
+              >
+                <small className="dashboard-delta dashboard-delta-flat">
+                  {health.unbalanced_weeks > 0
+                    ? `${health.unbalanced_weeks} ${health.unbalanced_weeks === 1 ? 'week needs' : 'weeks need'} review`
+                    : `Add. fees: ${currency(meter.additional_fees_total)}`}
+                </small>
+              </DashboardKpi>
+            </div>
+
+            {hasData ? (
+              <>
+                <div className="dashboard-grid">
+                  <DashboardChartCard
+                    className="dashboard-card-wide"
+                    subtitle="Weekly values derived from month-to-date totals"
+                    title="Weekly Sales: Sales Analysis vs Meter Report"
+                  >
+                    <ResponsiveContainer height={280} width="100%">
+                      <BarChart data={weekChartData} margin={{ top: 8, right: 16, bottom: 4, left: 8 }}>
+                        <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
+                        <XAxis axisLine={false} dataKey="name" tick={DASHBOARD_AXIS_TICK} tickLine={false} />
+                        <YAxis axisLine={false} tick={DASHBOARD_AXIS_TICK} tickFormatter={compactCurrency} tickLine={false} width={64} />
+                        <Tooltip
+                          {...DASHBOARD_TOOLTIP_PROPS}
+                          formatter={(value) => currency(value)}
+                          labelFormatter={(label, payload) => `${label}${payload?.[0]?.payload?.range ? ` (${payload[0].payload.range})` : ''}`}
+                        />
+                        <Legend wrapperStyle={{ color: 'var(--text-muted)', fontSize: '0.8rem' }} />
+                        <Bar dataKey="salesAnalysis" fill="var(--primary)" name="Sales Analysis" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="meterSales" fill="var(--icon)" name="Meter Report" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </DashboardChartCard>
+
+                  <DashboardChartCard subtitle="Month-to-date Sales Analysis by bucket" title="Sales by Bucket">
+                    {sales.buckets.length === 0 ? (
+                      <DashboardEmptyChart />
+                    ) : (
+                      <ResponsiveContainer height={280} width="100%">
+                        <PieChart>
+                          <Pie
+                            data={sales.buckets}
+                            dataKey="amount"
+                            innerRadius={60}
+                            nameKey="label"
+                            outerRadius={95}
+                            paddingAngle={2}
+                            stroke="var(--surface)"
+                          >
+                            {sales.buckets.map((bucket, index) => (
+                              <Cell fill={DASHBOARD_PALETTE[index % DASHBOARD_PALETTE.length]} key={bucket.bucket} />
+                            ))}
+                          </Pie>
+                          <Tooltip {...DASHBOARD_TOOLTIP_PROPS} formatter={(value) => currency(value)} />
+                          <Legend wrapperStyle={{ color: 'var(--text-muted)', fontSize: '0.8rem' }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    )}
+                  </DashboardChartCard>
+
+                  <DashboardChartCard subtitle="Month-to-date net sales" title="Top Meter Models by Sales">
+                    <DashboardHorizontalBars
+                      data={modelSalesData}
+                      dataKey="value"
+                      valueFormatter={compactCurrency}
+                    />
+                  </DashboardChartCard>
+
+                  <DashboardChartCard subtitle="Month-to-date units" title="Top Meter Models by Units">
+                    <DashboardHorizontalBars
+                      color="var(--icon)"
+                      data={modelUnitsData}
+                      dataKey="value"
+                      valueFormatter={(value) => formatMeterNumber(value)}
+                    />
+                  </DashboardChartCard>
+
+                  <DashboardChartCard subtitle="Month-to-date Sales Analysis" title="Top Categories">
+                    <DashboardHorizontalBars
+                      data={categoryData}
+                      dataKey="value"
+                      labelWidth={190}
+                      valueFormatter={compactCurrency}
+                    />
+                  </DashboardChartCard>
+
+                  <DashboardChartCard subtitle="Units shipped per week" title="Weekly Meter Units">
+                    <ResponsiveContainer height={240} width="100%">
+                      <AreaChart data={weekChartData} margin={{ top: 8, right: 16, bottom: 4, left: 0 }}>
+                        <defs>
+                          <linearGradient id="dashboardUnitsFill" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.45} />
+                            <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.02} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
+                        <XAxis axisLine={false} dataKey="name" tick={DASHBOARD_AXIS_TICK} tickLine={false} />
+                        <YAxis axisLine={false} tick={DASHBOARD_AXIS_TICK} tickLine={false} width={48} />
+                        <Tooltip {...DASHBOARD_TOOLTIP_PROPS} formatter={(value) => [formatMeterNumber(value), 'Units']} />
+                        <Area
+                          connectNulls
+                          dataKey="meterUnits"
+                          fill="url(#dashboardUnitsFill)"
+                          stroke="var(--primary)"
+                          strokeWidth={2}
+                          type="monotone"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </DashboardChartCard>
+                </div>
+
+                <div className="dashboard-grid">
+                  <DashboardChartCard className="dashboard-card-wide" subtitle="Latest upload per week" title="Weekly Reconciliation">
+                    <div className="table-wrap">
+                      <table className="dashboard-table">
+                        <thead>
+                          <tr>
+                            <th>Week</th>
+                            <th className="dashboard-num">Sales Analysis (week)</th>
+                            <th className="dashboard-num">Sales Analysis (MTD)</th>
+                            <th className="dashboard-num">Meter Sales</th>
+                            <th className="dashboard-num">Income Statement</th>
+                            <th className="dashboard-num">Difference</th>
+                            <th className="dashboard-num">Unmatched</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {data.weeks.map((week) => (
+                            <tr key={week.index}>
+                              <td>
+                                {week.label} <span className="dashboard-muted">{week.range}</span>
+                              </td>
+                              <td className="dashboard-num">{week.has_data ? currency(week.sales_analysis_weekly) : '—'}</td>
+                              <td className="dashboard-num">{week.has_data ? currency(week.sales_analysis_mtd) : '—'}</td>
+                              <td className="dashboard-num">{week.meter_sales === null ? '—' : currency(week.meter_sales)}</td>
+                              <td className="dashboard-num">
+                                {week.reconciliation ? currency(week.reconciliation.income_statement_total) : '—'}
+                              </td>
+                              <td className="dashboard-num">
+                                {week.reconciliation ? currency(week.reconciliation.difference) : '—'}
+                              </td>
+                              <td className="dashboard-num">{week.unmatched_rows ?? '—'}</td>
+                              <td>
+                                {!week.has_data ? (
+                                  <span className="dashboard-badge dashboard-badge-muted">No upload</span>
+                                ) : !week.reconciliation ? (
+                                  <span className="dashboard-badge dashboard-badge-muted">Not reconciled</span>
+                                ) : week.reconciliation.is_balanced ? (
+                                  <span className="dashboard-badge dashboard-badge-success">Balanced</span>
+                                ) : (
+                                  <span className="dashboard-badge dashboard-badge-warning">Needs review</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </DashboardChartCard>
+
+                  <DashboardChartCard subtitle="Month-to-date Sales Analysis" title="Top Customers">
+                    {sales.top_customers.length === 0 ? (
+                      <DashboardEmptyChart />
+                    ) : (
+                      <ol className="dashboard-ranking">
+                        {sales.top_customers.map((customer) => (
+                          <li key={customer.name}>
+                            <span title={customer.name}>{customer.name}</span>
+                            <strong>{currency(customer.amount)}</strong>
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                    {Object.keys(reportCounts).length > 0 ? (
+                      <p className="dashboard-report-counts">
+                        Generated reports:{' '}
+                        {Object.entries(reportCounts)
+                          .map(([status, count]) => `${count} ${status}`)
+                          .join(', ')}
+                      </p>
+                    ) : null}
+                  </DashboardChartCard>
+                </div>
+              </>
+            ) : (
+              <div className="empty-state dashboard-empty-state">
+                <strong>No data for this month</strong>
+                <p>Upload a Sales Analysis workbook for a week in {data.title} to see statistics here.</p>
+              </div>
+            )}
+          </div>
         ) : null}
       </article>
     </section>

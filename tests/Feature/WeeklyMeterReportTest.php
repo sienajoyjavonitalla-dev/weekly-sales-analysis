@@ -83,6 +83,47 @@ class WeeklyMeterReportTest extends TestCase
             ->assertJsonPath('data.weeks.0.has_data', true);
     }
 
+    public function test_year_workbook_has_a_sheet_for_every_month_including_empty_ones(): void
+    {
+        $user = $this->createAnalyst();
+        $category = $this->createStarterKitCategory();
+        $this->createWeekSales($user, '2026-02-06', $category, 3, 900.00, 1);
+        $this->createWeekSales($user, '2026-04-17', $category, 26, 17533.00, 1);
+
+        $spreadsheet = app(WeeklyMeterReportExporter::class)
+            ->exportYear(2026, CarbonImmutable::parse('2026-09-21'));
+
+        $this->assertNotNull($spreadsheet);
+        $this->assertSame(12, $spreadsheet->getSheetCount());
+        $this->assertSame('January 2026', $spreadsheet->getSheetNames()[0]);
+        $this->assertSame('December 2026', $spreadsheet->getSheetNames()[11]);
+        $this->assertSame('RHP L6 Kits', $spreadsheet->getSheetByName('April 2026')->getCell('A7')->getValue());
+        $this->assertNull($spreadsheet->getSheetByName('March 2026')->getCell('G7')->getValue());
+        $this->assertSame(17533.0, (float) $spreadsheet->getSheetByName('April 2026')->getCell('G7')->getCalculatedValue());
+    }
+
+    public function test_year_workbook_is_null_when_year_has_no_data(): void
+    {
+        $this->assertNull(app(WeeklyMeterReportExporter::class)->exportYear(2025, CarbonImmutable::parse('2026-09-21')));
+    }
+
+    public function test_analyst_can_download_year_report_and_empty_year_is_rejected(): void
+    {
+        $user = $this->createAnalyst();
+        $category = $this->createStarterKitCategory();
+        $this->createWeekSales($user, '2026-04-17', $category, 26, 17533.00, 1);
+
+        $this->getJson('/api/weekly-meter-report/download?year=2026')->assertUnauthorized();
+
+        $response = $this->actingAs($user)->get('/api/weekly-meter-report/download?year=2026');
+        $response->assertOk();
+        $this->assertStringContainsString('2026-weekly-meter-report.xlsx', (string) $response->headers->get('content-disposition'));
+
+        $this->actingAs($user)
+            ->getJson('/api/weekly-meter-report/download?year=2024')
+            ->assertUnprocessable();
+    }
+
     public function test_exporter_creates_workbook_without_an_uploaded_template(): void
     {
         $user = $this->createAnalyst();

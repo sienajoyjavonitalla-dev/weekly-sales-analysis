@@ -61,12 +61,48 @@ class WeeklyMeterReportExporter
     private function makeSpreadsheet(array $report): Spreadsheet
     {
         $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheetTitle = CarbonImmutable::create((int) $report['year'], (int) $report['month'], 1)->format('F Y');
-        $sheet->setTitle($sheetTitle);
         $spreadsheet->getProperties()
             ->setCreator(config('app.name'))
             ->setTitle((string) $report['title']);
+
+        $this->writeSheet($spreadsheet->getActiveSheet(), $report);
+
+        return $spreadsheet;
+    }
+
+    /**
+     * Builds one workbook for a whole year: one sheet for each of the 12 months, including months
+     * with no uploaded data (those sheets show the layout with blank values).
+     * Returns null when the year has no data in any month.
+     */
+    public function exportYear(int $year, ?CarbonImmutable $today = null): ?Spreadsheet
+    {
+        $today ??= CarbonImmutable::now();
+        $spreadsheet = new Spreadsheet();
+        $spreadsheet->getProperties()
+            ->setCreator(config('app.name'))
+            ->setTitle($year.' Handmeter/RHP Shipments');
+        $hasData = false;
+
+        for ($month = 1; $month <= 12; $month++) {
+            $report = $this->builder->build($year, $month, $today);
+
+            $hasData = $hasData
+                || collect($report['weeks'])->contains(fn (array $week): bool => $week['has_data'] === true);
+
+            $sheet = $month === 1 ? $spreadsheet->getActiveSheet() : $spreadsheet->createSheet();
+            $this->writeSheet($sheet, $report);
+        }
+
+        return $hasData ? $spreadsheet : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $report
+     */
+    private function writeSheet(Worksheet $sheet, array $report): void
+    {
+        $sheet->setTitle(CarbonImmutable::create((int) $report['year'], (int) $report['month'], 1)->format('F Y'));
 
         $weekCount = count($report['weeks']);
         $feesColumn = $this->columnLetter(2 + ($weekCount * 2));
@@ -179,8 +215,6 @@ class WeeklyMeterReportExporter
                 ],
             ],
         ]);
-
-        return $spreadsheet;
     }
 
     /**
