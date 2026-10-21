@@ -4090,8 +4090,6 @@ function DashboardScreen({ showNotice, onOpenCalendar, onOpenMeterReport }) {
     [sales],
   );
 
-  const unmatchedRows = health?.unmatched_rows ?? 0;
-  const reconciledWeeks = health?.reconciled_weeks ?? 0;
   const reportCounts = health?.reports_by_status ?? {};
 
   return (
@@ -4164,22 +4162,6 @@ function DashboardScreen({ showNotice, onOpenCalendar, onOpenMeterReport }) {
               </DashboardKpi>
               <DashboardKpi label="Weeks Uploaded" value={`${health.weeks_with_data} / ${health.weeks_in_month}`}>
                 <small className="dashboard-delta dashboard-delta-flat">Weeks with a Sales Analysis upload</small>
-              </DashboardKpi>
-              <DashboardKpi label="Unmatched Rows" value={formatMeterNumber(unmatchedRows)} tone={unmatchedRows > 0 ? 'warning' : 'success'}>
-                <small className="dashboard-delta dashboard-delta-flat">
-                  {unmatchedRows > 0 ? 'Resolve them to include in totals' : 'All rows classified'}
-                </small>
-              </DashboardKpi>
-              <DashboardKpi
-                label="Reconciliation"
-                value={reconciledWeeks > 0 ? `${health.balanced_weeks} / ${reconciledWeeks} balanced` : 'Not reconciled'}
-                tone={reconciledWeeks === 0 ? undefined : health.unbalanced_weeks > 0 ? 'warning' : 'success'}
-              >
-                <small className="dashboard-delta dashboard-delta-flat">
-                  {health.unbalanced_weeks > 0
-                    ? `${health.unbalanced_weeks} ${health.unbalanced_weeks === 1 ? 'week needs' : 'weeks need'} review`
-                    : `Add. fees: ${currency(meter.additional_fees_total)}`}
-                </small>
               </DashboardKpi>
             </div>
 
