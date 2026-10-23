@@ -2041,14 +2041,6 @@ function RuleForm({ categories, children, form, isSubmitting = false, primaryLab
           />
         </label>
       </div>
-      <label>
-        Source Type
-        <input
-          required
-          value={form.source_type}
-          onChange={(event) => setForm({ ...form, source_type: event.target.value })}
-        />
-      </label>
       <div className="rule-match-row">
         <label>
           Field
@@ -2085,15 +2077,6 @@ function RuleForm({ categories, children, form, isSubmitting = false, primaryLab
           />
         </label>
       </div>
-      <label>
-        Priority
-        <input
-          min="1"
-          type="number"
-          value={form.priority}
-          onChange={(event) => setForm({ ...form, priority: event.target.value })}
-        />
-      </label>
       <label className="checkbox-label">
         <input
           checked={form.is_active}
