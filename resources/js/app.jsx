@@ -63,19 +63,6 @@ function CategoriesIcon() {
   );
 }
 
-function ReconcileIcon() {
-  return (
-    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
-      <path d="M7 7h10" />
-      <path d="M17 7l-3-3" />
-      <path d="M17 7l-3 3" />
-      <path d="M17 17H7" />
-      <path d="M7 17l3-3" />
-      <path d="M7 17l3 3" />
-    </svg>
-  );
-}
-
 function CalendarIcon() {
   return (
     <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
@@ -210,7 +197,6 @@ const workflowTabs = [
   { id: 'meter-report', label: 'Meter Report', icon: MeterReportIcon },
   { id: 'categories', label: 'Categories', icon: CategoriesIcon },
   { id: 'rules', label: 'Mapping Rules', icon: RulesIcon },
-  { id: 'reconcile', label: 'Reconcile', icon: ReconcileIcon },
 ];
 
 const userRoleOptions = [
@@ -521,7 +507,7 @@ function App() {
       return;
     }
 
-    if (['upload', 'reconcile'].includes(activeTab)) {
+    if (activeTab === 'upload') {
       loadBatches();
     }
   }, [activeTab, loadBatches, user]);
@@ -693,15 +679,6 @@ function App() {
           {visibleTab === 'rules' ? <MappingRulesScreen showNotice={showNotice} /> : null}
           {visibleTab === 'categories' ? <CategoriesScreen showNotice={showNotice} /> : null}
           {visibleTab === 'users' ? <UsersScreen currentUser={user} showNotice={showNotice} /> : null}
-          {visibleTab === 'reconcile' ? (
-            <ReconciliationScreen
-              batchId={batchId}
-              batches={batchesWithUploads}
-              batchesLoading={batchesLoading}
-              setBatchId={setBatchId}
-              showNotice={showNotice}
-            />
-          ) : null}
           {visibleTab === 'meter-report' ? (
             <WeeklyMeterReportScreen
               initialMonth={meterReportTarget?.month}
@@ -793,26 +770,6 @@ function FloatingAlert({ notice, onClose }) {
         ×
       </button>
     </div>
-  );
-}
-
-function BatchSelect({ batches, batchId, batchesLoading, onChange }) {
-  return (
-    <label className="batch-select">
-      <span>Batch</span>
-      <select
-        disabled={batchesLoading}
-        value={batchId}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        <option value="">Select a batch...</option>
-        {batches.map((batch) => (
-          <option key={batch.id} value={String(batch.id)}>
-            {formatBatchLabel(batch)}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }
 
@@ -5617,169 +5574,6 @@ function RulesTable({ rules, selectedRule, statusFilter, searchQuery, onSelectRu
   );
 }
 
-function ReconciliationScreen({ batchId, batches, batchesLoading, setBatchId, showNotice }) {
-  const [result, setResult] = useState(null);
-  const [totals, setTotals] = useState([]);
-  const [fees, setFees] = useState([]);
-  const [feeForm, setFeeForm] = useState({ marketplace: 'Amazon', amount: '', description: '' });
-  const [running, setRunning] = useState(false);
-  const [addingFee, setAddingFee] = useState(false);
-
-  const canLoad = Boolean(batchId);
-
-  const loadData = useCallback(async () => {
-    if (!canLoad) {
-      return;
-    }
-    try {
-      const [reconciliationResponse, totalsResponse, feesResponse] = await Promise.all([
-        axios.get(`/api/import-batches/${batchId}/reconciliation`),
-        axios.get(`/api/import-batches/${batchId}/report-totals`),
-        axios.get(`/api/import-batches/${batchId}/marketplace-fees`),
-      ]);
-      setResult(reconciliationResponse.data.data);
-      setTotals(totalsResponse.data.data ?? []);
-      setFees(feesResponse.data.data ?? []);
-    } catch (error) {
-      showNotice('error', messageFromError(error, 'Unable to load reconciliation data.'));
-    }
-  }, [batchId, canLoad, showNotice]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  async function runReconciliation() {
-    setRunning(true);
-
-    try {
-      const response = await axios.post(`/api/import-batches/${batchId}/reconciliation`, { tolerance: 0.01 });
-      setResult(response.data.data.reconciliation);
-      setTotals(response.data.data.report_totals ?? []);
-      showNotice('success', 'Reconciliation calculated.');
-      await loadData();
-    } catch (error) {
-      showNotice('error', messageFromError(error, 'Unable to run reconciliation.'));
-    } finally {
-      setRunning(false);
-    }
-  }
-
-  async function addFee(event) {
-    event.preventDefault();
-    setAddingFee(true);
-
-    try {
-      await axios.post(`/api/import-batches/${batchId}/marketplace-fees`, {
-        ...feeForm,
-        amount: Number(feeForm.amount),
-      });
-      setFeeForm({ marketplace: 'Amazon', amount: '', description: '' });
-      showNotice('success', 'Marketplace fee added.');
-      await loadData();
-    } catch (error) {
-      showNotice('error', messageFromError(error, 'Unable to add marketplace fee.'));
-    } finally {
-      setAddingFee(false);
-    }
-  }
-
-  return (
-    <section className="panel-grid">
-      <article className="panel panel-span panel-legend">
-        <p className="eyebrow">Reconciliation</p>
-        <div className="section-heading">
-          <div>
-            <p>Balance Sales Analysis to Income Statement</p>
-          </div>
-          <button className="primary-button" disabled={!canLoad || running} type="button" onClick={runReconciliation}>
-            <ButtonContent icon="run" loading={running}>{running ? 'Running...' : 'Run Reconciliation'}</ButtonContent>
-          </button>
-        </div>
-        {!canLoad ? <p>Select a batch to continue.</p> : null}
-        <BatchSelect
-          batchId={batchId}
-          batches={batches}
-          batchesLoading={batchesLoading}
-          onChange={setBatchId}
-        />
-        {result ? <SummaryCards result={result} /> : null}
-      </article>
-
-      <article className="panel panel-legend">
-        <p className="eyebrow">Fees</p>
-        <h2>Marketplace Fees</h2>
-        <form className="stacked-form" onSubmit={addFee}>
-          <fieldset className="form-fieldset" disabled={addingFee}>
-          <label>
-            Marketplace
-            <select
-              value={feeForm.marketplace}
-              onChange={(event) => setFeeForm({ ...feeForm, marketplace: event.target.value })}
-            >
-              <option value="Amazon">Amazon</option>
-              <option value="Walmart">Walmart</option>
-            </select>
-          </label>
-          <label>
-            Amount
-            <input
-              required
-              step="0.01"
-              type="number"
-              value={feeForm.amount}
-              onChange={(event) => setFeeForm({ ...feeForm, amount: event.target.value })}
-            />
-          </label>
-          <label>
-            Description
-            <input
-              value={feeForm.description}
-              onChange={(event) => setFeeForm({ ...feeForm, description: event.target.value })}
-            />
-          </label>
-          <button className="secondary-button" disabled={!canLoad || addingFee} type="submit">
-            <ButtonContent icon="add" loading={addingFee}>{addingFee ? 'Adding...' : 'Add Fee'}</ButtonContent>
-          </button>
-          </fieldset>
-        </form>
-        <SimpleList items={fees.map((fee) => `${fee.marketplace}: ${currency(fee.amount)}`)} />
-      </article>
-
-      <article className="panel panel-legend">
-        <p className="eyebrow">Metrics</p>
-        <h2>Report Metrics</h2>
-        <SimpleList items={totals.map((total) => `${total.metric_key}: ${currency(total.amount)}`)} />
-      </article>
-    </section>
-  );
-}
-
-function SummaryCards({ result }) {
-  const cards = [
-    ['Sales Analysis', result.sales_analysis_total],
-    ['Income Statement', result.income_statement_total],
-    ['Marketplace Fees', result.marketplace_fee_total],
-    ['Adjusted IS', result.adjusted_income_statement_total],
-    ['Difference', result.difference],
-  ];
-
-  return (
-    <div className="summary-grid">
-      {cards.map(([label, value]) => (
-        <div className="summary-card" key={label}>
-          <span>{label}</span>
-          <strong>{currency(value)}</strong>
-        </div>
-      ))}
-      <div className="summary-card">
-        <span>Status</span>
-        <strong>{result.is_balanced ? 'Balanced' : 'Needs Review'}</strong>
-      </div>
-    </div>
-  );
-}
-
 const howToUseSteps = [
   {
     title: 'Select a week range',
@@ -6235,26 +6029,6 @@ function SalesAnalysisSheetTable({ sheet, hiddenColumns }) {
   );
 }
 
-function SimpleList({ items }) {
-  const normalizedItems = useMemo(() => items.filter(Boolean), [items]);
-  const pagination = usePagination(normalizedItems);
-
-  if (normalizedItems.length === 0) {
-    return <p>No records yet.</p>;
-  }
-
-  return (
-    <>
-      <ul className="simple-list">
-        {pagination.paginatedItems.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-      <PaginationControls {...pagination} />
-    </>
-  );
-}
-
 function batchHasUploads(batch) {
   return (batch.uploaded_file_count ?? batch.uploaded_files?.length ?? 0) > 0;
 }
@@ -6263,10 +6037,6 @@ function batchHasImportedSalesAnalysis(batch) {
   return (batch.uploaded_files ?? []).some(
     (file) => file.file_type === 'sales_analysis' && file.status === 'imported',
   );
-}
-
-function formatBatchLabel(batch) {
-  return `${formatWeekRange(batch.week_start, batch.week_ending)} — Batch #${batch.id} (${batch.status})`;
 }
 
 function formatWeekRange(weekStart, weekEnding) {
