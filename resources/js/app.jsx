@@ -695,9 +695,9 @@ function App() {
               onBackToCalendar={
                 meterReportTarget
                   ? () => {
-                      setMeterReportTarget(null);
-                      setActiveTab('calendar');
-                    }
+                    setMeterReportTarget(null);
+                    setActiveTab('calendar');
+                  }
                   : undefined
               }
             />
@@ -1633,119 +1633,119 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
         type="file"
         onChange={handleFeeFileChosen}
       />
-    <section className="panel-grid">
-      <article className="panel panel-span">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Step 1</p>
-            <h2>Upload Weekly Workbooks</h2>
-          </div>
-          <span className="status-pill status-success">Partial uploads ready</span>
-        </div>
-        <p>
-          Choose one file, several files, or the full weekly set. Select the week range, then import to create a new
-          batch automatically.
-        </p>
-        <div className="week-range-field">
-          <span>Week range</span>
-          <DateRangePicker
-            end={weekRangeEnd}
-            start={weekRangeStart}
-            onChange={({ start, end }) => {
-              setWeekRangeStart(start);
-              setWeekRangeEnd(end);
-            }}
-          />
-        </div>
-        <div className="file-grid">
-          {workbookTypes.map((type) => (
-            <div className="file-card" key={type.key}>
-              <label className="file-card-field">
-                <span>{type.label}</span>
-                <input
-                  accept=".xlsx"
-                  disabled={isUploadBusy}
-                  key={`${type.key}-${fileInputResetKey}`}
-                  type="file"
-                  ref={isFeeWorkbookType(type.key) ? (element) => {
-                    feeCardInputRefs.current[type.key] = element;
-                  } : undefined}
-                  onClick={isFeeWorkbookType(type.key) ? (event) => {
-                    if (allowFeeFilePickRef.current) {
-                      allowFeeFilePickRef.current = false;
-                      return;
-                    }
-
-                    event.preventDefault();
-                    startFeeUpload(type.key);
-                  } : undefined}
-                  onChange={(event) => {
-                    if (isFeeWorkbookType(type.key)) {
-                      handleFeeFileChosen(event);
-                      return;
-                    }
-
-                    setSelectedFiles({
-                      ...selectedFiles,
-                      [type.key]: event.target.files?.[0] ?? null,
-                    });
-                  }}
-                />
-              </label>
-              {type.key === 'sales_analysis' ? (
-                <label className="checkbox-label file-card-option">
-                  <input
-                    checked={includeState}
-                    disabled={isUploadBusy}
-                    type="checkbox"
-                    onChange={(event) => setIncludeState(event.target.checked)}
-                  />
-                  Include State
-                </label>
-              ) : null}
+      <section className="panel-grid">
+        <article className="panel panel-span">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Step 1</p>
+              <h2>Upload Weekly Workbooks</h2>
             </div>
-          ))}
-        </div>
-        <div className="upload-actions">
-          <button className="primary-button" disabled={isUploadBusy} type="button" onClick={handleUploadClick}>
-            <ButtonContent icon="upload" loading={isUploadBusy}>
-              {generatingReports
-                ? 'Generating reports...'
-                : uploading
-                  ? 'Importing...'
-                  : preparingUnmatched
-                    ? 'Preparing reconcile...'
-                    : 'Upload / Import Selected Files'}
-            </ButtonContent>
-          </button>
-        </div>
-      </article>
-
-      <article className="panel panel-span">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Uploaded Batches</p>
-            <h2>Batch History</h2>
+            <span className="status-pill status-success">Partial uploads ready</span>
           </div>
-          <button className="secondary-button" disabled={batchesLoading} type="button" onClick={loadBatches}>
-            <ButtonContent icon="refresh">Refresh</ButtonContent>
-          </button>
-        </div>
-        {batchesLoading ? <p>Loading batches...</p> : null}
-        {!batchesLoading && batches.length === 0 ? <p>No batches uploaded yet.</p> : null}
-        {!batchesLoading && batches.length > 0 ? (
-          <UploadedBatchesTable
-            batches={batches}
-            loadBatches={loadBatches}
-            setBatchId={setBatchId}
-            showNotice={showNotice}
-            onGenerateReports={autoGenerateReports}
-            onStartFeeUpload={startFeeUpload}
-            onUnmatchedItems={openUnmatchedModal}
-          />
-        ) : null}
-      </article>
-    </section>
+          <p>
+            Choose one file, several files, or the full weekly set. Select the week range, then import to create a new
+            batch automatically.
+          </p>
+          <div className="week-range-field">
+            <span>Week range</span>
+            <DateRangePicker
+              end={weekRangeEnd}
+              start={weekRangeStart}
+              onChange={({ start, end }) => {
+                setWeekRangeStart(start);
+                setWeekRangeEnd(end);
+              }}
+            />
+          </div>
+          <div className="file-grid">
+            {workbookTypes.map((type) => (
+              <div className="file-card" key={type.key}>
+                <label className="file-card-field">
+                  <span>{type.label}</span>
+                  <input
+                    accept=".xlsx"
+                    disabled={isUploadBusy}
+                    key={`${type.key}-${fileInputResetKey}`}
+                    type="file"
+                    ref={isFeeWorkbookType(type.key) ? (element) => {
+                      feeCardInputRefs.current[type.key] = element;
+                    } : undefined}
+                    onClick={isFeeWorkbookType(type.key) ? (event) => {
+                      if (allowFeeFilePickRef.current) {
+                        allowFeeFilePickRef.current = false;
+                        return;
+                      }
+
+                      event.preventDefault();
+                      startFeeUpload(type.key);
+                    } : undefined}
+                    onChange={(event) => {
+                      if (isFeeWorkbookType(type.key)) {
+                        handleFeeFileChosen(event);
+                        return;
+                      }
+
+                      setSelectedFiles({
+                        ...selectedFiles,
+                        [type.key]: event.target.files?.[0] ?? null,
+                      });
+                    }}
+                  />
+                </label>
+                {type.key === 'sales_analysis' ? (
+                  <label className="checkbox-label file-card-option">
+                    <input
+                      checked={includeState}
+                      disabled={isUploadBusy}
+                      type="checkbox"
+                      onChange={(event) => setIncludeState(event.target.checked)}
+                    />
+                    Include State
+                  </label>
+                ) : null}
+              </div>
+            ))}
+          </div>
+          <div className="upload-actions">
+            <button className="primary-button" disabled={isUploadBusy} type="button" onClick={handleUploadClick}>
+              <ButtonContent icon="upload" loading={isUploadBusy}>
+                {generatingReports
+                  ? 'Generating reports...'
+                  : uploading
+                    ? 'Importing...'
+                    : preparingUnmatched
+                      ? 'Preparing reconcile...'
+                      : 'Upload / Import Selected Files'}
+              </ButtonContent>
+            </button>
+          </div>
+        </article>
+
+        <article className="panel panel-span">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Uploaded Batches</p>
+              <h2>Batch History</h2>
+            </div>
+            <button className="secondary-button" disabled={batchesLoading} type="button" onClick={loadBatches}>
+              <ButtonContent icon="refresh">Refresh</ButtonContent>
+            </button>
+          </div>
+          {batchesLoading ? <p>Loading batches...</p> : null}
+          {!batchesLoading && batches.length === 0 ? <p>No batches uploaded yet.</p> : null}
+          {!batchesLoading && batches.length > 0 ? (
+            <UploadedBatchesTable
+              batches={batches}
+              loadBatches={loadBatches}
+              setBatchId={setBatchId}
+              showNotice={showNotice}
+              onGenerateReports={autoGenerateReports}
+              onStartFeeUpload={startFeeUpload}
+              onUnmatchedItems={openUnmatchedModal}
+            />
+          ) : null}
+        </article>
+      </section>
     </>
   );
 }
@@ -1864,136 +1864,136 @@ function UploadedBatchesTable({
         />
       ) : null}
       <div className="table-wrap table-section">
-      <table className="upload-table">
-        <thead>
-          <tr>
-            <th>Batch ID</th>
-            <th>Week Range</th>
-            <th>Status</th>
-            {workbookTypes.map((type) => (
-              <th key={type.key}>{type.label}</th>
-            ))}
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pagination.paginatedItems.map((batch) => (
-            <tr key={batch.id}>
-              <td>#{batch.id}</td>
-              <td>{formatWeekRange(batch.week_start, batch.week_ending)}</td>
-              <td className="batch-status-text">{batch.status}</td>
-              {workbookTypes.map((type) => {
-                const uploaded = (batch.uploaded_files ?? []).find((file) => file.file_type === type.key);
-                const status = uploaded?.status ?? 'missing';
-                const cellKey = `${batch.id}-${type.key}`;
-                const isUploading = uploadingCell === cellKey;
-                const canUpload = status === 'missing' || status === 'validation_failed' || status === 'pending_reconcile';
-                const canDownload = status === 'imported' && uploaded?.id;
-
-                return (
-                  <td key={type.key}>
-                    <div className="batch-cell-status">
-                      {canDownload ? (
-                        <>
-                          <a
-                            className="batch-file-download"
-                            href={`/api/uploaded-files/${uploaded.id}/download`}
-                            title={`Download ${uploaded.original_name}`}
-                          >
-                            <ActionIcon name="download" />
-                            <span className="batch-file-name">{truncateFileName(uploaded.original_name)}</span>
-                          </a>
-                          <button
-                            aria-label={`Delete ${type.label} from batch ${batch.id}`}
-                            className="batch-delete-button"
-                            title={`Delete ${type.label}`}
-                            type="button"
-                            onClick={() =>
-                              setDeleteTarget({
-                                batchId: batch.id,
-                                fileTypeLabel: type.label,
-                                uploadedFileId: uploaded.id,
-                              })
-                            }
-                          >
-                            <ActionIcon name="delete" />
-                          </button>
-                        </>
-                      ) : (
-                        <span
-                          className={`import-status ${importStatusClass(status)}`}
-                          title={validationErrorTitle(uploaded)}
-                        >
-                          {formatImportStatus(status)}
-                        </span>
-                      )}
-                      {canUpload ? (
-                        <>
-                          <button
-                            aria-label={`Upload ${type.label} for batch ${batch.id}`}
-                            className="batch-upload-button"
-                            disabled={isUploading}
-                            title={isUploading ? `Uploading ${type.label}...` : `Upload ${type.label}`}
-                            type="button"
-                            onClick={() => {
-                              if (isFeeWorkbookType(type.key)) {
-                                onStartFeeUpload?.(type.key, batch.id);
-                                return;
-                              }
-
-                              fileInputRefs.current[cellKey]?.click();
-                            }}
-                          >
-                            {isUploading ? <LoadingSpinner /> : <ActionIcon name="upload" />}
-                          </button>
-                          <input
-                            accept=".xlsx"
-                            className="batch-upload-input"
-                            ref={(element) => {
-                              fileInputRefs.current[cellKey] = element;
-                            }}
-                            type="file"
-                            onChange={(event) => {
-                              const file = event.target.files?.[0];
-
-                              if (file) {
-                                uploadForCell(batch.id, type.key, type.label, file);
-                              }
-
-                              event.target.value = '';
-                            }}
-                          />
-                        </>
-                      ) : null}
-                    </div>
-                  </td>
-                );
-              })}
-              <td>
-                <button
-                  className="secondary-button batch-reclassify-button"
-                  disabled={!batchHasImportedSalesAnalysis(batch) || reclassifyingBatchId === batch.id}
-                  title={
-                    batchHasImportedSalesAnalysis(batch)
-                      ? 'Re-run sales row classification for this batch'
-                      : 'Import Sales Analysis before reclassifying'
-                  }
-                  type="button"
-                  onClick={() => reclassifyBatch(batch.id)}
-                >
-                  {reclassifyingBatchId === batch.id ? (
-                    <ButtonContent loading>Reclassifying...</ButtonContent>
-                  ) : (
-                    'Reclassify'
-                  )}
-                </button>
-              </td>
+        <table className="upload-table">
+          <thead>
+            <tr>
+              <th>Batch ID</th>
+              <th>Week Range</th>
+              <th>Status</th>
+              {workbookTypes.map((type) => (
+                <th key={type.key}>{type.label}</th>
+              ))}
+              <th>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-    <PaginationControls {...pagination} />
+          </thead>
+          <tbody>
+            {pagination.paginatedItems.map((batch) => (
+              <tr key={batch.id}>
+                <td>#{batch.id}</td>
+                <td>{formatWeekRange(batch.week_start, batch.week_ending)}</td>
+                <td className="batch-status-text">{batch.status}</td>
+                {workbookTypes.map((type) => {
+                  const uploaded = (batch.uploaded_files ?? []).find((file) => file.file_type === type.key);
+                  const status = uploaded?.status ?? 'missing';
+                  const cellKey = `${batch.id}-${type.key}`;
+                  const isUploading = uploadingCell === cellKey;
+                  const canUpload = status === 'missing' || status === 'validation_failed' || status === 'pending_reconcile';
+                  const canDownload = status === 'imported' && uploaded?.id;
+
+                  return (
+                    <td key={type.key}>
+                      <div className="batch-cell-status">
+                        {canDownload ? (
+                          <>
+                            <a
+                              className="batch-file-download"
+                              href={`/api/uploaded-files/${uploaded.id}/download`}
+                              title={`Download ${uploaded.original_name}`}
+                            >
+                              <ActionIcon name="download" />
+                              <span className="batch-file-name">{truncateFileName(uploaded.original_name)}</span>
+                            </a>
+                            <button
+                              aria-label={`Delete ${type.label} from batch ${batch.id}`}
+                              className="batch-delete-button"
+                              title={`Delete ${type.label}`}
+                              type="button"
+                              onClick={() =>
+                                setDeleteTarget({
+                                  batchId: batch.id,
+                                  fileTypeLabel: type.label,
+                                  uploadedFileId: uploaded.id,
+                                })
+                              }
+                            >
+                              <ActionIcon name="delete" />
+                            </button>
+                          </>
+                        ) : (
+                          <span
+                            className={`import-status ${importStatusClass(status)}`}
+                            title={validationErrorTitle(uploaded)}
+                          >
+                            {formatImportStatus(status)}
+                          </span>
+                        )}
+                        {canUpload ? (
+                          <>
+                            <button
+                              aria-label={`Upload ${type.label} for batch ${batch.id}`}
+                              className="batch-upload-button"
+                              disabled={isUploading}
+                              title={isUploading ? `Uploading ${type.label}...` : `Upload ${type.label}`}
+                              type="button"
+                              onClick={() => {
+                                if (isFeeWorkbookType(type.key)) {
+                                  onStartFeeUpload?.(type.key, batch.id);
+                                  return;
+                                }
+
+                                fileInputRefs.current[cellKey]?.click();
+                              }}
+                            >
+                              {isUploading ? <LoadingSpinner /> : <ActionIcon name="upload" />}
+                            </button>
+                            <input
+                              accept=".xlsx"
+                              className="batch-upload-input"
+                              ref={(element) => {
+                                fileInputRefs.current[cellKey] = element;
+                              }}
+                              type="file"
+                              onChange={(event) => {
+                                const file = event.target.files?.[0];
+
+                                if (file) {
+                                  uploadForCell(batch.id, type.key, type.label, file);
+                                }
+
+                                event.target.value = '';
+                              }}
+                            />
+                          </>
+                        ) : null}
+                      </div>
+                    </td>
+                  );
+                })}
+                <td>
+                  <button
+                    className="secondary-button batch-reclassify-button"
+                    disabled={!batchHasImportedSalesAnalysis(batch) || reclassifyingBatchId === batch.id}
+                    title={
+                      batchHasImportedSalesAnalysis(batch)
+                        ? 'Re-run sales row classification for this batch'
+                        : 'Import Sales Analysis before reclassifying'
+                    }
+                    type="button"
+                    onClick={() => reclassifyBatch(batch.id)}
+                  >
+                    {reclassifyingBatchId === batch.id ? (
+                      <ButtonContent loading>Reclassifying...</ButtonContent>
+                    ) : (
+                      'Reclassify'
+                    )}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <PaginationControls {...pagination} />
     </>
   );
 }
@@ -2163,94 +2163,94 @@ function MappingRulesScreen({ showNotice }) {
           onConfirm={confirmDeleteRule}
         />
       ) : null}
-    <section className="panel-grid">
-      <article className="panel panel-legend panel-transparent">
-        <p className="eyebrow">Mapping Rules</p>
-        <div className="section-heading section-heading-toolbar">
-          <div className="button-row">
-            <ListSearchInput
-              placeholder="Search rules..."
-              value={searchQuery}
-              onChange={setSearchQuery}
-            />
-            <label className="status-filter">
-              Status
-              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="all">All</option>
-              </select>
-            </label>
-          </div>
-          <button className="primary-button" type="button" onClick={() => setIsCreateOpen(true)}>
-            <ButtonContent icon="add">Create Rule</ButtonContent>
-          </button>
-        </div>
-        {loading ? (
-          <p>Loading rules...</p>
-        ) : (
-          <RulesTable
-            rules={filteredRules}
-            searchQuery={searchQuery}
-            selectedRule={selectedRule}
-            statusFilter={statusFilter}
-            onSelectRule={setSelectedRule}
-          />
-        )}
-      </article>
-
-      <article className="panel panel-legend">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Details</p>
-            <h2>{selectedRule ? 'Edit Mapping Rule' : 'Select a Rule'}</h2>
-          </div>
-        </div>
-
-        {selectedRule ? (
-          <RuleForm
-            categories={categories}
-            form={editForm}
-            isSubmitting={editing}
-            primaryLabel="Update Rule"
-            setForm={setEditForm}
-            onSubmit={submitEditRule}
-          >
-            <button className="danger-button" disabled={editing} type="button" onClick={() => setIsDeleteConfirmOpen(true)}>
-              <ButtonContent icon="delete">Delete Rule</ButtonContent>
+      <section className="panel-grid">
+        <article className="panel panel-legend panel-transparent">
+          <p className="eyebrow">Mapping Rules</p>
+          <div className="section-heading section-heading-toolbar">
+            <div className="button-row">
+              <ListSearchInput
+                placeholder="Search rules..."
+                value={searchQuery}
+                onChange={setSearchQuery}
+              />
+              <label className="status-filter">
+                Status
+                <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="all">All</option>
+                </select>
+              </label>
+            </div>
+            <button className="primary-button" type="button" onClick={() => setIsCreateOpen(true)}>
+              <ButtonContent icon="add">Create Rule</ButtonContent>
             </button>
-          </RuleForm>
-        ) : (
-          <div className="empty-state">
-            <strong>No mapping rule selected</strong>
-            <p>Click a mapping rule from the table on the left to view, edit, or delete it.</p>
           </div>
-        )}
-      </article>
+          {loading ? (
+            <p>Loading rules...</p>
+          ) : (
+            <RulesTable
+              rules={filteredRules}
+              searchQuery={searchQuery}
+              selectedRule={selectedRule}
+              statusFilter={statusFilter}
+              onSelectRule={setSelectedRule}
+            />
+          )}
+        </article>
 
-      {isCreateOpen ? (
-        <Modal
-          className="modal-card-rule"
-          isBusy={creating}
-          title="Create Mapping Rule"
-          onClose={() => {
-            if (!creating) {
-              setIsCreateOpen(false);
-            }
-          }}
-        >
-          <RuleForm
-            categories={categories}
-            form={createForm}
-            isSubmitting={creating}
-            primaryLabel="Create Rule"
-            setForm={setCreateForm}
-            onSubmit={submitCreateRule}
-          />
-        </Modal>
-      ) : null}
+        <article className="panel panel-legend">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Details</p>
+              <h2>{selectedRule ? 'Edit Mapping Rule' : 'Select a Rule'}</h2>
+            </div>
+          </div>
 
-    </section>
+          {selectedRule ? (
+            <RuleForm
+              categories={categories}
+              form={editForm}
+              isSubmitting={editing}
+              primaryLabel="Update Rule"
+              setForm={setEditForm}
+              onSubmit={submitEditRule}
+            >
+              <button className="danger-button" disabled={editing} type="button" onClick={() => setIsDeleteConfirmOpen(true)}>
+                <ButtonContent icon="delete">Delete Rule</ButtonContent>
+              </button>
+            </RuleForm>
+          ) : (
+            <div className="empty-state">
+              <strong>No mapping rule selected</strong>
+              <p>Click a mapping rule from the table on the left to view, edit, or delete it.</p>
+            </div>
+          )}
+        </article>
+
+        {isCreateOpen ? (
+          <Modal
+            className="modal-card-rule"
+            isBusy={creating}
+            title="Create Mapping Rule"
+            onClose={() => {
+              if (!creating) {
+                setIsCreateOpen(false);
+              }
+            }}
+          >
+            <RuleForm
+              categories={categories}
+              form={createForm}
+              isSubmitting={creating}
+              primaryLabel="Create Rule"
+              setForm={setCreateForm}
+              onSubmit={submitCreateRule}
+            />
+          </Modal>
+        ) : null}
+
+      </section>
     </>
   );
 }
@@ -2295,7 +2295,7 @@ function ruleToForm(rule) {
 
 function RuleForm({ categories, children, form, isSubmitting = false, primaryLabel, setForm, onSubmit }) {
   const visibleCategories = useMemo(() => {
-    if (! form.target_bucket) {
+    if (!form.target_bucket) {
       return categories;
     }
 
@@ -2309,108 +2309,108 @@ function RuleForm({ categories, children, form, isSubmitting = false, primaryLab
   return (
     <form className="stacked-form" onSubmit={onSubmit}>
       <fieldset className="form-fieldset" disabled={isSubmitting}>
-      <label>
-        Rule Name
-        <input
-          required
-          value={form.name}
-          onChange={(event) => setForm({ ...form, name: event.target.value })}
-        />
-      </label>
-      <div className="form-row">
         <label>
-          Bucket
-          <select
-            value={form.target_bucket}
-            onChange={(event) => {
-              const target_bucket = event.target.value;
-              const selectedCategory = categories.find(
-                (category) => String(category.id) === String(form.product_category_id),
-              );
-              const product_category_id = !target_bucket
-                || selectedCategory?.sales_analysis_bucket === target_bucket
-                ? form.product_category_id
-                : '';
-
-              setForm({ ...form, target_bucket, product_category_id });
-            }}
-          >
-            <option value="">None</option>
-            {salesAnalysisBucketOptions.map((bucket) => (
-              <option key={bucket.value} value={bucket.value}>
-                {bucket.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Category
-          <SearchableCategorySelect
-            allowEmpty
-            categories={visibleCategories}
-            disabled={isSubmitting}
-            emptyLabel="No category"
-            showBucketInLabel
-            value={form.product_category_id}
-            onChange={(categoryId) => setForm({ ...form, product_category_id: categoryId })}
-          />
-        </label>
-      </div>
-      <div className="rule-match-row">
-        <label>
-          Field
-          <select
-            value={form.match_field}
-            onChange={(event) => setForm({ ...form, match_field: event.target.value })}
-          >
-            {['item_id', 'description', 'customer_id', 'customer_name', 'invoice_number', 'sales_rep_id', 'country', 'bill_to_state'].map((field) => (
-              <option key={field} value={field}>
-                {field}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Operator
-          <select
-            value={form.match_operator}
-            onChange={(event) => setForm({ ...form, match_operator: event.target.value })}
-          >
-            {['exact', 'starts_with', 'ends_with', 'contains', 'regex'].map((operator) => (
-              <option key={operator} value={operator}>
-                {operator}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Pattern
+          Rule Name
           <input
             required
-            value={form.pattern}
-            onChange={(event) => setForm({ ...form, pattern: event.target.value })}
+            value={form.name}
+            onChange={(event) => setForm({ ...form, name: event.target.value })}
           />
         </label>
-      </div>
-      <label className="checkbox-label">
-        <input
-          checked={form.is_active}
-          type="checkbox"
-          onChange={(event) => setForm({ ...form, is_active: event.target.checked })}
-        />
-        Active
-      </label>
-      <div className="form-actions">
-        <button className="primary-button" disabled={isSubmitting} type="submit">
-          <ButtonContent
-            icon={primaryLabel.startsWith('Update') ? 'save' : 'check'}
-            loading={isSubmitting}
-          >
-            {submitLabel}
-          </ButtonContent>
-        </button>
-        {children}
-      </div>
+        <div className="form-row">
+          <label>
+            Bucket
+            <select
+              value={form.target_bucket}
+              onChange={(event) => {
+                const target_bucket = event.target.value;
+                const selectedCategory = categories.find(
+                  (category) => String(category.id) === String(form.product_category_id),
+                );
+                const product_category_id = !target_bucket
+                  || selectedCategory?.sales_analysis_bucket === target_bucket
+                  ? form.product_category_id
+                  : '';
+
+                setForm({ ...form, target_bucket, product_category_id });
+              }}
+            >
+              <option value="">None</option>
+              {salesAnalysisBucketOptions.map((bucket) => (
+                <option key={bucket.value} value={bucket.value}>
+                  {bucket.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Category
+            <SearchableCategorySelect
+              allowEmpty
+              categories={visibleCategories}
+              disabled={isSubmitting}
+              emptyLabel="No category"
+              showBucketInLabel
+              value={form.product_category_id}
+              onChange={(categoryId) => setForm({ ...form, product_category_id: categoryId })}
+            />
+          </label>
+        </div>
+        <div className="rule-match-row">
+          <label>
+            Field
+            <select
+              value={form.match_field}
+              onChange={(event) => setForm({ ...form, match_field: event.target.value })}
+            >
+              {['item_id', 'description', 'customer_id', 'customer_name', 'invoice_number', 'sales_rep_id', 'country', 'bill_to_state'].map((field) => (
+                <option key={field} value={field}>
+                  {field}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Operator
+            <select
+              value={form.match_operator}
+              onChange={(event) => setForm({ ...form, match_operator: event.target.value })}
+            >
+              {['exact', 'starts_with', 'ends_with', 'contains', 'regex'].map((operator) => (
+                <option key={operator} value={operator}>
+                  {operator}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Pattern
+            <input
+              required
+              value={form.pattern}
+              onChange={(event) => setForm({ ...form, pattern: event.target.value })}
+            />
+          </label>
+        </div>
+        <label className="checkbox-label">
+          <input
+            checked={form.is_active}
+            type="checkbox"
+            onChange={(event) => setForm({ ...form, is_active: event.target.checked })}
+          />
+          Active
+        </label>
+        <div className="form-actions">
+          <button className="primary-button" disabled={isSubmitting} type="submit">
+            <ButtonContent
+              icon={primaryLabel.startsWith('Update') ? 'save' : 'check'}
+              loading={isSubmitting}
+            >
+              {submitLabel}
+            </ButtonContent>
+          </button>
+          {children}
+        </div>
       </fieldset>
     </form>
   );
@@ -2660,35 +2660,35 @@ function UnmatchedDetailsTrigger({ group }) {
       </button>
       {isOpen && position
         ? createPortal(
-            <div
-              className="unmatched-details-popover unmatched-details-popover-fixed"
-              style={{
-                left: position.left,
-                top: position.openAbove ? undefined : position.top,
-                bottom: position.openAbove ? window.innerHeight - position.top : undefined,
-                width: position.width,
-                transform: position.openAbove ? 'translateY(-100%)' : undefined,
-              }}
-              onMouseEnter={clearCloseTimer}
-              onMouseLeave={scheduleClose}
-            >
-              {group.rows.map((row, index) => (
-                <div className="unmatched-details-row" key={`${group.item_id}-${index}`}>
-                  <strong>Row {index + 1}</strong>
-                  <span>Customer ID: {row.customer_id ?? '—'}</span>
-                  <span>Customer: {row.customer_name ?? '—'}</span>
-                  <span>Invoice: {row.invoice_number ?? '—'}</span>
-                  <span>Sales Rep: {row.sales_rep_id ?? '—'}</span>
-                  <span>Country: {row.country ?? '—'}</span>
-                  <span>State: {row.bill_to_state ?? '—'}</span>
-                  <span>Invoice Date: {row.invoice_date ?? '—'}</span>
-                  <span>Qty: {row.quantity_ordered ?? '—'}</span>
-                  <span>Amount: {row.amount != null ? currency(row.amount) : '—'}</span>
-                </div>
-              ))}
-            </div>,
-            document.body,
-          )
+          <div
+            className="unmatched-details-popover unmatched-details-popover-fixed"
+            style={{
+              left: position.left,
+              top: position.openAbove ? undefined : position.top,
+              bottom: position.openAbove ? window.innerHeight - position.top : undefined,
+              width: position.width,
+              transform: position.openAbove ? 'translateY(-100%)' : undefined,
+            }}
+            onMouseEnter={clearCloseTimer}
+            onMouseLeave={scheduleClose}
+          >
+            {group.rows.map((row, index) => (
+              <div className="unmatched-details-row" key={`${group.item_id}-${index}`}>
+                <strong>Row {index + 1}</strong>
+                <span>Customer ID: {row.customer_id ?? '—'}</span>
+                <span>Customer: {row.customer_name ?? '—'}</span>
+                <span>Invoice: {row.invoice_number ?? '—'}</span>
+                <span>Sales Rep: {row.sales_rep_id ?? '—'}</span>
+                <span>Country: {row.country ?? '—'}</span>
+                <span>State: {row.bill_to_state ?? '—'}</span>
+                <span>Invoice Date: {row.invoice_date ?? '—'}</span>
+                <span>Qty: {row.quantity_ordered ?? '—'}</span>
+                <span>Amount: {row.amount != null ? currency(row.amount) : '—'}</span>
+              </div>
+            ))}
+          </div>,
+          document.body,
+        )
         : null}
     </div>
   );
@@ -3001,240 +3001,240 @@ function UnmatchedItemsModal({
   }
 
   return (
-  <>
-    <div className="modal-backdrop" role="presentation">
-      <section
-        aria-labelledby="unmatched-items-title"
-        aria-modal="true"
-        className={
-          view === 'create-rule'
-            ? 'modal-card modal-card-rule modal-card-unmatched-rule'
-            : 'modal-card modal-card-wide modal-card-unmatched'
-        }
-        role="dialog"
-      >
-        {view !== 'create-rule' ? (
-          <button
-            aria-label="Close"
-            className="modal-close-button"
-            disabled={isBusy}
-            type="button"
-            onClick={requestClose}
-          >
-            <ActionIcon name="cancel" />
-          </button>
-        ) : null}
-
-        {view === 'create-rule' ? (
-          <>
-            <div className="section-heading unmatched-rule-heading">
-              <div>
-                <button
-                  className="link-button unmatched-rule-back"
-                  disabled={creatingRule}
-                  type="button"
-                  onClick={backToUnmatchedView}
-                >
-                  <ButtonContent icon="back">Back</ButtonContent>
-                </button>
-                <h2 id="unmatched-items-title">Create Mapping Rule</h2>
-              </div>
-            </div>
-            <RuleForm
-              categories={categories}
-              form={createRuleForm}
-              isSubmitting={creatingRule}
-              primaryLabel="Create Rule"
-              setForm={setCreateRuleForm}
-              onSubmit={submitCreateRule}
-            />
-          </>
-        ) : (
-          <>
-            <div className="section-heading unmatched-modal-heading">
-              <div>
-                <p className="eyebrow">Reconcile</p>
-                <h2 id="unmatched-items-title">
-                  Resolve Unmatched Items
-                  {itemGroups.length > 0 ? (
-                    <span className="unmatched-items-count">
-                      {' '}
-                      ({itemGroups.length} item{itemGroups.length === 1 ? '' : 's'})
-                    </span>
-                  ) : null}
-                </h2>
-              </div>
-              <button
-                className="secondary-button"
-                disabled={isBusy}
-                type="button"
-                onClick={openCreateRuleView}
-              >
-                <ButtonContent icon="add">Add mapping rule</ButtonContent>
-              </button>
-            </div>
-            <p className="unmatched-modal-intro">
-              Assign a category to each item, or mark items that should stay on the raw sheet only with no category
-              assignment. A mapping rule will be created for each resolved item.
-            </p>
-
-            {itemGroups.length === 0 ? <p>No unmatched items found.</p> : null}
-
-            {itemGroups.length > 0 ? (
-              <>
-                <div className="unmatched-items-scroll table-wrap">
-                  <table className="unmatched-items-table">
-                    <thead>
-                      <tr>
-                        <th>Item ID</th>
-                        <th>Description</th>
-                        <th>Details</th>
-                        <th>Category</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {itemGroups.map((group) => (
-                        <tr key={group.item_id}>
-                          <td>
-                            <div className="unmatched-item-id-cell">
-                              <span>{group.item_id}</span>
-                              <button
-                                aria-label={`Copy item ID ${group.item_id}`}
-                                className="copy-item-id-button"
-                                title="Copy item ID"
-                                type="button"
-                                onClick={() => copyItemId(group.item_id)}
-                              >
-                                <ActionIcon name="copy" />
-                              </button>
-                            </div>
-                          </td>
-                          <td>{group.description ?? '—'}</td>
-                          <td>
-                            <UnmatchedDetailsTrigger group={group} />
-                          </td>
-                          <td>
-                            <div className="unmatched-category-cell">
-                              <div className="unmatched-category-controls">
-                                <SearchableCategorySelect
-                                  categories={categories}
-                                  disabled={Boolean(noCategoryAssignments[group.item_id])}
-                                  showBucketInLabel
-                                  value={resolutions[group.item_id] ?? ''}
-                                  onChange={(categoryId) => {
-                                    setNoCategoryAssignments((current) => ({
-                                      ...current,
-                                      [group.item_id]: false,
-                                    }));
-                                    setResolutions((current) => ({
-                                      ...current,
-                                      [group.item_id]: categoryId,
-                                    }));
-                                  }}
-                                />
-                                <button
-                                  className="secondary-button"
-                                  disabled={Boolean(noCategoryAssignments[group.item_id])}
-                                  type="button"
-                                  onClick={() => openCreateCategory(group.item_id)}
-                                >
-                                  <ButtonContent icon="add">Add</ButtonContent>
-                                </button>
-                                <label className="checkbox-label unmatched-no-category-label">
-                                  <input
-                                    checked={Boolean(noCategoryAssignments[group.item_id])}
-                                    type="checkbox"
-                                    onChange={(event) =>
-                                      toggleNoCategoryAssignment(group.item_id, event.target.checked)
-                                    }
-                                  />
-                                  <span>No category assignment</span>
-                                </label>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {!allResolved ? (
-                  <p className="unmatched-modal-hint">
-                    Resolve {remainingCount} remaining item{remainingCount === 1 ? '' : 's'} to enable Save
-                    ({resolvedCount} of {itemGroups.length} done).
-                  </p>
-                ) : null}
-
-                <div className="unmatched-modal-actions">
-                  <button className="secondary-button" disabled={saving} type="button" onClick={requestClose}>
-                    Cancel
-                  </button>
-                  <button
-                    className="primary-button"
-                    disabled={!allResolved || saving}
-                    type="button"
-                    onClick={saveResolutions}
-                  >
-                    <ButtonContent icon="save" loading={saving}>{saving ? 'Saving...' : 'Save'}</ButtonContent>
-                  </button>
-                </div>
-              </>
-            ) : null}
-          </>
-        )}
-      </section>
-    </div>
-    {isCreateCategoryOpen ? (
-      <Modal
-        isBusy={creatingCategory}
-        title="Add Category"
-        onClose={() => {
-          if (!creatingCategory) {
-            setIsCreateCategoryOpen(false);
-            setCreateCategoryForItemId('');
+    <>
+      <div className="modal-backdrop" role="presentation">
+        <section
+          aria-labelledby="unmatched-items-title"
+          aria-modal="true"
+          className={
+            view === 'create-rule'
+              ? 'modal-card modal-card-rule modal-card-unmatched-rule'
+              : 'modal-card modal-card-wide modal-card-unmatched'
           }
-        }}
-      >
-        <CategoryForm
-          form={createCategoryForm}
-          isSubmitting={creatingCategory}
-          primaryLabel="Create Category"
-          setForm={setCreateCategoryForm}
-          onSubmit={submitCreateCategory}
+          role="dialog"
         >
-          <button
-            className="secondary-button"
-            disabled={creatingCategory}
-            type="button"
-            onClick={() => {
+          {view !== 'create-rule' ? (
+            <button
+              aria-label="Close"
+              className="modal-close-button"
+              disabled={isBusy}
+              type="button"
+              onClick={requestClose}
+            >
+              <ActionIcon name="cancel" />
+            </button>
+          ) : null}
+
+          {view === 'create-rule' ? (
+            <>
+              <div className="section-heading unmatched-rule-heading">
+                <div>
+                  <button
+                    className="link-button unmatched-rule-back"
+                    disabled={creatingRule}
+                    type="button"
+                    onClick={backToUnmatchedView}
+                  >
+                    <ButtonContent icon="back">Back</ButtonContent>
+                  </button>
+                  <h2 id="unmatched-items-title">Create Mapping Rule</h2>
+                </div>
+              </div>
+              <RuleForm
+                categories={categories}
+                form={createRuleForm}
+                isSubmitting={creatingRule}
+                primaryLabel="Create Rule"
+                setForm={setCreateRuleForm}
+                onSubmit={submitCreateRule}
+              />
+            </>
+          ) : (
+            <>
+              <div className="section-heading unmatched-modal-heading">
+                <div>
+                  <p className="eyebrow">Reconcile</p>
+                  <h2 id="unmatched-items-title">
+                    Resolve Unmatched Items
+                    {itemGroups.length > 0 ? (
+                      <span className="unmatched-items-count">
+                        {' '}
+                        ({itemGroups.length} item{itemGroups.length === 1 ? '' : 's'})
+                      </span>
+                    ) : null}
+                  </h2>
+                </div>
+                <button
+                  className="secondary-button"
+                  disabled={isBusy}
+                  type="button"
+                  onClick={openCreateRuleView}
+                >
+                  <ButtonContent icon="add">Add mapping rule</ButtonContent>
+                </button>
+              </div>
+              <p className="unmatched-modal-intro">
+                Assign a category to each item, or mark items that should stay on the raw sheet only with no category
+                assignment. A mapping rule will be created for each resolved item.
+              </p>
+
+              {itemGroups.length === 0 ? <p>No unmatched items found.</p> : null}
+
+              {itemGroups.length > 0 ? (
+                <>
+                  <div className="unmatched-items-scroll table-wrap">
+                    <table className="unmatched-items-table">
+                      <thead>
+                        <tr>
+                          <th>Item ID</th>
+                          <th>Description</th>
+                          <th>Details</th>
+                          <th>Category</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {itemGroups.map((group) => (
+                          <tr key={group.item_id}>
+                            <td>
+                              <div className="unmatched-item-id-cell">
+                                <span>{group.item_id}</span>
+                                <button
+                                  aria-label={`Copy item ID ${group.item_id}`}
+                                  className="copy-item-id-button"
+                                  title="Copy item ID"
+                                  type="button"
+                                  onClick={() => copyItemId(group.item_id)}
+                                >
+                                  <ActionIcon name="copy" />
+                                </button>
+                              </div>
+                            </td>
+                            <td>{group.description ?? '—'}</td>
+                            <td>
+                              <UnmatchedDetailsTrigger group={group} />
+                            </td>
+                            <td>
+                              <div className="unmatched-category-cell">
+                                <div className="unmatched-category-controls">
+                                  <SearchableCategorySelect
+                                    categories={categories}
+                                    disabled={Boolean(noCategoryAssignments[group.item_id])}
+                                    showBucketInLabel
+                                    value={resolutions[group.item_id] ?? ''}
+                                    onChange={(categoryId) => {
+                                      setNoCategoryAssignments((current) => ({
+                                        ...current,
+                                        [group.item_id]: false,
+                                      }));
+                                      setResolutions((current) => ({
+                                        ...current,
+                                        [group.item_id]: categoryId,
+                                      }));
+                                    }}
+                                  />
+                                  <button
+                                    className="secondary-button"
+                                    disabled={Boolean(noCategoryAssignments[group.item_id])}
+                                    type="button"
+                                    onClick={() => openCreateCategory(group.item_id)}
+                                  >
+                                    <ButtonContent icon="add">Add</ButtonContent>
+                                  </button>
+                                  <label className="checkbox-label unmatched-no-category-label">
+                                    <input
+                                      checked={Boolean(noCategoryAssignments[group.item_id])}
+                                      type="checkbox"
+                                      onChange={(event) =>
+                                        toggleNoCategoryAssignment(group.item_id, event.target.checked)
+                                      }
+                                    />
+                                    <span>No category assignment</span>
+                                  </label>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {!allResolved ? (
+                    <p className="unmatched-modal-hint">
+                      Resolve {remainingCount} remaining item{remainingCount === 1 ? '' : 's'} to enable Save
+                      ({resolvedCount} of {itemGroups.length} done).
+                    </p>
+                  ) : null}
+
+                  <div className="unmatched-modal-actions">
+                    <button className="secondary-button" disabled={saving} type="button" onClick={requestClose}>
+                      Cancel
+                    </button>
+                    <button
+                      className="primary-button"
+                      disabled={!allResolved || saving}
+                      type="button"
+                      onClick={saveResolutions}
+                    >
+                      <ButtonContent icon="save" loading={saving}>{saving ? 'Saving...' : 'Save'}</ButtonContent>
+                    </button>
+                  </div>
+                </>
+              ) : null}
+            </>
+          )}
+        </section>
+      </div>
+      {isCreateCategoryOpen ? (
+        <Modal
+          isBusy={creatingCategory}
+          title="Add Category"
+          onClose={() => {
+            if (!creatingCategory) {
               setIsCreateCategoryOpen(false);
               setCreateCategoryForItemId('');
-            }}
+            }
+          }}
+        >
+          <CategoryForm
+            form={createCategoryForm}
+            isSubmitting={creatingCategory}
+            primaryLabel="Create Category"
+            setForm={setCreateCategoryForm}
+            onSubmit={submitCreateCategory}
           >
-            Cancel
-          </button>
-        </CategoryForm>
-      </Modal>
-    ) : null}
-    {isCloseConfirmOpen ? (
-      <ConfirmDialog
-        cancelLabel="Go back"
-        confirmButtonClassName="primary-button"
-        confirmIcon={null}
-        confirmLabel="Yes"
-        isProcessing={discardingUpload}
-        message="The file uploaded will not be saved, continue?"
-        title="Discard Upload"
-        onCancel={() => {
-          if (!discardingUpload) {
-            setIsCloseConfirmOpen(false);
-          }
-        }}
-        onConfirm={confirmDiscardUpload}
-      />
-    ) : null}
-  </>
+            <button
+              className="secondary-button"
+              disabled={creatingCategory}
+              type="button"
+              onClick={() => {
+                setIsCreateCategoryOpen(false);
+                setCreateCategoryForItemId('');
+              }}
+            >
+              Cancel
+            </button>
+          </CategoryForm>
+        </Modal>
+      ) : null}
+      {isCloseConfirmOpen ? (
+        <ConfirmDialog
+          cancelLabel="Go back"
+          confirmButtonClassName="primary-button"
+          confirmIcon={null}
+          confirmLabel="Yes"
+          isProcessing={discardingUpload}
+          message="The file uploaded will not be saved, continue?"
+          title="Discard Upload"
+          onCancel={() => {
+            if (!discardingUpload) {
+              setIsCloseConfirmOpen(false);
+            }
+          }}
+          onConfirm={confirmDiscardUpload}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -3424,113 +3424,113 @@ function UsersScreen({ currentUser, showNotice }) {
           onConfirm={confirmDeleteUser}
         />
       ) : null}
-    <section className="panel-grid">
-      <article className="panel panel-legend panel-transparent">
-        <p className="eyebrow">Users</p>
-        <div className="section-heading section-heading-toolbar">
-          <div className="button-row">
-            <ListSearchInput
-              placeholder="Search users..."
-              value={searchQuery}
-              onChange={setSearchQuery}
+      <section className="panel-grid">
+        <article className="panel panel-legend panel-transparent">
+          <p className="eyebrow">Users</p>
+          <div className="section-heading section-heading-toolbar">
+            <div className="button-row">
+              <ListSearchInput
+                placeholder="Search users..."
+                value={searchQuery}
+                onChange={setSearchQuery}
+              />
+              <label className="status-filter">
+                Role
+                <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}>
+                  <option value="all">All</option>
+                  {userRoleOptions.map((role) => (
+                    <option key={role.value} value={role.value}>
+                      {role.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="status-filter">
+                Status
+                <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="all">All</option>
+                </select>
+              </label>
+            </div>
+            <button className="primary-button" type="button" onClick={() => setIsCreateOpen(true)}>
+              <ButtonContent icon="add">Create User</ButtonContent>
+            </button>
+          </div>
+          {loading ? (
+            <p>Loading users...</p>
+          ) : (
+            <UsersTable
+              roleFilter={roleFilter}
+              searchQuery={searchQuery}
+              selectedUser={selectedUser}
+              statusFilter={statusFilter}
+              users={filteredUsers}
+              onSelectUser={setSelectedUser}
             />
-            <label className="status-filter">
-              Role
-              <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}>
-                <option value="all">All</option>
-                {userRoleOptions.map((role) => (
-                  <option key={role.value} value={role.value}>
-                    {role.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="status-filter">
-              Status
-              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="all">All</option>
-              </select>
-            </label>
-          </div>
-          <button className="primary-button" type="button" onClick={() => setIsCreateOpen(true)}>
-            <ButtonContent icon="add">Create User</ButtonContent>
-          </button>
-        </div>
-        {loading ? (
-          <p>Loading users...</p>
-        ) : (
-          <UsersTable
-            roleFilter={roleFilter}
-            searchQuery={searchQuery}
-            selectedUser={selectedUser}
-            statusFilter={statusFilter}
-            users={filteredUsers}
-            onSelectUser={setSelectedUser}
-          />
-        )}
-      </article>
+          )}
+        </article>
 
-      <article className="panel panel-legend">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Details</p>
-            <h2>{selectedUser ? 'Edit User' : 'Select a User'}</h2>
+        <article className="panel panel-legend">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Details</p>
+              <h2>{selectedUser ? 'Edit User' : 'Select a User'}</h2>
+            </div>
           </div>
-        </div>
 
-        {selectedUser ? (
-          <UserForm
-            form={editForm}
-            isSelf={Boolean(isEditingSelf)}
-            isSubmitting={editing || deleting}
-            passwordRequired={false}
-            primaryLabel="Update User"
-            setForm={setEditForm}
-            onSubmit={submitEditUser}
+          {selectedUser ? (
+            <UserForm
+              form={editForm}
+              isSelf={Boolean(isEditingSelf)}
+              isSubmitting={editing || deleting}
+              passwordRequired={false}
+              primaryLabel="Update User"
+              setForm={setEditForm}
+              onSubmit={submitEditUser}
+            >
+              {!isEditingSelf ? (
+                <button
+                  className="danger-button"
+                  disabled={editing || deleting}
+                  type="button"
+                  onClick={() => setIsDeleteConfirmOpen(true)}
+                >
+                  <ButtonContent icon="delete">Delete User</ButtonContent>
+                </button>
+              ) : null}
+            </UserForm>
+          ) : (
+            <div className="empty-state">
+              <strong>No user selected</strong>
+              <p>Click a user from the table on the left to view or edit them.</p>
+            </div>
+          )}
+        </article>
+
+        {isCreateOpen ? (
+          <Modal
+            isBusy={creating}
+            title="Create User"
+            onClose={() => {
+              if (!creating) {
+                setIsCreateOpen(false);
+              }
+            }}
           >
-            {!isEditingSelf ? (
-              <button
-                className="danger-button"
-                disabled={editing || deleting}
-                type="button"
-                onClick={() => setIsDeleteConfirmOpen(true)}
-              >
-                <ButtonContent icon="delete">Delete User</ButtonContent>
-              </button>
-            ) : null}
-          </UserForm>
-        ) : (
-          <div className="empty-state">
-            <strong>No user selected</strong>
-            <p>Click a user from the table on the left to view or edit them.</p>
-          </div>
-        )}
-      </article>
-
-      {isCreateOpen ? (
-        <Modal
-          isBusy={creating}
-          title="Create User"
-          onClose={() => {
-            if (!creating) {
-              setIsCreateOpen(false);
-            }
-          }}
-        >
-          <UserForm
-            form={createForm}
-            isSelf={false}
-            isSubmitting={creating}
-            passwordRequired
-            primaryLabel="Create User"
-            setForm={setCreateForm}
-            onSubmit={submitCreateUser}
-          />
-        </Modal>
-      ) : null}
-    </section>
+            <UserForm
+              form={createForm}
+              isSelf={false}
+              isSubmitting={creating}
+              passwordRequired
+              primaryLabel="Create User"
+              setForm={setCreateForm}
+              onSubmit={submitCreateUser}
+            />
+          </Modal>
+        ) : null}
+      </section>
     </>
   );
 }
@@ -5202,88 +5202,88 @@ function CalendarWeekModal({ week, showNotice, onClose, onOpenMeterReport, onOpe
 
   return (
     <>
-    <Modal className="modal-card-calendar" eyebrow="Week Reports" title={formatWeekRange(week.week_start, week.week_ending)} onClose={onClose}>
-      <div className="table-wrap">
-        <table className="calendar-reports-table">
-          <thead>
-            <tr>
-              <th>Report</th>
-              <th className="calendar-total-column">Total Sales</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visibleRows.map((row) => {
-              const report = week.reports.find((candidate) => candidate.report_type === row.type);
-              const isReady = report?.status === 'completed';
-              const isMeter = row.type === 'weekly_meter_report';
-              const isFees = isFeeWorkbookType(row.type);
+      <Modal className="modal-card-calendar" eyebrow="Week Reports" title={formatWeekRange(week.week_start, week.week_ending)} onClose={onClose}>
+        <div className="table-wrap">
+          <table className="calendar-reports-table">
+            <thead>
+              <tr>
+                <th>Report</th>
+                <th className="calendar-total-column">Total Sales</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleRows.map((row) => {
+                const report = week.reports.find((candidate) => candidate.report_type === row.type);
+                const isReady = report?.status === 'completed';
+                const isMeter = row.type === 'weekly_meter_report';
+                const isFees = isFeeWorkbookType(row.type);
 
-              return (
-                <tr key={row.type}>
-                  <td>{row.label}</td>
-                  <td className="calendar-total-column">
-                    {isReady && report.total !== null && report.total !== undefined
-                      ? formatMeterMoney(report.total)
-                      : '—'}
-                  </td>
-                  <td>
-                    {isReady ? (
-                      <div className="form-actions">
-                        <button
-                          className="secondary-button"
-                          title={isMeter ? `Open the Meter Report for ${meterMonthLabel}` : undefined}
-                          type="button"
-                          onClick={() =>
-                            isMeter
-                              ? onOpenMeterReport(week.meter_year, week.meter_month)
-                              : onOpenSalesAnalysis(report.id)
-                          }
-                        >
-                          <ButtonContent icon="eye">View</ButtonContent>
-                        </button>
-                        {isFees ? (
+                return (
+                  <tr key={row.type}>
+                    <td>{row.label}</td>
+                    <td className="calendar-total-column">
+                      {isReady && report.total !== null && report.total !== undefined
+                        ? formatMeterMoney(report.total)
+                        : '—'}
+                    </td>
+                    <td>
+                      {isReady ? (
+                        <div className="form-actions">
                           <button
                             className="secondary-button"
+                            title={isMeter ? `Open the Meter Report for ${meterMonthLabel}` : undefined}
                             type="button"
-                            onClick={() => openFeeEditor(row.type)}
+                            onClick={() =>
+                              isMeter
+                                ? onOpenMeterReport(week.meter_year, week.meter_month)
+                                : onOpenSalesAnalysis(report.id)
+                            }
                           >
-                            Edit amounts
+                            <ButtonContent icon="eye">View</ButtonContent>
                           </button>
-                        ) : null}
-                      </div>
-                    ) : (
-                      <span className="exports-details-unavailable">
-                        {report?.status === 'failed' ? 'Failed' : 'Not generated'}
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-      {hasAnyReport ? (
-        <p className="calendar-modal-note">The Meter Report opens on {meterMonthLabel}.</p>
-      ) : (
-        <p className="calendar-modal-note">
-          No reports have been generated for this week yet. They are generated automatically after the Sales Analysis upload.
-        </p>
-      )}
-    </Modal>
-    {feeEditor ? (
-      <MarketplaceFeeAmountsModal
-        initialFees={editorFees}
-        saving={savingFees}
-        showAddLater={false}
-        subtitle={FEE_WORKBOOK_TYPES[feeEditor].label}
-        title={`Manually inputted ${FEE_WORKBOOK_TYPES[feeEditor].label}`}
-        onAddLater={() => setFeeEditor(null)}
-        onClose={() => setFeeEditor(null)}
-        onNext={saveFeeEditor}
-      />
-    ) : null}
+                          {isFees ? (
+                            <button
+                              className="secondary-button"
+                              type="button"
+                              onClick={() => openFeeEditor(row.type)}
+                            >
+                              Edit amounts
+                            </button>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <span className="exports-details-unavailable">
+                          {report?.status === 'failed' ? 'Failed' : 'Not generated'}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {hasAnyReport ? (
+          <p className="calendar-modal-note">The Meter Report opens on {meterMonthLabel}.</p>
+        ) : (
+          <p className="calendar-modal-note">
+            No reports have been generated for this week yet. They are generated automatically after the Sales Analysis upload.
+          </p>
+        )}
+      </Modal>
+      {feeEditor ? (
+        <MarketplaceFeeAmountsModal
+          initialFees={editorFees}
+          saving={savingFees}
+          showAddLater={false}
+          subtitle={FEE_WORKBOOK_TYPES[feeEditor].label}
+          title={`Manually inputted ${FEE_WORKBOOK_TYPES[feeEditor].label}`}
+          onAddLater={() => setFeeEditor(null)}
+          onClose={() => setFeeEditor(null)}
+          onNext={saveFeeEditor}
+        />
+      ) : null}
     </>
   );
 }
@@ -5461,90 +5461,90 @@ function CategoriesScreen({ showNotice }) {
           onConfirm={confirmDeleteCategory}
         />
       ) : null}
-    <section className="panel-grid">
-      <article className="panel panel-legend panel-transparent">
-        <p className="eyebrow">Categories</p>
-        <div className="section-heading section-heading-toolbar">
-          <div className="button-row">
-            <ListSearchInput
-              placeholder="Search categories..."
-              value={searchQuery}
-              onChange={setSearchQuery}
-            />
-            <label className="status-filter">
-              Status
-              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="all">All</option>
-              </select>
-            </label>
-          </div>
-          <button className="primary-button" type="button" onClick={() => setIsCreateOpen(true)}>
-            <ButtonContent icon="add">Create Category</ButtonContent>
-          </button>
-        </div>
-        {loading ? (
-          <p>Loading categories...</p>
-        ) : (
-          <CategoryTable
-            categories={filteredCategories}
-            searchQuery={searchQuery}
-            selectedCategory={selectedCategory}
-            statusFilter={statusFilter}
-            onSelectCategory={setSelectedCategory}
-          />
-        )}
-      </article>
-
-      <article className="panel panel-legend">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Details</p>
-            <h2>{selectedCategory ? 'Edit Category' : 'Select a Category'}</h2>
-          </div>
-        </div>
-
-        {selectedCategory ? (
-          <CategoryForm
-            form={editForm}
-            isSubmitting={editing}
-            primaryLabel="Update Category"
-            setForm={setEditForm}
-            onSubmit={submitEditCategory}
-          >
-            <button className="danger-button" disabled={editing} type="button" onClick={() => setIsDeleteConfirmOpen(true)}>
-              <ButtonContent icon="delete">Delete Category</ButtonContent>
+      <section className="panel-grid">
+        <article className="panel panel-legend panel-transparent">
+          <p className="eyebrow">Categories</p>
+          <div className="section-heading section-heading-toolbar">
+            <div className="button-row">
+              <ListSearchInput
+                placeholder="Search categories..."
+                value={searchQuery}
+                onChange={setSearchQuery}
+              />
+              <label className="status-filter">
+                Status
+                <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="all">All</option>
+                </select>
+              </label>
+            </div>
+            <button className="primary-button" type="button" onClick={() => setIsCreateOpen(true)}>
+              <ButtonContent icon="add">Create Category</ButtonContent>
             </button>
-          </CategoryForm>
-        ) : (
-          <div className="empty-state">
-            <strong>No category selected</strong>
-            <p>Click a category from the table on the left to view, edit, or delete it.</p>
           </div>
-        )}
-      </article>
+          {loading ? (
+            <p>Loading categories...</p>
+          ) : (
+            <CategoryTable
+              categories={filteredCategories}
+              searchQuery={searchQuery}
+              selectedCategory={selectedCategory}
+              statusFilter={statusFilter}
+              onSelectCategory={setSelectedCategory}
+            />
+          )}
+        </article>
 
-      {isCreateOpen ? (
-        <Modal
-          isBusy={creating}
-          title="Create Category"
-          onClose={() => {
-            if (!creating) {
-              setIsCreateOpen(false);
-            }
-          }}
-        >
-          <CategoryForm
-            form={createForm}
-            isSubmitting={creating}
-            primaryLabel="Create Category"
-            setForm={setCreateForm}
-            onSubmit={submitCreateCategory}
-          />
-        </Modal>
-      ) : null}
-    </section>
+        <article className="panel panel-legend">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Details</p>
+              <h2>{selectedCategory ? 'Edit Category' : 'Select a Category'}</h2>
+            </div>
+          </div>
+
+          {selectedCategory ? (
+            <CategoryForm
+              form={editForm}
+              isSubmitting={editing}
+              primaryLabel="Update Category"
+              setForm={setEditForm}
+              onSubmit={submitEditCategory}
+            >
+              <button className="danger-button" disabled={editing} type="button" onClick={() => setIsDeleteConfirmOpen(true)}>
+                <ButtonContent icon="delete">Delete Category</ButtonContent>
+              </button>
+            </CategoryForm>
+          ) : (
+            <div className="empty-state">
+              <strong>No category selected</strong>
+              <p>Click a category from the table on the left to view, edit, or delete it.</p>
+            </div>
+          )}
+        </article>
+
+        {isCreateOpen ? (
+          <Modal
+            isBusy={creating}
+            title="Create Category"
+            onClose={() => {
+              if (!creating) {
+                setIsCreateOpen(false);
+              }
+            }}
+          >
+            <CategoryForm
+              form={createForm}
+              isSubmitting={creating}
+              primaryLabel="Create Category"
+              setForm={setCreateForm}
+              onSubmit={submitCreateCategory}
+            />
+          </Modal>
+        ) : null}
+      </section>
     </>
   );
 }
@@ -5568,79 +5568,79 @@ function CategoryForm({ children, form, isSubmitting = false, primaryLabel, setF
   return (
     <form className="stacked-form" onSubmit={onSubmit}>
       <fieldset className="form-fieldset" disabled={isSubmitting}>
-      <label>
-        Name
-        <input
-          required
-          value={form.name}
-          onChange={(event) => setForm({ ...form, name: event.target.value })}
-        />
-      </label>
-      <label>
-        Bucket
-        <select
-          value={form.sales_analysis_bucket}
-          onChange={(event) => setForm({ ...form, sales_analysis_bucket: event.target.value })}
-        >
-          <option value="">None</option>
-          {salesAnalysisBucketOptions.map((bucket) => (
-            <option key={bucket.value} value={bucket.value}>
-              {bucket.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Weekly Meter Model
-        <select
-          value={form.weekly_meter_row_label}
-          onChange={(event) => setForm({ ...form, weekly_meter_row_label: event.target.value })}
-        >
-          <option value="">None</option>
-          {weeklyMeterModelLabels.map((label) => (
-            <option key={label} value={label}>
-              {label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Sort Order
-        <input
-          min="0"
-          type="number"
-          value={form.sort_order}
-          onChange={(event) => setForm({ ...form, sort_order: event.target.value })}
-        />
-      </label>
-      <label>
-        Qty Multiplier
-        <input
-          min="1"
-          type="number"
-          value={form.quantity_multiplier}
-          onChange={(event) => setForm({ ...form, quantity_multiplier: event.target.value })}
-        />
-      </label>
-      <label className="checkbox-label">
-        <input
-          checked={form.is_active}
-          type="checkbox"
-          onChange={(event) => setForm({ ...form, is_active: event.target.checked })}
-        />
-        Active
-      </label>
-      <div className="form-actions">
-        <button className="primary-button" disabled={isSubmitting} type="submit">
-          <ButtonContent
-            icon={primaryLabel.startsWith('Update') ? 'save' : 'add'}
-            loading={isSubmitting}
+        <label>
+          Name
+          <input
+            required
+            value={form.name}
+            onChange={(event) => setForm({ ...form, name: event.target.value })}
+          />
+        </label>
+        <label>
+          Bucket
+          <select
+            value={form.sales_analysis_bucket}
+            onChange={(event) => setForm({ ...form, sales_analysis_bucket: event.target.value })}
           >
-            {submitLabel}
-          </ButtonContent>
-        </button>
-        {children}
-      </div>
+            <option value="">None</option>
+            {salesAnalysisBucketOptions.map((bucket) => (
+              <option key={bucket.value} value={bucket.value}>
+                {bucket.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Weekly Meter Model
+          <select
+            value={form.weekly_meter_row_label}
+            onChange={(event) => setForm({ ...form, weekly_meter_row_label: event.target.value })}
+          >
+            <option value="">None</option>
+            {weeklyMeterModelLabels.map((label) => (
+              <option key={label} value={label}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Sort Order
+          <input
+            min="0"
+            type="number"
+            value={form.sort_order}
+            onChange={(event) => setForm({ ...form, sort_order: event.target.value })}
+          />
+        </label>
+        <label>
+          Qty Multiplier
+          <input
+            min="1"
+            type="number"
+            value={form.quantity_multiplier}
+            onChange={(event) => setForm({ ...form, quantity_multiplier: event.target.value })}
+          />
+        </label>
+        <label className="checkbox-label">
+          <input
+            checked={form.is_active}
+            type="checkbox"
+            onChange={(event) => setForm({ ...form, is_active: event.target.checked })}
+          />
+          Active
+        </label>
+        <div className="form-actions">
+          <button className="primary-button" disabled={isSubmitting} type="submit">
+            <ButtonContent
+              icon={primaryLabel.startsWith('Update') ? 'save' : 'add'}
+              loading={isSubmitting}
+            >
+              {submitLabel}
+            </ButtonContent>
+          </button>
+          {children}
+        </div>
       </fieldset>
     </form>
   );
@@ -5946,31 +5946,31 @@ function CategoryTable({ categories, selectedCategory, statusFilter, searchQuery
 
   return (
     <>
-    <div className="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Bucket</th>
-            <th>Meter Model</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pagination.paginatedItems.map((category) => (
-            <tr
-              className={selectedCategory?.id === category.id ? 'clickable-row selected-row' : 'clickable-row'}
-              key={category.id}
-              onClick={() => onSelectCategory(category)}
-            >
-              <td>{category.name}</td>
-              <td>{category.sales_analysis_bucket ? salesAnalysisBucketLabel(category.sales_analysis_bucket) : 'None'}</td>
-              <td>{category.weekly_meter_row_label || '—'}</td>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Bucket</th>
+              <th>Meter Model</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-    <PaginationControls {...pagination} />
+          </thead>
+          <tbody>
+            {pagination.paginatedItems.map((category) => (
+              <tr
+                className={selectedCategory?.id === category.id ? 'clickable-row selected-row' : 'clickable-row'}
+                key={category.id}
+                onClick={() => onSelectCategory(category)}
+              >
+                <td>{category.name}</td>
+                <td>{category.sales_analysis_bucket ? salesAnalysisBucketLabel(category.sales_analysis_bucket) : 'None'}</td>
+                <td>{category.weekly_meter_row_label || '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <PaginationControls {...pagination} />
     </>
   );
 }
@@ -5988,33 +5988,33 @@ function RulesTable({ rules, selectedRule, statusFilter, searchQuery, onSelectRu
 
   return (
     <>
-    <div className="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Match</th>
-            <th>Category</th>
-            <th>Bucket</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pagination.paginatedItems.map((rule) => (
-            <tr
-              className={selectedRule?.id === rule.id ? 'clickable-row selected-row' : 'clickable-row'}
-              key={rule.id}
-              onClick={() => onSelectRule(rule)}
-            >
-              <td>
-                {rule.match_field} {rule.match_operator} {rule.pattern}
-              </td>
-              <td>{rule.product_category?.name ?? 'Unassigned'}</td>
-              <td>{salesAnalysisBucketLabel(rule.target_bucket) ?? 'None'}</td>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Match</th>
+              <th>Category</th>
+              <th>Bucket</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-    <PaginationControls {...pagination} />
+          </thead>
+          <tbody>
+            {pagination.paginatedItems.map((rule) => (
+              <tr
+                className={selectedRule?.id === rule.id ? 'clickable-row selected-row' : 'clickable-row'}
+                key={rule.id}
+                onClick={() => onSelectRule(rule)}
+              >
+                <td>
+                  {rule.match_field} {rule.match_operator} {rule.pattern}
+                </td>
+                <td>{rule.product_category?.name ?? 'Unassigned'}</td>
+                <td>{salesAnalysisBucketLabel(rule.target_bucket) ?? 'None'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <PaginationControls {...pagination} />
     </>
   );
 }
@@ -6353,103 +6353,103 @@ function SalesAnalysisReportScreen({ reportId, showNotice, onLoaded, onBack }) {
 
   return (
     <>
-    <section className="panel-grid">
-      <article className="panel panel-span panel-legend">
-        <p className="eyebrow">{reportTypeLabel}</p>
-        <div className="section-heading">
-          <div>
-            <h2>
-              {report
-                ? formatWeekRange(report.import_batch.week_start, report.import_batch.week_ending)
-                : reportTypeLabel}
-            </h2>
-            {report ? (
-              <p className="sa-report-meta">
-                Batch #{report.import_batch.id} · {report.file_name}
-                {generatedAt ? ` · Generated ${generatedAt}` : ''}
-              </p>
-            ) : null}
-          </div>
-          <div className="button-row">
-            <button className="secondary-button" type="button" onClick={onBack}>
-              <ButtonContent icon="back">Back to Calendar</ButtonContent>
-            </button>
-            {isFeesReport ? (
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={async () => {
-                  try {
-                    const response = await axios.get(`/api/import-batches/${report.import_batch.id}/fee-adjustments`, {
-                      params: { marketplace: FEE_WORKBOOK_TYPES[reportType].marketplace },
-                    });
-                    setEditorFees(response.data.data ?? []);
-                    setFeeEditorOpen(true);
-                  } catch (error) {
-                    showNotice('error', messageFromError(error, 'Unable to load fee amounts.'));
-                  }
-                }}
-              >
-                Edit amounts
-              </button>
-            ) : null}
-            {report ? (
-              <a className="secondary-button" href={`/api/generated-reports/${report.id}/download`}>
-                <ButtonContent icon="download">Download</ButtonContent>
-              </a>
-            ) : null}
-          </div>
-        </div>
-
-        {loading ? <p>Loading {reportTypeLabel}...</p> : null}
-        {!loading && errorMessage ? <p className="sa-report-error">{errorMessage}</p> : null}
-
-        {!loading && activeSheet ? (
-          <>
-            <div className="sa-toolbar">
-              <div className="sa-tabs" role="tablist" aria-label={`${reportTypeLabel} sheets`}>
-                {sheets.map((sheet, index) => (
-                  <button
-                    aria-selected={sheet === activeSheet}
-                    className={sheet === activeSheet ? 'sa-tab sa-tab-active' : 'sa-tab'}
-                    key={sheet.title}
-                    role="tab"
-                    type="button"
-                    onClick={() => setActiveSheetIndex(index)}
-                  >
-                    {sheet.title}
-                  </button>
-                ))}
-              </div>
-              {isFeesReport ? null : (
-                <SalesAnalysisColumnPicker
-                  columns={columns}
-                  hiddenColumns={hiddenColumns}
-                  onChange={updateHiddenColumns}
-                />
-              )}
+      <section className="panel-grid">
+        <article className="panel panel-span panel-legend">
+          <p className="eyebrow">{reportTypeLabel}</p>
+          <div className="section-heading">
+            <div>
+              <h2>
+                {report
+                  ? formatWeekRange(report.import_batch.week_start, report.import_batch.week_ending)
+                  : reportTypeLabel}
+              </h2>
+              {report ? (
+                <p className="sa-report-meta">
+                  Batch #{report.import_batch.id} · {report.file_name}
+                  {generatedAt ? ` · Generated ${generatedAt}` : ''}
+                </p>
+              ) : null}
             </div>
-            <SalesAnalysisSheetTable
-              hiddenColumns={hiddenColumns}
-              key={activeSheet.title}
-              sheet={activeSheet}
-            />
-          </>
-        ) : null}
-      </article>
-    </section>
-    {feeEditorOpen ? (
-      <MarketplaceFeeAmountsModal
-        initialFees={editorFees}
-        saving={savingFees}
-        showAddLater={false}
-        subtitle={reportTypeLabel}
-        title={`Manually inputted ${reportTypeLabel}`}
-        onAddLater={() => setFeeEditorOpen(false)}
-        onClose={() => setFeeEditorOpen(false)}
-        onNext={saveFeeEditor}
-      />
-    ) : null}
+            <div className="button-row">
+              <button className="secondary-button" type="button" onClick={onBack}>
+                <ButtonContent icon="back">Back to Calendar</ButtonContent>
+              </button>
+              {isFeesReport ? (
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const response = await axios.get(`/api/import-batches/${report.import_batch.id}/fee-adjustments`, {
+                        params: { marketplace: FEE_WORKBOOK_TYPES[reportType].marketplace },
+                      });
+                      setEditorFees(response.data.data ?? []);
+                      setFeeEditorOpen(true);
+                    } catch (error) {
+                      showNotice('error', messageFromError(error, 'Unable to load fee amounts.'));
+                    }
+                  }}
+                >
+                  Edit amounts
+                </button>
+              ) : null}
+              {report ? (
+                <a className="secondary-button" href={`/api/generated-reports/${report.id}/download`}>
+                  <ButtonContent icon="download">Download</ButtonContent>
+                </a>
+              ) : null}
+            </div>
+          </div>
+
+          {loading ? <p>Loading {reportTypeLabel}...</p> : null}
+          {!loading && errorMessage ? <p className="sa-report-error">{errorMessage}</p> : null}
+
+          {!loading && activeSheet ? (
+            <>
+              <div className="sa-toolbar">
+                <div className="sa-tabs" role="tablist" aria-label={`${reportTypeLabel} sheets`}>
+                  {sheets.map((sheet, index) => (
+                    <button
+                      aria-selected={sheet === activeSheet}
+                      className={sheet === activeSheet ? 'sa-tab sa-tab-active' : 'sa-tab'}
+                      key={sheet.title}
+                      role="tab"
+                      type="button"
+                      onClick={() => setActiveSheetIndex(index)}
+                    >
+                      {sheet.title}
+                    </button>
+                  ))}
+                </div>
+                {isFeesReport ? null : (
+                  <SalesAnalysisColumnPicker
+                    columns={columns}
+                    hiddenColumns={hiddenColumns}
+                    onChange={updateHiddenColumns}
+                  />
+                )}
+              </div>
+              <SalesAnalysisSheetTable
+                hiddenColumns={hiddenColumns}
+                key={activeSheet.title}
+                sheet={activeSheet}
+              />
+            </>
+          ) : null}
+        </article>
+      </section>
+      {feeEditorOpen ? (
+        <MarketplaceFeeAmountsModal
+          initialFees={editorFees}
+          saving={savingFees}
+          showAddLater={false}
+          subtitle={reportTypeLabel}
+          title={`Manually inputted ${reportTypeLabel}`}
+          onAddLater={() => setFeeEditorOpen(false)}
+          onClose={() => setFeeEditorOpen(false)}
+          onNext={saveFeeEditor}
+        />
+      ) : null}
     </>
   );
 }
