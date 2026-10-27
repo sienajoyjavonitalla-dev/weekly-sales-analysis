@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\BatchClassificationController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\GeneratedReportController;
 use App\Http\Controllers\Api\ImportBatchController;
+use App\Http\Controllers\Api\ImportBatchFeeAdjustmentController;
 use App\Http\Controllers\Api\MappingRuleController;
 use App\Http\Controllers\Api\MarketplaceFeeController;
 use App\Http\Controllers\Api\ProductCategoryController;
@@ -64,6 +65,8 @@ Route::middleware(['web', 'auth', 'throttle:60,1'])->group(function (): void {
     Route::get('/import-batches/{importBatch}/unmatched-sales-rows', [UnmatchedSalesRowController::class, 'index']);
     Route::get('/import-batches/{importBatch}/unmatched-item-groups', [UnmatchedSalesRowController::class, 'itemGroups']);
     Route::post('/import-batches/{importBatch}/resolve-unmatched-items', [UnmatchedSalesRowController::class, 'bulkResolve']);
+    Route::get('/import-batches/{importBatch}/fee-adjustments', [ImportBatchFeeAdjustmentController::class, 'index']);
+    Route::put('/import-batches/{importBatch}/fee-adjustments', [ImportBatchFeeAdjustmentController::class, 'update']);
     Route::get('/import-batches/{importBatch}/marketplace-fees', [MarketplaceFeeController::class, 'index']);
     Route::post('/import-batches/{importBatch}/marketplace-fees', [MarketplaceFeeController::class, 'store']);
     Route::get('/import-batches/{importBatch}/reconciliation', [ReconciliationController::class, 'show']);

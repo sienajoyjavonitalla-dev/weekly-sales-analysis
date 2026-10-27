@@ -17,10 +17,14 @@ class BulkUnmatchedItemResolver
      * @param  array<int, array{item_id: string, product_category_id?: int|null, no_category_assignment?: bool}>  $resolutions
      * @return array{resolved_item_count: int, updated_row_count: int, created_or_updated_rule_count: int}
      */
-    public function resolve(ImportBatch $importBatch, array $resolutions, ?int $userId): array
+    public function resolve(ImportBatch $importBatch, array $resolutions, ?int $userId, ?string $workbookType = null): array
     {
         $expectedItemIds = SalesRow::query()
             ->where('import_batch_id', $importBatch->id)
+            ->when(
+                $workbookType !== null,
+                fn ($query) => $query->where('workbook_type', $workbookType),
+            )
             ->where('classification_status', 'unmatched')
             ->whereNotNull('item_id')
             ->where('item_id', '!=', '')
@@ -62,7 +66,7 @@ class BulkUnmatchedItemResolver
             ->get()
             ->keyBy('id');
 
-        return DB::transaction(function () use ($importBatch, $resolutions, $userId, $categories): array {
+        return DB::transaction(function () use ($importBatch, $resolutions, $userId, $categories, $workbookType): array {
             $updatedRowCount = 0;
             $ruleCount = 0;
 
@@ -72,6 +76,10 @@ class BulkUnmatchedItemResolver
                 if ($this->isNoCategoryAssignment($resolution)) {
                     $updatedRowCount += SalesRow::query()
                         ->where('import_batch_id', $importBatch->id)
+                        ->when(
+                            $workbookType !== null,
+                            fn ($query) => $query->where('workbook_type', $workbookType),
+                        )
                         ->where('classification_status', 'unmatched')
                         ->where('item_id', $itemId)
                         ->update([
@@ -121,6 +129,10 @@ class BulkUnmatchedItemResolver
 
                 $updatedRowCount += SalesRow::query()
                     ->where('import_batch_id', $importBatch->id)
+                    ->when(
+                        $workbookType !== null,
+                        fn ($query) => $query->where('workbook_type', $workbookType),
+                    )
                     ->where('classification_status', 'unmatched')
                     ->where('item_id', $itemId)
                     ->update([
@@ -173,10 +185,14 @@ class BulkUnmatchedItemResolver
     /**
      * @return array<int, array{item_id: string, description: string|null, row_count: int, rows: array<int, array<string, mixed>>}>
      */
-    public function itemGroups(ImportBatch $importBatch): array
+    public function itemGroups(ImportBatch $importBatch, ?string $workbookType = null): array
     {
         $rows = SalesRow::query()
             ->where('import_batch_id', $importBatch->id)
+            ->when(
+                $workbookType !== null,
+                fn ($query) => $query->where('workbook_type', $workbookType),
+            )
             ->where('classification_status', 'unmatched')
             ->whereNotNull('item_id')
             ->where('item_id', '!=', '')

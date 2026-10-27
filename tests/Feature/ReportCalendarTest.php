@@ -34,7 +34,7 @@ class ReportCalendarTest extends TestCase
         ]);
         $salesAnalysis = $this->createReport($batch, 'sales_analysis');
         $meter = $this->createReport($batch, 'weekly_meter_report');
-        $this->createReport($batch, 'total_sales_report');
+        $amazonFees = $this->createReport($batch, 'amazon_fees');
 
         $response = $this->actingAs($user)
             ->getJson('/api/report-calendar?year=2026&month=4')
@@ -45,7 +45,7 @@ class ReportCalendarTest extends TestCase
             ->assertJsonPath('data.weeks.0.week_ending', '2026-04-03')
             ->assertJsonPath('data.weeks.0.meter_year', 2026)
             ->assertJsonPath('data.weeks.0.meter_month', 4)
-            ->assertJsonCount(2, 'data.weeks.0.reports');
+            ->assertJsonCount(3, 'data.weeks.0.reports');
 
         $reports = collect($response->json('data.weeks.0.reports'))->keyBy('report_type');
 
@@ -53,6 +53,8 @@ class ReportCalendarTest extends TestCase
         $this->assertEquals(425834.37, $reports['sales_analysis']['total']);
         $this->assertSame($meter->id, $reports['weekly_meter_report']['id']);
         $this->assertEquals(1246.0, $reports['weekly_meter_report']['total']);
+        $this->assertSame($amazonFees->id, $reports['amazon_fees']['id']);
+        $this->assertEquals(0.0, $reports['amazon_fees']['total']);
     }
 
     public function test_calendar_lists_uploaded_weeks_without_generated_reports(): void

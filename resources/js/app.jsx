@@ -206,11 +206,18 @@ const userRoleOptions = [
 
 const workbookTypes = [
   { key: 'sales_analysis', label: 'Sales Analysis' },
-  { key: 'income_statement', label: 'Income Statement' },
-  { key: 'total_sales_report', label: 'Total Sales Report' },
-  { key: 'open_orders', label: 'Open Orders' },
-  { key: 'ptd_orders', label: 'PTD Orders' },
+  { key: 'amazon_fees', label: 'Amazon Fees' },
+  { key: 'walmart_fees', label: 'Walmart Fees' },
 ];
+
+const FEE_WORKBOOK_TYPES = {
+  amazon_fees: { marketplace: 'amazon', label: 'Amazon Fees' },
+  walmart_fees: { marketplace: 'walmart', label: 'Walmart Fees' },
+};
+
+function isFeeWorkbookType(type) {
+  return Boolean(FEE_WORKBOOK_TYPES[type]);
+}
 
 const weeklyMeterModelLabels = [
   'RHP 4.0 Kits',
@@ -1161,6 +1168,117 @@ function DateRangePicker({ start, end, onChange, placeholder = 'Select week rang
   );
 }
 
+function MarketplaceFeeAmountsModal({
+  title,
+  subtitle,
+  initialFees,
+  saving,
+  showAddLater = true,
+  onClose,
+  onAddLater,
+  onNext,
+}) {
+  const [lines, setLines] = useState(() => (
+    initialFees?.length
+      ? initialFees.map((fee) => String(fee.amount))
+      : ['']
+  ));
+  const [error, setError] = useState('');
+
+  function updateLine(index, value) {
+    setError('');
+    setLines((current) => current.map((line, lineIndex) => (lineIndex === index ? value : line)));
+  }
+
+  function addLine() {
+    setError('');
+    setLines((current) => [...current, '']);
+  }
+
+  function removeLine(index) {
+    setError('');
+    setLines((current) => (current.length <= 1 ? [''] : current.filter((_, lineIndex) => lineIndex !== index)));
+  }
+
+  function parsedFees() {
+    const fees = lines
+      .map((line) => line.trim())
+      .filter((line) => line !== '')
+      .map((line) => ({ amount: Number(line) }));
+
+    if (fees.some((fee) => Number.isNaN(fee.amount))) {
+      setError('Enter a valid number for each amount.');
+      return null;
+    }
+
+    return fees;
+  }
+
+  async function handleNext() {
+    const fees = parsedFees();
+
+    if (fees === null) {
+      return;
+    }
+
+    await onNext(fees);
+  }
+
+  return (
+    <Modal
+      className="modal-card-meter-fees"
+      isBusy={saving}
+      title={title}
+      onClose={onClose}
+    >
+      {subtitle ? <p className="muted">{subtitle}</p> : null}
+      {error ? <p className="form-error">{error}</p> : null}
+      <div className="meter-fee-lines">
+        {lines.map((line, index) => (
+          <div className="meter-fee-line" key={`fee-line-${index}`}>
+            <label>
+              Amount {index + 1}
+              <input
+                disabled={saving}
+                inputMode="decimal"
+                placeholder="0.00"
+                type="number"
+                step="0.01"
+                value={line}
+                onChange={(event) => updateLine(index, event.target.value)}
+              />
+            </label>
+            <button
+              aria-label={`Remove amount ${index + 1}`}
+              className="meter-fee-edit"
+              disabled={saving}
+              type="button"
+              onClick={() => removeLine(index)}
+            >
+              <ActionIcon name="delete" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <div className="form-actions meter-fee-actions">
+        <button className="secondary-button" disabled={saving} type="button" onClick={addLine}>
+          <ButtonContent icon="add">Add more</ButtonContent>
+        </button>
+        {showAddLater ? (
+          <button className="secondary-button" disabled={saving} type="button" onClick={onAddLater}>
+            Add later
+          </button>
+        ) : null}
+        <button className="primary-button" disabled={saving} type="button" onClick={handleNext}>
+          <ButtonContent icon="upload" loading={saving}>
+            {saving ? 'Saving...' : 'Next'}
+          </ButtonContent>
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
 function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchId, showNotice }) {
   const [selectedFiles, setSelectedFiles] = useState({});
   const [uploading, setUploading] = useState(false);
@@ -1170,6 +1288,12 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
   const [preparingUnmatched, setPreparingUnmatched] = useState(false);
   const [includeState, setIncludeState] = useState(false);
   const [generatingReports, setGeneratingReports] = useState(false);
+  const [feeUpload, setFeeUpload] = useState(null);
+  const [pendingFeeAmounts, setPendingFeeAmounts] = useState({});
+  const [fileInputResetKey, setFileInputResetKey] = useState(0);
+  const feeFileInputRef = useRef(null);
+  const feeCardInputRefs = useRef({});
+  const allowFeeFilePickRef = useRef(false);
 
   const closeUnmatchedModal = useCallback(() => {
     setUnmatchedModal(null);
@@ -1202,24 +1326,29 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
     }
   }, [includeState, showNotice]);
 
-  const openUnmatchedModal = useCallback(async (nextBatchId) => {
+  const openUnmatchedModal = useCallback(async (nextBatchId, queue = ['sales_analysis']) => {
     setPreparingUnmatched(true);
 
     try {
-      const data = await fetchUnmatchedModalData(nextBatchId);
+      const types = (Array.isArray(queue) ? queue : [queue]).filter(Boolean);
 
-      if ((data.itemGroups ?? []).length === 0) {
-        showNotice('success', 'Sales Analysis uploaded successfully with no unmatched rows.');
-        await autoGenerateReports(nextBatchId);
+      for (let index = 0; index < types.length; index += 1) {
+        const fileType = types[index];
+        const data = await fetchUnmatchedModalData(nextBatchId, fileType);
 
-        return;
+        if ((data.itemGroups ?? []).length > 0) {
+          markReconcileSessionActive();
+          setUnmatchedModal({
+            batchId: nextBatchId,
+            remainingTypes: types.slice(index + 1),
+            ...data,
+          });
+          return;
+        }
       }
 
-      markReconcileSessionActive();
-      setUnmatchedModal({
-        batchId: nextBatchId,
-        ...data,
-      });
+      showNotice('success', 'Uploaded successfully with no unmatched rows.');
+      await autoGenerateReports(nextBatchId);
     } catch (error) {
       showNotice('error', messageFromError(error, 'Unable to load unmatched items.'));
     } finally {
@@ -1232,6 +1361,11 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
     [batches, batchId],
   );
 
+  const batchForWeek = useMemo(
+    () => batches.find((batch) => batch.week_start === weekRangeStart && batch.week_ending === weekRangeEnd),
+    [batches, weekRangeEnd, weekRangeStart],
+  );
+
   useEffect(() => {
     if (!weekRangeStart && !weekRangeEnd && selectedBatch) {
       setWeekRangeStart(selectedBatch.week_start ?? '');
@@ -1242,19 +1376,162 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
   const hasFiles = Object.values(selectedFiles).some(Boolean);
   const isUploadBusy = uploading || preparingUnmatched || generatingReports;
 
+  async function saveFeeAmounts(targetBatchId, fileType, fees) {
+    if (!Array.isArray(fees)) {
+      return;
+    }
+
+    await axios.put(`/api/import-batches/${targetBatchId}/fee-adjustments`, {
+      marketplace: FEE_WORKBOOK_TYPES[fileType].marketplace,
+      fees,
+    });
+  }
+
+  async function importFeeWorkbook(file, fileType, fees, existingBatchId = null) {
+    const formData = new FormData();
+    formData.append(fileType, file);
+
+    if (existingBatchId) {
+      formData.append('import_batch_id', String(existingBatchId));
+    } else {
+      formData.append('week_start', weekRangeStart);
+      formData.append('week_ending', weekRangeEnd);
+    }
+
+    const response = await axios.post('/api/workbook-imports', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    const result = response.data.data;
+    const nextBatchId = String(result.import_batch.id);
+
+    setBatchId(nextBatchId);
+    showNotice('success', uploadSuccessMessage(result, nextBatchId, false));
+    await loadBatches();
+
+    if (Array.isArray(fees)) {
+      await saveFeeAmounts(nextBatchId, fileType, fees);
+    }
+
+    if (shouldOpenUnmatchedModal(result, [fileType])) {
+      await openUnmatchedModal(nextBatchId, [fileType]);
+    } else {
+      await autoGenerateReports(nextBatchId);
+    }
+  }
+
+  function requireWeekRange() {
+    if (!weekRangeStart || !weekRangeEnd) {
+      showNotice('error', 'Select a week range before importing.');
+      return false;
+    }
+
+    if (weekRangeStart > weekRangeEnd) {
+      showNotice('error', 'Week range start date must be on or before the end date.');
+      return false;
+    }
+
+    return true;
+  }
+
+  async function startFeeUpload(fileType, existingBatchId = null) {
+    const importImmediately = existingBatchId != null;
+
+    if (!importImmediately && !requireWeekRange()) {
+      return;
+    }
+
+    const targetBatchId = existingBatchId ?? batchForWeek?.id ?? null;
+    let initialFees = Array.isArray(pendingFeeAmounts[fileType]) ? pendingFeeAmounts[fileType] : [];
+
+    if (initialFees.length === 0 && targetBatchId) {
+      try {
+        const response = await axios.get(`/api/import-batches/${targetBatchId}/fee-adjustments`, {
+          params: { marketplace: FEE_WORKBOOK_TYPES[fileType].marketplace },
+        });
+        const existing = response.data.data ?? [];
+        if (existing.length > 0) {
+          initialFees = existing;
+        }
+      } catch {
+        initialFees = [];
+      }
+    }
+
+    setFeeUpload({
+      fileType,
+      batchId: targetBatchId,
+      initialFees,
+      pendingFees: null,
+      importImmediately,
+    });
+  }
+
+  function continueFeeFilePick(fees) {
+    setFeeUpload((current) => {
+      if (!current) {
+        return current;
+      }
+
+      const { fileType, importImmediately } = current;
+
+      window.setTimeout(() => {
+        if (importImmediately) {
+          feeFileInputRef.current?.click();
+          return;
+        }
+
+        allowFeeFilePickRef.current = true;
+        feeCardInputRefs.current[fileType]?.click();
+      }, 0);
+
+      return { ...current, pendingFees: fees };
+    });
+  }
+
+  async function handleFeeFileChosen(event) {
+    const file = event.target.files?.[0];
+
+    if (!file || !feeUpload) {
+      event.target.value = '';
+      return;
+    }
+
+    const { fileType, batchId: existingBatchId, pendingFees, importImmediately } = feeUpload;
+    setFeeUpload(null);
+
+    if (!importImmediately) {
+      setSelectedFiles((current) => ({
+        ...current,
+        [fileType]: file,
+      }));
+      setPendingFeeAmounts((current) => ({
+        ...current,
+        [fileType]: Array.isArray(pendingFees) ? pendingFees : [],
+      }));
+      return;
+    }
+
+    event.target.value = '';
+    setUploading(true);
+
+    try {
+      await importFeeWorkbook(file, fileType, pendingFees, existingBatchId);
+    } catch (error) {
+      showNotice('error', messageFromError(error, `Unable to upload ${FEE_WORKBOOK_TYPES[fileType].label}.`));
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function handleUploadClick() {
     if (!hasFiles) {
       showNotice('error', 'Choose at least one workbook before importing.');
       return;
     }
 
-    if (!weekRangeStart || !weekRangeEnd) {
-      showNotice('error', 'Select a week range before importing.');
-      return;
-    }
-
-    if (weekRangeStart > weekRangeEnd) {
-      showNotice('error', 'Week range start date must be on or before the end date.');
+    if (!requireWeekRange()) {
       return;
     }
 
@@ -1266,12 +1543,17 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
       }
     });
 
-    formData.append('week_start', weekRangeStart);
-    formData.append('week_ending', weekRangeEnd);
+    if (batchForWeek?.id) {
+      formData.append('import_batch_id', String(batchForWeek.id));
+    } else {
+      formData.append('week_start', weekRangeStart);
+      formData.append('week_ending', weekRangeEnd);
+    }
 
     setUploading(true);
 
-    const includedSalesAnalysis = Boolean(selectedFiles.sales_analysis);
+    const includedTypes = Object.keys(selectedFiles).filter((type) => selectedFiles[type]);
+    const amountsToSave = pendingFeeAmounts;
 
     try {
       const response = await axios.post('/api/workbook-imports', formData, {
@@ -1284,12 +1566,22 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
 
       setBatchId(nextBatchId);
       setSelectedFiles({});
-      showNotice('success', uploadSuccessMessage(result, nextBatchId, includedSalesAnalysis));
+      setPendingFeeAmounts({});
+      setFileInputResetKey((current) => current + 1);
+      showNotice('success', uploadSuccessMessage(result, nextBatchId, includedTypes.includes('sales_analysis')));
       await loadBatches();
 
-      if (shouldOpenUnmatchedModal(result, includedSalesAnalysis)) {
-        await openUnmatchedModal(nextBatchId);
-      } else if (includedSalesAnalysis) {
+      for (const fileType of includedTypes) {
+        if (isFeeWorkbookType(fileType) && Array.isArray(amountsToSave[fileType])) {
+          await saveFeeAmounts(nextBatchId, fileType, amountsToSave[fileType]);
+        }
+      }
+
+      const unmatchedQueue = unmatchedTypesFromResult(result, includedTypes);
+
+      if (unmatchedQueue.length > 0) {
+        await openUnmatchedModal(nextBatchId, unmatchedQueue);
+      } else if (includedTypes.some((type) => type === 'sales_analysis' || isFeeWorkbookType(type))) {
         await autoGenerateReports(nextBatchId);
       }
     } catch (error) {
@@ -1305,14 +1597,42 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
         <UnmatchedItemsModal
           batchId={unmatchedModal.batchId}
           categories={unmatchedModal.categories}
+          fileType={unmatchedModal.fileType}
+          fileTypeLabel={unmatchedModal.fileTypeLabel}
           itemGroups={unmatchedModal.itemGroups}
           loadBatches={loadBatches}
-          salesAnalysisFileId={unmatchedModal.salesAnalysisFileId}
+          uploadedFileId={unmatchedModal.uploadedFileId}
           showNotice={showNotice}
           onClose={closeUnmatchedModal}
-          onResolved={autoGenerateReports}
+          onResolved={(nextBatchId) => {
+            const remaining = unmatchedModal.remainingTypes ?? [];
+
+            if (remaining.length > 0) {
+              return openUnmatchedModal(nextBatchId, remaining);
+            }
+
+            return autoGenerateReports(nextBatchId);
+          }}
         />
       ) : null}
+      {feeUpload ? (
+        <MarketplaceFeeAmountsModal
+          initialFees={Array.isArray(feeUpload.initialFees) ? feeUpload.initialFees : []}
+          saving={false}
+          subtitle={FEE_WORKBOOK_TYPES[feeUpload.fileType].label}
+          title={`Manually inputted ${FEE_WORKBOOK_TYPES[feeUpload.fileType].label}`}
+          onAddLater={() => continueFeeFilePick(null)}
+          onClose={() => setFeeUpload(null)}
+          onNext={(fees) => continueFeeFilePick(fees)}
+        />
+      ) : null}
+      <input
+        accept=".xlsx"
+        hidden
+        ref={feeFileInputRef}
+        type="file"
+        onChange={handleFeeFileChosen}
+      />
     <section className="panel-grid">
       <article className="panel panel-span">
         <div className="section-heading">
@@ -1344,8 +1664,27 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
                 <span>{type.label}</span>
                 <input
                   accept=".xlsx"
+                  disabled={isUploadBusy}
+                  key={`${type.key}-${fileInputResetKey}`}
                   type="file"
+                  ref={isFeeWorkbookType(type.key) ? (element) => {
+                    feeCardInputRefs.current[type.key] = element;
+                  } : undefined}
+                  onClick={isFeeWorkbookType(type.key) ? (event) => {
+                    if (allowFeeFilePickRef.current) {
+                      allowFeeFilePickRef.current = false;
+                      return;
+                    }
+
+                    event.preventDefault();
+                    startFeeUpload(type.key);
+                  } : undefined}
                   onChange={(event) => {
+                    if (isFeeWorkbookType(type.key)) {
+                      handleFeeFileChosen(event);
+                      return;
+                    }
+
                     setSelectedFiles({
                       ...selectedFiles,
                       [type.key]: event.target.files?.[0] ?? null,
@@ -1401,6 +1740,7 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
             setBatchId={setBatchId}
             showNotice={showNotice}
             onGenerateReports={autoGenerateReports}
+            onStartFeeUpload={startFeeUpload}
             onUnmatchedItems={openUnmatchedModal}
           />
         ) : null}
@@ -1410,7 +1750,15 @@ function UploadScreen({ batchId, batches, batchesLoading, loadBatches, setBatchI
   );
 }
 
-function UploadedBatchesTable({ batches, loadBatches, onGenerateReports, onUnmatchedItems, setBatchId, showNotice }) {
+function UploadedBatchesTable({
+  batches,
+  loadBatches,
+  onGenerateReports,
+  onStartFeeUpload,
+  onUnmatchedItems,
+  setBatchId,
+  showNotice,
+}) {
   const [uploadingCell, setUploadingCell] = useState('');
   const [reclassifyingBatchId, setReclassifyingBatchId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -1437,15 +1785,15 @@ function UploadedBatchesTable({ batches, loadBatches, onGenerateReports, onUnmat
       const nextBatchId = String(result.import_batch.id);
 
       setBatchId(nextBatchId);
-      const successMessage = fileType === 'sales_analysis'
-        ? uploadSuccessMessage(result, nextBatchId, true)
+      const successMessage = fileType === 'sales_analysis' || isFeeWorkbookType(fileType)
+        ? uploadSuccessMessage(result, nextBatchId, fileType === 'sales_analysis')
         : `${fileTypeLabel} imported into batch #${nextBatchId}.`;
       showNotice('success', successMessage);
       await loadBatches();
 
-      if (fileType === 'sales_analysis') {
-        if (shouldOpenUnmatchedModal(result, true)) {
-          await onUnmatchedItems?.(nextBatchId);
+      if (fileType === 'sales_analysis' || isFeeWorkbookType(fileType)) {
+        if (shouldOpenUnmatchedModal(result, [fileType])) {
+          await onUnmatchedItems?.(nextBatchId, fileType);
         } else {
           await onGenerateReports?.(nextBatchId);
         }
@@ -1572,7 +1920,10 @@ function UploadedBatchesTable({ batches, loadBatches, onGenerateReports, onUnmat
                           </button>
                         </>
                       ) : (
-                        <span className={`import-status ${importStatusClass(status)}`}>
+                        <span
+                          className={`import-status ${importStatusClass(status)}`}
+                          title={validationErrorTitle(uploaded)}
+                        >
                           {formatImportStatus(status)}
                         </span>
                       )}
@@ -1584,7 +1935,14 @@ function UploadedBatchesTable({ batches, loadBatches, onGenerateReports, onUnmat
                             disabled={isUploading}
                             title={isUploading ? `Uploading ${type.label}...` : `Upload ${type.label}`}
                             type="button"
-                            onClick={() => fileInputRefs.current[cellKey]?.click()}
+                            onClick={() => {
+                              if (isFeeWorkbookType(type.key)) {
+                                onStartFeeUpload?.(type.key, batch.id);
+                                return;
+                              }
+
+                              fileInputRefs.current[cellKey]?.click();
+                            }}
                           >
                             {isUploading ? <LoadingSpinner /> : <ActionIcon name="upload" />}
                           </button>
@@ -2158,7 +2516,8 @@ function hasFailedReports(reports) {
 
 const REPORT_TYPE_LABELS = {
   sales_analysis: 'Sales Analysis',
-  total_sales_report: 'Total Sales Report',
+  amazon_fees: 'Amazon Fees',
+  walmart_fees: 'Walmart Fees',
   weekly_meter_report: 'Meter Report',
 };
 
@@ -2178,14 +2537,31 @@ function failedReportDetails(reports) {
     .join(' | ');
 }
 
-function shouldOpenUnmatchedModal(result, salesAnalysisIncluded) {
+function shouldOpenUnmatchedModal(result, includedTypes = []) {
+  const types = Array.isArray(includedTypes) ? includedTypes : (includedTypes ? ['sales_analysis'] : []);
+  const byType = result?.summary?.classification?.reconcilable_unmatched_by_type;
+
+  if (byType) {
+    return types.some((type) => (byType[type] ?? 0) > 0);
+  }
+
   const reconcilableUnmatched = result?.summary?.classification?.reconcilable_unmatched;
 
   if (typeof reconcilableUnmatched === 'number') {
-    return Boolean(salesAnalysisIncluded && reconcilableUnmatched > 0);
+    return Boolean(types.includes('sales_analysis') && reconcilableUnmatched > 0);
   }
 
-  return Boolean(salesAnalysisIncluded && (result?.summary?.classification?.unmatched ?? 0) > 0);
+  return Boolean(types.includes('sales_analysis') && (result?.summary?.classification?.unmatched ?? 0) > 0);
+}
+
+function unmatchedFileTypeFromResult(result, includedTypes = []) {
+  return unmatchedTypesFromResult(result, includedTypes)[0] ?? includedTypes[0] ?? 'sales_analysis';
+}
+
+function unmatchedTypesFromResult(result, includedTypes = []) {
+  const byType = result?.summary?.classification?.reconcilable_unmatched_by_type ?? {};
+
+  return includedTypes.filter((type) => (byType[type] ?? 0) > 0);
 }
 
 function uploadSuccessMessage(result, batchId, salesAnalysisIncluded = false) {
@@ -2203,21 +2579,25 @@ function uploadSuccessMessage(result, batchId, salesAnalysisIncluded = false) {
   return message;
 }
 
-async function fetchUnmatchedModalData(batchId) {
+async function fetchUnmatchedModalData(batchId, fileType = 'sales_analysis') {
   const [groupsResponse, categoriesResponse, batchResponse] = await Promise.all([
-    axios.get(`/api/import-batches/${batchId}/unmatched-item-groups`),
+    axios.get(`/api/import-batches/${batchId}/unmatched-item-groups`, {
+      params: { file_type: fileType },
+    }),
     axios.get('/api/product-categories'),
     axios.get(`/api/import-batches/${batchId}`),
   ]);
 
-  const salesAnalysisFile = (batchResponse.data.data?.uploaded_files ?? []).find(
-    (file) => file.file_type === 'sales_analysis',
+  const uploadedFile = (batchResponse.data.data?.uploaded_files ?? []).find(
+    (file) => file.file_type === fileType,
   );
 
   return {
     itemGroups: groupsResponse.data.data ?? [],
     categories: categoriesResponse.data.data ?? [],
-    salesAnalysisFileId: salesAnalysisFile?.id ?? null,
+    uploadedFileId: uploadedFile?.id ?? null,
+    fileType,
+    fileTypeLabel: REPORT_TYPE_LABELS[fileType] ?? fileType,
   };
 }
 
@@ -2321,7 +2701,9 @@ function UnmatchedItemsModal({
   loadBatches,
   onClose,
   onResolved,
-  salesAnalysisFileId: initialSalesAnalysisFileId,
+  uploadedFileId: initialUploadedFileId,
+  fileType = 'sales_analysis',
+  fileTypeLabel = 'Sales Analysis',
   showNotice,
 }) {
   const emptyCategoryForm = {
@@ -2348,7 +2730,7 @@ function UnmatchedItemsModal({
   const [createCategoryForm, setCreateCategoryForm] = useState(emptyCategoryForm);
   const [createCategoryForItemId, setCreateCategoryForItemId] = useState('');
   const [creatingCategory, setCreatingCategory] = useState(false);
-  const [salesAnalysisFileId, setSalesAnalysisFileId] = useState(initialSalesAnalysisFileId);
+  const [uploadedFileId, setUploadedFileId] = useState(initialUploadedFileId);
   const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
   const [discardingUpload, setDiscardingUpload] = useState(false);
   const [createRuleForm, setCreateRuleForm] = useState(emptyMappingRuleForm());
@@ -2490,12 +2872,12 @@ function UnmatchedItemsModal({
       showNoticeRef.current('success', 'Mapping rule created.');
 
       await axios.post(`/api/import-batches/${batchId}/classify-sales-rows`);
-      const data = await fetchUnmatchedModalData(batchId);
+      const data = await fetchUnmatchedModalData(batchId, fileType);
       const nextGroups = data.itemGroups ?? [];
 
       setItemGroups(nextGroups);
       setCategories(data.categories ?? []);
-      setSalesAnalysisFileId(data.salesAnalysisFileId ?? null);
+      setUploadedFileId(data.uploadedFileId ?? null);
       pruneResolutionsForItemIds(nextGroups.map((group) => group.item_id));
       setCreateRuleForm(emptyMappingRuleForm());
 
@@ -2521,7 +2903,7 @@ function UnmatchedItemsModal({
         await loadBatches?.();
         showNoticeRef.current(
           'error',
-          'This Sales Analysis upload is no longer available. It may have been discarded. Please upload it again.',
+          `This ${fileTypeLabel} upload is no longer available. It may have been discarded. Please upload it again.`,
         );
         onClose();
       } else {
@@ -2541,6 +2923,7 @@ function UnmatchedItemsModal({
 
     try {
       const payload = {
+        file_type: fileType,
         resolutions: itemGroups.map((group) => {
           if (noCategoryAssignments[group.item_id]) {
             return {
@@ -2575,7 +2958,7 @@ function UnmatchedItemsModal({
         await loadBatches?.();
         showNoticeRef.current(
           'error',
-          'This Sales Analysis upload is no longer available. It may have been discarded. Please upload it again.',
+          `This ${fileTypeLabel} upload is no longer available. It may have been discarded. Please upload it again.`,
         );
         onClose();
       } else {
@@ -2595,8 +2978,8 @@ function UnmatchedItemsModal({
   }
 
   async function confirmDiscardUpload() {
-    if (!salesAnalysisFileId) {
-      showNoticeRef.current('error', 'Unable to discard upload because the Sales Analysis file was not found.');
+    if (!uploadedFileId) {
+      showNoticeRef.current('error', `Unable to discard upload because the ${fileTypeLabel} file was not found.`);
       setIsCloseConfirmOpen(false);
       return;
     }
@@ -2604,10 +2987,10 @@ function UnmatchedItemsModal({
     setDiscardingUpload(true);
 
     try {
-      await axios.delete(`/api/uploaded-files/${salesAnalysisFileId}`);
+      await axios.delete(`/api/uploaded-files/${uploadedFileId}`);
       await loadBatches?.();
       clearReconcileSession();
-      showNoticeRef.current('success', 'Sales Analysis upload discarded.');
+      showNoticeRef.current('success', `${fileTypeLabel} upload discarded.`);
       setIsCloseConfirmOpen(false);
       onClose();
     } catch (error) {
@@ -4218,8 +4601,8 @@ function DashboardScreen({ showNotice, onOpenCalendar, onOpenMeterReport }) {
                             <th className="dashboard-num">Sales Analysis (week)</th>
                             <th className="dashboard-num">Sales Analysis (MTD)</th>
                             <th className="dashboard-num">Meter Sales</th>
-                            <th className="dashboard-num">Income Statement</th>
-                            <th className="dashboard-num">Difference</th>
+                            <th className="dashboard-num">Amazon Fees</th>
+                            <th className="dashboard-num">Walmart Fees</th>
                             <th className="dashboard-num">Unmatched</th>
                             <th>Status</th>
                           </tr>
@@ -4234,10 +4617,14 @@ function DashboardScreen({ showNotice, onOpenCalendar, onOpenMeterReport }) {
                               <td className="dashboard-num">{week.has_data ? currency(week.sales_analysis_mtd) : '—'}</td>
                               <td className="dashboard-num">{week.meter_sales === null ? '—' : currency(week.meter_sales)}</td>
                               <td className="dashboard-num">
-                                {week.reconciliation ? currency(week.reconciliation.income_statement_total) : '—'}
+                                {week.amazon_fees_total === null || week.amazon_fees_total === undefined
+                                  ? '—'
+                                  : currency(week.amazon_fees_total)}
                               </td>
                               <td className="dashboard-num">
-                                {week.reconciliation ? currency(week.reconciliation.difference) : '—'}
+                                {week.walmart_fees_total === null || week.walmart_fees_total === undefined
+                                  ? '—'
+                                  : currency(week.walmart_fees_total)}
                               </td>
                               <td className="dashboard-num">{week.unmatched_rows ?? '—'}</td>
                               <td>
@@ -4298,6 +4685,8 @@ function DashboardScreen({ showNotice, onOpenCalendar, onOpenMeterReport }) {
 const CALENDAR_REPORT_ROWS = [
   { type: 'sales_analysis', label: 'Sales Analysis' },
   { type: 'weekly_meter_report', label: 'Meter Report' },
+  { type: 'amazon_fees', label: 'Amazon Fees' },
+  { type: 'walmart_fees', label: 'Walmart Fees' },
 ];
 
 const CALENDAR_WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -4737,6 +5126,7 @@ function ReportCalendarScreen({ initialMonth, showNotice, onMonthChange, onOpenM
 
         {selectedWeek ? (
           <CalendarWeekModal
+            showNotice={showNotice}
             week={selectedWeek}
             onClose={() => setSelectedWeekId(null)}
             onOpenMeterReport={(targetYear, targetMonth) => {
@@ -4760,11 +5150,58 @@ function ReportCalendarScreen({ initialMonth, showNotice, onMonthChange, onOpenM
   );
 }
 
-function CalendarWeekModal({ week, onClose, onOpenMeterReport, onOpenSalesAnalysis }) {
+function CalendarWeekModal({ week, showNotice, onClose, onOpenMeterReport, onOpenSalesAnalysis }) {
   const meterMonthLabel = `${monthNames[week.meter_month - 1]} ${week.meter_year}`;
   const hasAnyReport = calendarWeekReadyReportCount(week) > 0;
+  const [feeEditor, setFeeEditor] = useState(null);
+  const [savingFees, setSavingFees] = useState(false);
+  const [editorFees, setEditorFees] = useState([]);
+
+  const visibleRows = CALENDAR_REPORT_ROWS.filter((row) => {
+    if (!isFeeWorkbookType(row.type)) {
+      return true;
+    }
+
+    return week.reports.some(
+      (candidate) => candidate.report_type === row.type && candidate.status === 'completed',
+    );
+  });
+
+  async function openFeeEditor(fileType) {
+    try {
+      const response = await axios.get(`/api/import-batches/${week.id}/fee-adjustments`, {
+        params: { marketplace: FEE_WORKBOOK_TYPES[fileType].marketplace },
+      });
+      setEditorFees(response.data.data ?? []);
+      setFeeEditor(fileType);
+    } catch (error) {
+      showNotice?.('error', messageFromError(error, 'Unable to load fee amounts.'));
+    }
+  }
+
+  async function saveFeeEditor(fees) {
+    if (!feeEditor) {
+      return;
+    }
+
+    setSavingFees(true);
+
+    try {
+      await axios.put(`/api/import-batches/${week.id}/fee-adjustments`, {
+        marketplace: FEE_WORKBOOK_TYPES[feeEditor].marketplace,
+        fees,
+      });
+      showNotice?.('success', `${FEE_WORKBOOK_TYPES[feeEditor].label} amounts saved.`);
+      setFeeEditor(null);
+    } catch (error) {
+      showNotice?.('error', messageFromError(error, 'Unable to save fee amounts.'));
+    } finally {
+      setSavingFees(false);
+    }
+  }
 
   return (
+    <>
     <Modal className="modal-card-calendar" eyebrow="Week Reports" title={formatWeekRange(week.week_start, week.week_ending)} onClose={onClose}>
       <div className="table-wrap">
         <table className="calendar-reports-table">
@@ -4776,10 +5213,11 @@ function CalendarWeekModal({ week, onClose, onOpenMeterReport, onOpenSalesAnalys
             </tr>
           </thead>
           <tbody>
-            {CALENDAR_REPORT_ROWS.map((row) => {
+            {visibleRows.map((row) => {
               const report = week.reports.find((candidate) => candidate.report_type === row.type);
               const isReady = report?.status === 'completed';
               const isMeter = row.type === 'weekly_meter_report';
+              const isFees = isFeeWorkbookType(row.type);
 
               return (
                 <tr key={row.type}>
@@ -4791,18 +5229,29 @@ function CalendarWeekModal({ week, onClose, onOpenMeterReport, onOpenSalesAnalys
                   </td>
                   <td>
                     {isReady ? (
-                      <button
-                        className="secondary-button"
-                        title={isMeter ? `Open the Meter Report for ${meterMonthLabel}` : undefined}
-                        type="button"
-                        onClick={() =>
-                          isMeter
-                            ? onOpenMeterReport(week.meter_year, week.meter_month)
-                            : onOpenSalesAnalysis(report.id)
-                        }
-                      >
-                        <ButtonContent icon="eye">View</ButtonContent>
-                      </button>
+                      <div className="form-actions">
+                        <button
+                          className="secondary-button"
+                          title={isMeter ? `Open the Meter Report for ${meterMonthLabel}` : undefined}
+                          type="button"
+                          onClick={() =>
+                            isMeter
+                              ? onOpenMeterReport(week.meter_year, week.meter_month)
+                              : onOpenSalesAnalysis(report.id)
+                          }
+                        >
+                          <ButtonContent icon="eye">View</ButtonContent>
+                        </button>
+                        {isFees ? (
+                          <button
+                            className="secondary-button"
+                            type="button"
+                            onClick={() => openFeeEditor(row.type)}
+                          >
+                            Edit amounts
+                          </button>
+                        ) : null}
+                      </div>
                     ) : (
                       <span className="exports-details-unavailable">
                         {report?.status === 'failed' ? 'Failed' : 'Not generated'}
@@ -4823,6 +5272,19 @@ function CalendarWeekModal({ week, onClose, onOpenMeterReport, onOpenSalesAnalys
         </p>
       )}
     </Modal>
+    {feeEditor ? (
+      <MarketplaceFeeAmountsModal
+        initialFees={editorFees}
+        saving={savingFees}
+        showAddLater={false}
+        subtitle={FEE_WORKBOOK_TYPES[feeEditor].label}
+        title={`Manually inputted ${FEE_WORKBOOK_TYPES[feeEditor].label}`}
+        onAddLater={() => setFeeEditor(null)}
+        onClose={() => setFeeEditor(null)}
+        onNext={saveFeeEditor}
+      />
+    ) : null}
+    </>
   );
 }
 
@@ -5782,6 +6244,12 @@ function SalesAnalysisReportScreen({ reportId, showNotice, onLoaded, onBack }) {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [activeSheetIndex, setActiveSheetIndex] = useState(0);
+  const [feeEditorOpen, setFeeEditorOpen] = useState(false);
+  const [editorFees, setEditorFees] = useState([]);
+  const [savingFees, setSavingFees] = useState(false);
+  const reportType = preview?.report?.report_type;
+  const isFeesReport = isFeeWorkbookType(reportType);
+  const reportTypeLabel = REPORT_TYPE_LABELS[reportType] ?? 'Report';
 
   useEffect(() => {
     let cancelled = false;
@@ -5801,7 +6269,7 @@ function SalesAnalysisReportScreen({ reportId, showNotice, onLoaded, onBack }) {
       })
       .catch((error) => {
         if (!cancelled) {
-          const message = messageFromError(error, 'Unable to load this Sales Analysis.');
+          const message = messageFromError(error, 'Unable to load this report.');
 
           setErrorMessage(message);
           showNotice('error', message);
@@ -5822,6 +6290,41 @@ function SalesAnalysisReportScreen({ reportId, showNotice, onLoaded, onBack }) {
   const sheets = preview?.sheets ?? [];
   const activeSheet = sheets[activeSheetIndex] ?? sheets[0] ?? null;
   const generatedAt = report?.generated_at ? new Date(report.generated_at).toLocaleString() : null;
+
+  useEffect(() => {
+    if (isFeesReport) {
+      setHiddenColumns([]);
+    } else if (reportType === 'sales_analysis') {
+      setHiddenColumns(loadSalesAnalysisHiddenColumns());
+    }
+  }, [isFeesReport, reportType]);
+
+  async function saveFeeEditor(fees) {
+    const batchId = report?.import_batch?.id;
+
+    if (!isFeesReport || !batchId) {
+      return;
+    }
+
+    setSavingFees(true);
+
+    try {
+      await axios.put(`/api/import-batches/${batchId}/fee-adjustments`, {
+        marketplace: FEE_WORKBOOK_TYPES[reportType].marketplace,
+        fees,
+      });
+      showNotice('success', `${reportTypeLabel} amounts saved. Reloading report...`);
+      setFeeEditorOpen(false);
+
+      const response = await axios.get(`/api/generated-reports/${reportId}/preview`);
+      setPreview(response.data.data);
+      onLoaded?.(response.data.data?.report);
+    } catch (error) {
+      showNotice('error', messageFromError(error, 'Unable to save fee amounts.'));
+    } finally {
+      setSavingFees(false);
+    }
+  }
 
   const columns = useMemo(() => {
     if (!activeSheet) {
@@ -5849,15 +6352,16 @@ function SalesAnalysisReportScreen({ reportId, showNotice, onLoaded, onBack }) {
   }
 
   return (
+    <>
     <section className="panel-grid">
       <article className="panel panel-span panel-legend">
-        <p className="eyebrow">Sales Analysis</p>
+        <p className="eyebrow">{reportTypeLabel}</p>
         <div className="section-heading">
           <div>
             <h2>
               {report
                 ? formatWeekRange(report.import_batch.week_start, report.import_batch.week_ending)
-                : 'Sales Analysis'}
+                : reportTypeLabel}
             </h2>
             {report ? (
               <p className="sa-report-meta">
@@ -5870,6 +6374,25 @@ function SalesAnalysisReportScreen({ reportId, showNotice, onLoaded, onBack }) {
             <button className="secondary-button" type="button" onClick={onBack}>
               <ButtonContent icon="back">Back to Calendar</ButtonContent>
             </button>
+            {isFeesReport ? (
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={async () => {
+                  try {
+                    const response = await axios.get(`/api/import-batches/${report.import_batch.id}/fee-adjustments`, {
+                      params: { marketplace: FEE_WORKBOOK_TYPES[reportType].marketplace },
+                    });
+                    setEditorFees(response.data.data ?? []);
+                    setFeeEditorOpen(true);
+                  } catch (error) {
+                    showNotice('error', messageFromError(error, 'Unable to load fee amounts.'));
+                  }
+                }}
+              >
+                Edit amounts
+              </button>
+            ) : null}
             {report ? (
               <a className="secondary-button" href={`/api/generated-reports/${report.id}/download`}>
                 <ButtonContent icon="download">Download</ButtonContent>
@@ -5878,13 +6401,13 @@ function SalesAnalysisReportScreen({ reportId, showNotice, onLoaded, onBack }) {
           </div>
         </div>
 
-        {loading ? <p>Loading Sales Analysis...</p> : null}
+        {loading ? <p>Loading {reportTypeLabel}...</p> : null}
         {!loading && errorMessage ? <p className="sa-report-error">{errorMessage}</p> : null}
 
         {!loading && activeSheet ? (
           <>
             <div className="sa-toolbar">
-              <div className="sa-tabs" role="tablist" aria-label="Sales Analysis sheets">
+              <div className="sa-tabs" role="tablist" aria-label={`${reportTypeLabel} sheets`}>
                 {sheets.map((sheet, index) => (
                   <button
                     aria-selected={sheet === activeSheet}
@@ -5898,11 +6421,13 @@ function SalesAnalysisReportScreen({ reportId, showNotice, onLoaded, onBack }) {
                   </button>
                 ))}
               </div>
-              <SalesAnalysisColumnPicker
-                columns={columns}
-                hiddenColumns={hiddenColumns}
-                onChange={updateHiddenColumns}
-              />
+              {isFeesReport ? null : (
+                <SalesAnalysisColumnPicker
+                  columns={columns}
+                  hiddenColumns={hiddenColumns}
+                  onChange={updateHiddenColumns}
+                />
+              )}
             </div>
             <SalesAnalysisSheetTable
               hiddenColumns={hiddenColumns}
@@ -5913,6 +6438,19 @@ function SalesAnalysisReportScreen({ reportId, showNotice, onLoaded, onBack }) {
         ) : null}
       </article>
     </section>
+    {feeEditorOpen ? (
+      <MarketplaceFeeAmountsModal
+        initialFees={editorFees}
+        saving={savingFees}
+        showAddLater={false}
+        subtitle={reportTypeLabel}
+        title={`Manually inputted ${reportTypeLabel}`}
+        onAddLater={() => setFeeEditorOpen(false)}
+        onClose={() => setFeeEditorOpen(false)}
+        onNext={saveFeeEditor}
+      />
+    ) : null}
+    </>
   );
 }
 
@@ -6085,6 +6623,14 @@ function formatImportStatus(status) {
   }
 
   return status.replace(/_/g, ' ');
+}
+
+function validationErrorTitle(uploaded) {
+  const errors = (uploaded?.validation_errors ?? [])
+    .map((error) => error?.message)
+    .filter(Boolean);
+
+  return errors.length > 0 ? errors.join('\n') : undefined;
 }
 
 function truncateFileName(filename, maxLength = 10) {

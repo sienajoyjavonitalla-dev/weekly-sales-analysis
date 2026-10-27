@@ -90,6 +90,8 @@ class DashboardApiTest extends TestCase
         $this->assertEqualsWithDelta(2500.0, $data['weeks'][1]['sales_analysis_weekly'], 0.001);
         $this->assertEqualsWithDelta(3500.0, $data['weeks'][1]['sales_analysis_mtd'], 0.001);
         $this->assertSame(1, $data['weeks'][1]['unmatched_rows']);
+        $this->assertEqualsWithDelta(0.0, $data['weeks'][1]['amazon_fees_total'], 0.001);
+        $this->assertEqualsWithDelta(0.0, $data['weeks'][1]['walmart_fees_total'], 0.001);
         $this->assertTrue($data['weeks'][1]['reconciliation']['is_balanced']);
         $this->assertNull($data['weeks'][0]['reconciliation']);
         $this->assertFalse($data['weeks'][2]['has_data']);

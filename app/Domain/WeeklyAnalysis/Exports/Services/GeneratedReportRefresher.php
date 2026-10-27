@@ -3,6 +3,7 @@
 namespace App\Domain\WeeklyAnalysis\Exports\Services;
 
 use App\Domain\WeeklyAnalysis\Classification\Services\SalesRowClassifier;
+use App\Domain\WeeklyAnalysis\Imports\Enums\WorkbookType;
 use App\Domain\WeeklyAnalysis\Reconciliation\Services\WeeklyReconciliationService;
 use App\Models\ImportBatch;
 use Throwable;
@@ -18,6 +19,7 @@ class GeneratedReportRefresher
         private readonly SalesRowClassifier $classifier,
         private readonly WeeklyReconciliationService $reconciliationService,
         private readonly SalesAnalysisWorkbookExporter $salesAnalysisExporter,
+        private readonly MarketplaceFeesWorkbookExporter $marketplaceFeesExporter,
         private readonly WeeklyMeterReportExporter $weeklyMeterReportExporter,
     ) {
     }
@@ -29,7 +31,7 @@ class GeneratedReportRefresher
     {
         $batches = ImportBatch::query()
             ->whereHas('generatedReports', fn ($query) => $query
-                ->where('report_type', 'sales_analysis')
+                ->whereIn('report_type', ['sales_analysis', 'amazon_fees', 'walmart_fees'])
                 ->where('status', 'completed'))
             ->with('generatedReports')
             ->orderBy('week_ending')
@@ -81,6 +83,12 @@ class GeneratedReportRefresher
 
         if ($batch->generatedReports->contains('report_type', 'weekly_meter_report')) {
             $this->weeklyMeterReportExporter->export($batch->refresh(), $generatedByUserId);
+        }
+
+        foreach ([WorkbookType::AmazonFees, WorkbookType::WalmartFees] as $feesType) {
+            if ($this->marketplaceFeesExporter->hasUploadedFile($batch, $feesType)) {
+                $this->marketplaceFeesExporter->export($batch->refresh(), $feesType, $generatedByUserId);
+            }
         }
     }
 }

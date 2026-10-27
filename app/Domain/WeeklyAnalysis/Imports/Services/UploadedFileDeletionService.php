@@ -56,7 +56,7 @@ class UploadedFileDeletionService
     {
         $files = UploadedFile::query()
             ->with('importBatch')
-            ->where('file_type', 'sales_analysis')
+            ->whereIn('file_type', ['sales_analysis', 'amazon_fees', 'walmart_fees'])
             ->where('status', 'pending_reconcile')
             ->whereHas('importBatch', function ($query) use ($user): void {
                 $query
@@ -92,8 +92,17 @@ class UploadedFileDeletionService
 
     public function confirmSalesAnalysisReconcile(ImportBatch $importBatch): void
     {
+        $this->confirmPendingReconcile($importBatch, 'sales_analysis');
+    }
+
+    public function confirmPendingReconcile(ImportBatch $importBatch, ?string $fileType = null): void
+    {
         $importBatch->uploadedFiles()
-            ->where('file_type', 'sales_analysis')
+            ->when(
+                $fileType !== null,
+                fn ($query) => $query->where('file_type', $fileType),
+                fn ($query) => $query->whereIn('file_type', ['sales_analysis', 'amazon_fees', 'walmart_fees']),
+            )
             ->where('status', 'pending_reconcile')
             ->update(['status' => 'imported']);
     }

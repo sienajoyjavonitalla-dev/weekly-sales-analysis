@@ -23,8 +23,14 @@ class BatchClassificationController
 
         $summary = $classifier->classifyBatch($importBatch);
 
+        foreach ($summary['reconcilable_unmatched_by_type'] ?? [] as $fileType => $unmatched) {
+            if ((int) $unmatched === 0) {
+                $deletionService->confirmPendingReconcile($importBatch, $fileType);
+            }
+        }
+
         if (($summary['reconcilable_unmatched'] ?? 0) === 0) {
-            $deletionService->confirmSalesAnalysisReconcile($importBatch);
+            $deletionService->confirmPendingReconcile($importBatch);
         }
 
         $auditLogger->log('sales_rows.classified', $request, $importBatch, $importBatch, $summary);

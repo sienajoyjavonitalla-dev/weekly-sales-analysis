@@ -115,13 +115,6 @@ class WeeklyReconciliationService
             ];
         }
 
-        if ($incomeStatementTotal === 0.0) {
-            $messages[] = [
-                'severity' => 'warning',
-                'message' => 'Income Statement total revenue is zero or missing.',
-            ];
-        }
-
         return $messages;
     }
 }

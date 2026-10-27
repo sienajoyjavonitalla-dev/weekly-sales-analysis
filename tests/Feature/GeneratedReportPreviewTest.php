@@ -92,7 +92,7 @@ class GeneratedReportPreviewTest extends TestCase
 
         $report = GeneratedReport::query()->create([
             'import_batch_id' => $batch->id,
-            'report_type' => 'total_sales_report',
+            'report_type' => 'weekly_meter_report',
             'status' => 'completed',
             'file_name' => 'x.xlsx',
             'storage_path' => 'generated-reports/x.xlsx',

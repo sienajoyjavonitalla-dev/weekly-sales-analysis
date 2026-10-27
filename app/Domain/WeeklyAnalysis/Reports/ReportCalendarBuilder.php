@@ -4,6 +4,7 @@ namespace App\Domain\WeeklyAnalysis\Reports;
 
 use App\Models\GeneratedReport;
 use App\Models\ImportBatch;
+use App\Models\ImportBatchFeeAdjustment;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -12,7 +13,7 @@ class ReportCalendarBuilder
     /**
      * Report types listed in the calendar popup, in display order.
      */
-    private const REPORT_TYPES = ['sales_analysis', 'weekly_meter_report'];
+    private const REPORT_TYPES = ['sales_analysis', 'weekly_meter_report', 'amazon_fees', 'walmart_fees'];
 
     public function __construct(
         private readonly WeeklyMeterReportBuilder $meterReportBuilder,
@@ -31,6 +32,8 @@ class ReportCalendarBuilder
         // so weeks overlapping those padding days are included as well.
         $rangeStart = $monthStart->subDays(6);
         $rangeEnd = $monthEnd->addDays(6);
+
+        $feeTotals = $this->feeTotalsByBatch();
 
         $batches = ImportBatch::query()
             ->has('uploadedFiles')
@@ -72,7 +75,7 @@ class ReportCalendarBuilder
                     'report_type' => $reportType,
                     'status' => $report->status,
                     'total' => $completed
-                        ? $this->total($reportType, $batch, $meterTotalsByMonth[$meterKey])
+                        ? $this->total($reportType, $batch, $meterTotalsByMonth[$meterKey], $feeTotals)
                         : null,
                 ];
             }
@@ -152,8 +155,9 @@ class ReportCalendarBuilder
 
     /**
      * @param  array<int, float|null>  $meterTotals
+     * @param  array<int, array{amazon:float, walmart:float}>  $feeTotals
      */
-    private function total(string $reportType, ImportBatch $batch, array $meterTotals): ?float
+    private function total(string $reportType, ImportBatch $batch, array $meterTotals, array $feeTotals): ?float
     {
         if ($reportType === 'sales_analysis') {
             $total = $batch->reconciliationResult?->sales_analysis_total;
@@ -161,7 +165,39 @@ class ReportCalendarBuilder
             return $total === null ? null : round((float) $total, 2);
         }
 
+        if ($reportType === 'amazon_fees') {
+            return $feeTotals[$batch->id]['amazon'] ?? 0.0;
+        }
+
+        if ($reportType === 'walmart_fees') {
+            return $feeTotals[$batch->id]['walmart'] ?? 0.0;
+        }
+
         return $meterTotals[$batch->id] ?? null;
+    }
+
+    /**
+     * @return array<int, array{amazon:float, walmart:float}>
+     */
+    private function feeTotalsByBatch(): array
+    {
+        $rows = ImportBatchFeeAdjustment::query()
+            ->selectRaw('import_batch_id, marketplace, SUM(amount) as amount')
+            ->groupBy('import_batch_id', 'marketplace')
+            ->get();
+
+        $totals = [];
+
+        foreach ($rows as $row) {
+            $batchId = (int) $row->import_batch_id;
+            $totals[$batchId] ??= ['amazon' => 0.0, 'walmart' => 0.0];
+
+            if ($row->marketplace === 'amazon' || $row->marketplace === 'walmart') {
+                $totals[$batchId][$row->marketplace] = round((float) $row->amount, 2);
+            }
+        }
+
+        return $totals;
     }
 
     /**

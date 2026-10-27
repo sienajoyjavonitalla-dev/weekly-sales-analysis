@@ -8,11 +8,9 @@ use App\Domain\WeeklyAnalysis\Classification\Services\SalesRowClassifier;
 use App\Domain\WeeklyAnalysis\Imports\Contracts\WorkbookParser;
 use App\Domain\WeeklyAnalysis\Imports\Data\ParsedWorkbook;
 use App\Domain\WeeklyAnalysis\Imports\Enums\WorkbookType;
-use App\Domain\WeeklyAnalysis\Imports\Parsers\IncomeStatementWorkbookParser;
-use App\Domain\WeeklyAnalysis\Imports\Parsers\OpenOrdersWorkbookParser;
-use App\Domain\WeeklyAnalysis\Imports\Parsers\PtdOrdersWorkbookParser;
+use App\Domain\WeeklyAnalysis\Imports\Parsers\AmazonFeesWorkbookParser;
 use App\Domain\WeeklyAnalysis\Imports\Parsers\SalesAnalysisWorkbookParser;
-use App\Domain\WeeklyAnalysis\Imports\Parsers\TotalSalesReportWorkbookParser;
+use App\Domain\WeeklyAnalysis\Imports\Parsers\WalmartFeesWorkbookParser;
 use App\Domain\WeeklyAnalysis\Imports\Parsers\WeeklyMeterReportWorkbookParser;
 use App\Models\ImportBatch;
 use App\Models\IncomeStatementLine;
@@ -41,11 +39,9 @@ class WorkbookImportService
     ) {
         $this->parsers = $this->buildParserMap([
             new SalesAnalysisWorkbookParser(),
-            new IncomeStatementWorkbookParser(),
-            new TotalSalesReportWorkbookParser(),
+            new AmazonFeesWorkbookParser(),
+            new WalmartFeesWorkbookParser(),
             new WeeklyMeterReportWorkbookParser(),
-            new OpenOrdersWorkbookParser(),
-            new PtdOrdersWorkbookParser(),
         ]);
     }
 
@@ -76,8 +72,7 @@ class WorkbookImportService
 
             $uploadedFiles = [];
             $summary = [];
-            $classifiedSalesRows = false;
-            $salesAnalysisUploadedFile = null;
+            $classifiableUploadedFiles = [];
 
             foreach ($files as $type => $file) {
                 $parsed = $this->parsers[$type]->parse($file->getRealPath());
@@ -86,20 +81,27 @@ class WorkbookImportService
                 $this->clearPreviousRows($uploadedFile);
                 $summary[$type] = $this->persistParsedRows($importBatch, $uploadedFile, $parsed);
 
-                if ($type === WorkbookType::SalesAnalysis->value && $parsed->isValid()) {
-                    $classifiedSalesRows = true;
-                    $salesAnalysisUploadedFile = $uploadedFile;
+                $workbookType = WorkbookType::from($type);
+
+                if ($workbookType->isClassifiable() && $parsed->isValid()) {
+                    $classifiableUploadedFiles[$type] = $uploadedFile;
                 }
 
                 $uploadedFiles[] = $uploadedFile->refresh();
             }
 
-            if ($classifiedSalesRows) {
+            if ($classifiableUploadedFiles !== []) {
                 $summary['classification'] = $this->salesRowClassifier->classifyBatch($importBatch);
 
-                if (($summary['classification']['reconcilable_unmatched'] ?? 0) > 0 && $salesAnalysisUploadedFile !== null) {
-                    $salesAnalysisUploadedFile->update(['status' => 'pending_reconcile']);
-                    $salesAnalysisUploadedFile->refresh();
+                foreach ($classifiableUploadedFiles as $type => $uploadedFile) {
+                    $unmatched = $summary['classification']['reconcilable_unmatched_by_type'][$type]
+                        ?? $summary['classification']['reconcilable_unmatched']
+                        ?? 0;
+
+                    if ($unmatched > 0) {
+                        $uploadedFile->update(['status' => 'pending_reconcile']);
+                        $uploadedFile->refresh();
+                    }
                 }
             }
 
@@ -217,7 +219,9 @@ class WorkbookImportService
         }
 
         return match ($parsed->type) {
-            WorkbookType::SalesAnalysis => ['imported_rows' => $this->persistSalesRows($importBatch, $uploadedFile, $parsed)],
+            WorkbookType::SalesAnalysis,
+            WorkbookType::AmazonFees,
+            WorkbookType::WalmartFees => ['imported_rows' => $this->persistSalesRows($importBatch, $uploadedFile, $parsed)],
             WorkbookType::IncomeStatement => ['imported_rows' => $this->persistIncomeStatementLines($importBatch, $uploadedFile, $parsed)],
             WorkbookType::OpenOrders, WorkbookType::PtdOrders => ['imported_rows' => $this->persistOrderRows($importBatch, $uploadedFile, $parsed)],
             WorkbookType::TotalSalesReport, WorkbookType::WeeklyMeterReport => ['imported_rows' => 0],
@@ -227,15 +231,19 @@ class WorkbookImportService
     private function persistSalesRows(ImportBatch $importBatch, UploadedFile $uploadedFile, ParsedWorkbook $parsed): int
     {
         foreach ($parsed->rows as $row) {
+            $raw = $row;
+            unset($row['customer_po_number'], $row['notes']);
+
             SalesRow::query()->create([
                 ...$row,
                 'import_batch_id' => $importBatch->id,
                 'uploaded_file_id' => $uploadedFile->id,
+                'workbook_type' => $uploadedFile->file_type,
                 'invoice_date' => $this->dateValue($row['invoice_date'] ?? null),
                 'quantity_ordered' => $this->decimalValue($row['quantity_ordered'] ?? 0) ?? 0,
                 'amount' => $this->decimalValue($row['amount'] ?? 0) ?? 0,
                 'classification_status' => 'unmatched',
-                'raw_values' => $row,
+                'raw_values' => $raw,
             ]);
         }
 

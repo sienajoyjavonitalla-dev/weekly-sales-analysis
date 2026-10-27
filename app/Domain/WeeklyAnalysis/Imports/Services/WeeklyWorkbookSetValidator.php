@@ -6,11 +6,9 @@ use App\Domain\WeeklyAnalysis\Imports\Contracts\WorkbookParser;
 use App\Domain\WeeklyAnalysis\Imports\Data\WorkbookSetValidationResult;
 use App\Domain\WeeklyAnalysis\Imports\Data\WorkbookValidationIssue;
 use App\Domain\WeeklyAnalysis\Imports\Enums\WorkbookType;
-use App\Domain\WeeklyAnalysis\Imports\Parsers\IncomeStatementWorkbookParser;
-use App\Domain\WeeklyAnalysis\Imports\Parsers\OpenOrdersWorkbookParser;
-use App\Domain\WeeklyAnalysis\Imports\Parsers\PtdOrdersWorkbookParser;
+use App\Domain\WeeklyAnalysis\Imports\Parsers\AmazonFeesWorkbookParser;
 use App\Domain\WeeklyAnalysis\Imports\Parsers\SalesAnalysisWorkbookParser;
-use App\Domain\WeeklyAnalysis\Imports\Parsers\TotalSalesReportWorkbookParser;
+use App\Domain\WeeklyAnalysis\Imports\Parsers\WalmartFeesWorkbookParser;
 
 class WeeklyWorkbookSetValidator
 {
@@ -23,10 +21,8 @@ class WeeklyWorkbookSetValidator
     {
         $this->parsers = $this->buildParserMap([
             new SalesAnalysisWorkbookParser(),
-            new IncomeStatementWorkbookParser(),
-            new TotalSalesReportWorkbookParser(),
-            new OpenOrdersWorkbookParser(),
-            new PtdOrdersWorkbookParser(),
+            new AmazonFeesWorkbookParser(),
+            new WalmartFeesWorkbookParser(),
         ]);
     }
 
@@ -38,11 +34,7 @@ class WeeklyWorkbookSetValidator
         $workbooks = [];
         $issues = [];
 
-        foreach (WorkbookType::cases() as $type) {
-            if ($type === WorkbookType::WeeklyMeterReport) {
-                continue;
-            }
-
+        foreach (WorkbookType::uploadTypes() as $type) {
             $path = $pathsByType[$type->value] ?? null;
 
             if ($path === null || $path === '') {

@@ -78,4 +78,9 @@ class ImportBatch extends Model
     {
         return $this->hasMany(GeneratedReport::class);
     }
+
+    public function feeAdjustments(): HasMany
+    {
+        return $this->hasMany(ImportBatchFeeAdjustment::class);
+    }
 }

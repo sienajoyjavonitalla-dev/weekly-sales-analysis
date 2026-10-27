@@ -19,9 +19,15 @@ class UnmatchedSalesRowController
     {
         Gate::authorize('view', $importBatch);
 
+        $workbookType = $this->workbookType($request);
+
         $rows = SalesRow::query()
             ->with(['productCategory', 'mappingRule'])
             ->where('import_batch_id', $importBatch->id)
+            ->when(
+                $workbookType !== null,
+                fn ($query) => $query->where('workbook_type', $workbookType),
+            )
             ->where('classification_status', 'unmatched')
             ->when($request->string('search')->isNotEmpty(), function ($query) use ($request): void {
                 $search = '%'.$request->string('search')->toString().'%';
@@ -41,12 +47,12 @@ class UnmatchedSalesRowController
         return response()->json($rows);
     }
 
-    public function itemGroups(ImportBatch $importBatch, BulkUnmatchedItemResolver $resolver): JsonResponse
+    public function itemGroups(Request $request, ImportBatch $importBatch, BulkUnmatchedItemResolver $resolver): JsonResponse
     {
         Gate::authorize('view', $importBatch);
 
         return response()->json([
-            'data' => $resolver->itemGroups($importBatch),
+            'data' => $resolver->itemGroups($importBatch, $this->workbookType($request)),
         ]);
     }
 
@@ -59,13 +65,16 @@ class UnmatchedSalesRowController
     ): JsonResponse {
         Gate::authorize('update', $importBatch);
 
+        $workbookType = $this->workbookType($request);
+
         $result = $resolver->resolve(
             importBatch: $importBatch,
             resolutions: $request->validated('resolutions'),
             userId: $request->user()?->id,
+            workbookType: $workbookType,
         );
 
-        $deletionService->confirmSalesAnalysisReconcile($importBatch);
+        $deletionService->confirmPendingReconcile($importBatch, $workbookType);
 
         $auditLogger->log(
             action: 'import_batch.unmatched_items_resolved',
@@ -100,5 +109,20 @@ class UnmatchedSalesRowController
         return response()->json([
             'data' => $salesRow->load(['productCategory', 'mappingRule', 'classifier']),
         ]);
+    }
+
+    private function workbookType(Request $request): ?string
+    {
+        $type = (string) ($request->input('file_type') ?: $request->query('file_type', ''));
+
+        if ($type === '') {
+            return 'sales_analysis';
+        }
+
+        if (! in_array($type, ['sales_analysis', 'amazon_fees', 'walmart_fees'], true)) {
+            return 'sales_analysis';
+        }
+
+        return $type;
     }
 }

@@ -14,6 +14,7 @@ class SalesRow extends Model
     protected $fillable = [
         'import_batch_id',
         'uploaded_file_id',
+        'workbook_type',
         'product_category_id',
         'mapping_rule_id',
         'source_sheet',
@@ -77,5 +78,15 @@ class SalesRow extends Model
     public function classifier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'classified_by_user_id');
+    }
+
+    public function scopeSalesAnalysis($query)
+    {
+        return $query->where($this->qualifyColumn('workbook_type'), 'sales_analysis');
+    }
+
+    public function scopeForWorkbookType($query, string $workbookType)
+    {
+        return $query->where($this->qualifyColumn('workbook_type'), $workbookType);
     }
 }

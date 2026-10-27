@@ -61,9 +61,9 @@ class WeeklyReportExportServiceTest extends TestCase
         $this->assertSame($category->id, $weekTwoRow->product_category_id);
         $this->assertSame('rhp', $weekTwoRow->source_bucket);
 
-        // Total Sales Report is skipped (not failed) because no template was uploaded.
         $this->assertSame(['sales_analysis', 'weekly_meter_report'], collect($reports)->pluck('report_type')->all());
-        $this->assertSame(0, GeneratedReport::query()->where('report_type', 'total_sales_report')->count());
+        $this->assertSame(0, GeneratedReport::query()->where('report_type', 'amazon_fees')->count());
+        $this->assertSame(0, GeneratedReport::query()->where('report_type', 'walmart_fees')->count());
 
         $weekOneMeter = GeneratedReport::query()
             ->where('import_batch_id', $weekOne->id)

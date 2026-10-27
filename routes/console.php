@@ -95,18 +95,12 @@ Artisan::command('about:weekly-sales', function (): void {
 
 Artisan::command('weekly-analysis:validate-workbooks
     {--sales-analysis= : Path to the weekly Sales Analysis workbook}
-    {--income-statement= : Path to the Income Statement workbook}
-    {--total-sales-report= : Path to the Total Sales Report template}
-    {--weekly-meter-report= : Path to the Weekly Meter Report template}
-    {--open-orders= : Path to the Open Orders workbook}
-    {--ptd-orders= : Path to the PTD Orders workbook}', function (WeeklyWorkbookSetValidator $validator): int {
+    {--amazon-fees= : Path to the Amazon Fees workbook}
+    {--walmart-fees= : Path to the Walmart Fees workbook}', function (WeeklyWorkbookSetValidator $validator): int {
         $result = $validator->validate([
             WorkbookType::SalesAnalysis->value => (string) $this->option('sales-analysis'),
-            WorkbookType::IncomeStatement->value => (string) $this->option('income-statement'),
-            WorkbookType::TotalSalesReport->value => (string) $this->option('total-sales-report'),
-            WorkbookType::WeeklyMeterReport->value => (string) $this->option('weekly-meter-report'),
-            WorkbookType::OpenOrders->value => (string) $this->option('open-orders'),
-            WorkbookType::PtdOrders->value => (string) $this->option('ptd-orders'),
+            WorkbookType::AmazonFees->value => (string) $this->option('amazon-fees'),
+            WorkbookType::WalmartFees->value => (string) $this->option('walmart-fees'),
         ]);
 
         $this->line(json_encode($result->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
@@ -162,16 +156,10 @@ Artisan::command('weekly-analysis:reconcile
         $this->info('Weekly reconciliation complete.');
         $this->table([
             'Sales Analysis',
-            'Income Statement',
-            'Marketplace Fees',
-            'Adjusted IS',
             'Difference',
             'Balanced',
         ], [[
             $result->sales_analysis_total,
-            $result->income_statement_total,
-            $result->marketplace_fee_total,
-            $result->adjusted_income_statement_total,
             $result->difference,
             $result->is_balanced ? 'yes' : 'no',
         ]]);
@@ -203,4 +191,4 @@ Artisan::command('weekly-analysis:export-reports {importBatchId : Import batch I
     return collect($reports)->contains(fn ($report): bool => $report->status === 'failed')
         ? self::FAILURE
         : self::SUCCESS;
-})->purpose('Generate Sales Analysis, Total Sales, and Weekly Meter Excel reports');
+})->purpose('Generate Sales Analysis, marketplace fees, and Weekly Meter Excel reports');

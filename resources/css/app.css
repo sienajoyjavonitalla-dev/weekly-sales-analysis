@@ -1571,7 +1571,13 @@ input:disabled {
 }
 
 .file-card-field {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.file-card-field > span {
+  font-weight: 600;
 }
 
 .file-card-option {

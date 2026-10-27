@@ -4,6 +4,7 @@ namespace App\Domain\WeeklyAnalysis\Reports;
 
 use App\Models\GeneratedReport;
 use App\Models\ImportBatch;
+use App\Models\ImportBatchFeeAdjustment;
 use App\Models\ReconciliationResult;
 use App\Models\SalesRow;
 use Carbon\CarbonImmutable;
@@ -53,6 +54,7 @@ class DashboardStatsBuilder
             ->get()
             ->keyBy('import_batch_id');
         $unmatchedByBatch = $this->unmatchedCountsByBatch($batches->pluck('id')->all());
+        $feeTotalsByBatch = $this->feeTotalsByBatch($batches->pluck('id')->all());
 
         $meter = $this->meterReportBuilder->build($year, $month);
         $meterWeeks = collect($meter['totals']['weeks'])->keyBy('index');
@@ -109,6 +111,8 @@ class DashboardStatsBuilder
                 'meter_units' => $meterWeek['units'] ?? null,
                 'meter_percent' => $meterWeek['percent'] ?? null,
                 'unmatched_rows' => $batchId !== null ? ($unmatchedByBatch[$batchId] ?? 0) : null,
+                'amazon_fees_total' => $batchId !== null ? ($feeTotalsByBatch[$batchId]['amazon'] ?? 0.0) : null,
+                'walmart_fees_total' => $batchId !== null ? ($feeTotalsByBatch[$batchId]['walmart'] ?? 0.0) : null,
                 'reconciliation' => $reconciliation,
             ];
         }
@@ -202,6 +206,7 @@ class DashboardStatsBuilder
         }
 
         $rows = SalesRow::query()
+            ->salesAnalysis()
             ->selectRaw('import_batch_id, source_bucket, SUM(amount) as amount')
             ->whereIn('import_batch_id', $batchIds)
             ->whereIn('classification_status', self::MATCHED_STATUSES)
@@ -219,6 +224,36 @@ class DashboardStatsBuilder
 
     /**
      * @param  list<int>  $batchIds
+     * @return array<int, array{amazon:float, walmart:float}>
+     */
+    private function feeTotalsByBatch(array $batchIds): array
+    {
+        if ($batchIds === []) {
+            return [];
+        }
+
+        $rows = ImportBatchFeeAdjustment::query()
+            ->selectRaw('import_batch_id, marketplace, SUM(amount) as amount')
+            ->whereIn('import_batch_id', $batchIds)
+            ->groupBy('import_batch_id', 'marketplace')
+            ->get();
+
+        $totals = [];
+
+        foreach ($rows as $row) {
+            $batchId = (int) $row->import_batch_id;
+            $totals[$batchId] ??= ['amazon' => 0.0, 'walmart' => 0.0];
+
+            if ($row->marketplace === 'amazon' || $row->marketplace === 'walmart') {
+                $totals[$batchId][$row->marketplace] = round((float) $row->amount, 2);
+            }
+        }
+
+        return $totals;
+    }
+
+    /**
+     * @param  list<int>  $batchIds
      * @return array<int, int>
      */
     private function unmatchedCountsByBatch(array $batchIds): array
@@ -228,6 +263,7 @@ class DashboardStatsBuilder
         }
 
         return SalesRow::query()
+            ->salesAnalysis()
             ->selectRaw('import_batch_id, COUNT(*) as aggregate')
             ->whereIn('import_batch_id', $batchIds)
             ->where('classification_status', 'unmatched')
@@ -246,6 +282,7 @@ class DashboardStatsBuilder
         }
 
         return round((float) SalesRow::query()
+            ->salesAnalysis()
             ->where('import_batch_id', $latest->id)
             ->whereIn('classification_status', self::MATCHED_STATUSES)
             ->sum('amount'), 2);
@@ -282,6 +319,7 @@ class DashboardStatsBuilder
     private function topCategories(int $batchId): array
     {
         return SalesRow::query()
+            ->salesAnalysis()
             ->selectRaw("COALESCE(product_categories.name, 'Uncategorized') as name, SUM(sales_rows.amount) as amount, SUM(sales_rows.quantity_ordered) as quantity")
             ->leftJoin('product_categories', 'product_categories.id', '=', 'sales_rows.product_category_id')
             ->where('sales_rows.import_batch_id', $batchId)
@@ -304,6 +342,7 @@ class DashboardStatsBuilder
     private function topCustomers(int $batchId): array
     {
         return SalesRow::query()
+            ->salesAnalysis()
             ->selectRaw("COALESCE(NULLIF(customer_name, ''), NULLIF(customer_id, ''), 'Unknown') as customer, SUM(amount) as amount, COUNT(*) as row_count")
             ->where('import_batch_id', $batchId)
             ->whereIn('classification_status', self::MATCHED_STATUSES)

@@ -14,6 +14,7 @@ class SalesAnalysisTotalsCalculator
     public function calculate(ImportBatch $importBatch): array
     {
         $rows = SalesRow::query()
+            ->salesAnalysis()
             ->selectRaw('product_category_id, source_bucket, COUNT(*) as row_count, SUM(quantity_ordered) as quantity, SUM(amount) as amount')
             ->where('import_batch_id', $importBatch->id)
             ->whereIn('classification_status', ['matched', 'manual'])
@@ -42,6 +43,7 @@ class SalesAnalysisTotalsCalculator
         return [
             'total' => round(array_sum(array_column($categoryTotals, 'amount')), 2),
             'unmatched_count' => SalesRow::query()
+                ->salesAnalysis()
                 ->where('import_batch_id', $importBatch->id)
                 ->where('classification_status', 'unmatched')
                 ->count(),

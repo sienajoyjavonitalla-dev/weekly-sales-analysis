@@ -18,6 +18,7 @@ class BulkResolveUnmatchedItemsRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'file_type' => ['sometimes', 'nullable', 'string', 'in:sales_analysis,amazon_fees,walmart_fees'],
             'resolutions' => ['required', 'array', 'min:1'],
             'resolutions.*.item_id' => ['required', 'string', 'max:255'],
             'resolutions.*.product_category_id' => ['nullable', 'integer', 'exists:product_categories,id'],

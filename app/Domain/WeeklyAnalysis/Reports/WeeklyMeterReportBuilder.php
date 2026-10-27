@@ -278,6 +278,7 @@ class WeeklyMeterReportBuilder
         }
 
         $rows = SalesRow::query()
+            ->salesAnalysis()
             ->selectRaw('sales_rows.import_batch_id, product_categories.weekly_meter_row_label as label, SUM(sales_rows.quantity_ordered * CASE WHEN COALESCE(product_categories.quantity_multiplier, 1) < 1 THEN 1 ELSE COALESCE(product_categories.quantity_multiplier, 1) END) as quantity, SUM(sales_rows.amount) as amount')
             ->join('product_categories', 'product_categories.id', '=', 'sales_rows.product_category_id')
             ->whereIn('sales_rows.import_batch_id', $batches->pluck('id'))

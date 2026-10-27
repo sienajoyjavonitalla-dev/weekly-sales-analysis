@@ -54,8 +54,8 @@ class GeneratedReportController
     {
         Gate::authorize('view', $generatedReport);
 
-        if ($generatedReport->report_type !== 'sales_analysis') {
-            return response()->json(['message' => 'Only Sales Analysis reports can be viewed.'], 422);
+        if (! in_array($generatedReport->report_type, ['sales_analysis', 'amazon_fees', 'walmart_fees'], true)) {
+            return response()->json(['message' => 'This report type cannot be viewed in the app.'], 422);
         }
 
         if ($generatedReport->status !== 'completed' || $generatedReport->storage_path === null) {

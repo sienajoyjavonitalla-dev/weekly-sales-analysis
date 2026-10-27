@@ -88,9 +88,9 @@ class ImportBatchApiTest extends TestCase
 
         UploadedFile::query()->create([
             'import_batch_id' => $batch->id,
-            'file_type' => 'income_statement',
-            'original_name' => '04-17-2026 Income Statement.xlsx',
-            'storage_path' => 'uploads/'.$batch->id.'/income_statement.xlsx',
+            'file_type' => 'amazon_fees',
+            'original_name' => '04-17-2026 Amazon Fees.xlsx',
+            'storage_path' => 'uploads/'.$batch->id.'/amazon_fees.xlsx',
             'sha256_checksum' => str_repeat('b', 64),
             'status' => 'imported',
         ]);
@@ -101,7 +101,7 @@ class ImportBatchApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.id', $batch->id)
             ->assertJsonPath('data.uploaded_file_count', 1)
-            ->assertJsonPath('data.uploaded_files.0.file_type', 'income_statement');
+            ->assertJsonPath('data.uploaded_files.0.file_type', 'amazon_fees');
     }
 
     public function test_show_import_batch_requires_authentication(): void

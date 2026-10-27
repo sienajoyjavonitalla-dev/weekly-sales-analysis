@@ -99,6 +99,7 @@ class SalesAnalysisWorkbookExporter
                 'parts_tsd_rows' => $this->rowCount($importBatch, 'parts_tsd'),
                 'state_rows' => $includeState
                     ? SalesRow::query()
+                        ->salesAnalysis()
                         ->where('import_batch_id', $importBatch->id)
                         ->where(function ($query): void {
                             $query->where('source_bucket', 'state')
@@ -126,6 +127,7 @@ class SalesAnalysisWorkbookExporter
 
         /** @var Collection<int|string, Collection<int, SalesRow>> $rowsByCategory */
         $rowsByCategory = SalesRow::query()
+            ->salesAnalysis()
             ->where('import_batch_id', $importBatch->id)
             ->where('source_bucket', $bucket)
             ->orderBy('source_row_number')
@@ -265,6 +267,7 @@ class SalesAnalysisWorkbookExporter
         $sheetAmountTotal = 0.0;
 
         $rows = SalesRow::query()
+            ->salesAnalysis()
             ->where('import_batch_id', $importBatch->id)
             ->where('source_sheet', 'Sheet')
             ->orderBy('source_row_number')
@@ -290,6 +293,7 @@ class SalesAnalysisWorkbookExporter
         $sheetAmountTotal = 0.0;
 
         $rows = SalesRow::query()
+            ->salesAnalysis()
             ->where('import_batch_id', $importBatch->id)
             ->where(function ($query): void {
                 $query->where('source_bucket', 'state')
@@ -318,6 +322,7 @@ class SalesAnalysisWorkbookExporter
         $sheetAmountTotal = 0.0;
 
         $rows = SalesRow::query()
+            ->salesAnalysis()
             ->where('import_batch_id', $importBatch->id)
             ->where('source_bucket', $bucket)
             ->orderBy('source_row_number')
@@ -544,6 +549,7 @@ class SalesAnalysisWorkbookExporter
     private function rowCount(ImportBatch $importBatch, string $bucket): int
     {
         return SalesRow::query()
+            ->salesAnalysis()
             ->where('import_batch_id', $importBatch->id)
             ->where('source_bucket', $bucket)
             ->count();
@@ -552,6 +558,7 @@ class SalesAnalysisWorkbookExporter
     private function sourceSheetRowCount(ImportBatch $importBatch): int
     {
         return SalesRow::query()
+            ->salesAnalysis()
             ->where('import_batch_id', $importBatch->id)
             ->where('source_sheet', 'Sheet')
             ->count();

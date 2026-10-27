@@ -10,10 +10,8 @@ return [
         ],
         'required_file_types' => [
             'sales_analysis',
-            'income_statement',
-            'total_sales_report',
-            'open_orders',
-            'ptd_orders',
+            'amazon_fees',
+            'walmart_fees',
         ],
     ],
     'sales_analysis_buckets' => [

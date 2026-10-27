@@ -84,15 +84,33 @@ class SalesRowClassifier
                 });
         });
 
-        $summary['reconcilable_unmatched'] = SalesRow::query()
+        $summary['reconcilable_unmatched_by_type'] = [];
+
+        foreach (['sales_analysis', 'amazon_fees', 'walmart_fees'] as $workbookType) {
+            $summary['reconcilable_unmatched_by_type'][$workbookType] = $this->reconcilableUnmatchedCount(
+                $importBatch,
+                $workbookType,
+            );
+        }
+
+        $summary['reconcilable_unmatched'] = array_sum($summary['reconcilable_unmatched_by_type']);
+
+        return $summary;
+    }
+
+    public function reconcilableUnmatchedCount(ImportBatch $importBatch, ?string $workbookType = null): int
+    {
+        return SalesRow::query()
             ->where('import_batch_id', $importBatch->id)
+            ->when(
+                $workbookType !== null,
+                fn ($query) => $query->where('workbook_type', $workbookType),
+            )
             ->where('classification_status', 'unmatched')
             ->whereNotNull('item_id')
             ->where('item_id', '!=', '')
             ->distinct()
             ->count('item_id');
-
-        return $summary;
     }
 
     /**
