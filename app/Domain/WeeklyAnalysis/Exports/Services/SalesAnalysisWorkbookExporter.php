@@ -3,7 +3,7 @@
 namespace App\Domain\WeeklyAnalysis\Exports\Services;
 
 use App\Domain\WeeklyAnalysis\Imports\Support\NumericValueParser;
-
+use App\Domain\WeeklyAnalysis\Reports\FeesFamilyCatalog;
 use App\Models\GeneratedReport;
 use App\Models\ImportBatch;
 use App\Models\ProductCategory;
@@ -79,8 +79,18 @@ class SalesAnalysisWorkbookExporter
             ->setCreator(config('app.name'))
             ->setTitle('Weekly Sales Analysis '.$importBatch->week_ending->format('m-d-Y'));
 
-        $this->writeOrganizedBucketSheet($spreadsheet->getActiveSheet(), $importBatch, 'RHP', 'rhp');
-        $this->writeOrganizedBucketSheet($spreadsheet->createSheet(), $importBatch, 'Parts & TSD', 'parts_tsd');
+        $rhpWorksheet = $spreadsheet->getActiveSheet();
+        $rhpSheet = $this->writeOrganizedBucketSheet($rhpWorksheet, $importBatch, 'RHP', 'rhp');
+        $partsSheet = $this->writeOrganizedBucketSheet($spreadsheet->createSheet(), $importBatch, 'Parts & TSD', 'parts_tsd');
+
+        if ($rhpSheet['grand_total_row'] !== null) {
+            $this->writeFamilyFooter(
+                $rhpWorksheet,
+                $rhpSheet['grand_total_row'],
+                $rhpSheet['subtotals'],
+                $partsSheet['grand_total_row'],
+            );
+        }
 
         if ($includeState) {
             $this->writeStateSheet($spreadsheet->createSheet(), $importBatch, 'State');
@@ -113,10 +123,14 @@ class SalesAnalysisWorkbookExporter
         );
     }
 
-    private function writeOrganizedBucketSheet(Worksheet $sheet, ImportBatch $importBatch, string $title, string $bucket): void
+    /**
+     * @return array{grand_total_row:?int, subtotals:list<array{row:int, family:string, qty:?string}>}
+     */
+    private function writeOrganizedBucketSheet(Worksheet $sheet, ImportBatch $importBatch, string $title, string $bucket): array
     {
         $sheet->setTitle($title);
         $this->writeHeaderRow($sheet);
+        $subtotals = [];
 
         $categories = ProductCategory::query()
             ->where('sales_analysis_bucket', $bucket)
@@ -182,6 +196,11 @@ class SalesAnalysisWorkbookExporter
                 $useNaQuantity,
                 $multipliedQuantity,
             );
+            $subtotals[] = [
+                'row' => $rowNumber,
+                'family' => FeesFamilyCatalog::forMeterLabel($category->weekly_meter_row_label),
+                'qty' => $this->familyQuantityColumn($useNaQuantity, $multipliedQuantity),
+            ];
             $lastDataRow = $rowNumber;
             $rowNumber++;
 
@@ -197,6 +216,7 @@ class SalesAnalysisWorkbookExporter
                     $lastDataRow,
                     $sheetQuantityTotal,
                     $sheetAmountTotal,
+                    $subtotals,
                 );
                 $noCategoryWritten = true;
             }
@@ -210,13 +230,22 @@ class SalesAnalysisWorkbookExporter
                 $lastDataRow,
                 $sheetQuantityTotal,
                 $sheetAmountTotal,
+                $subtotals,
                 leadingBlankRow: false,
             );
         }
 
         $this->finalizeSheet($sheet, $lastDataRow, $sheetQuantityTotal, $sheetAmountTotal);
+
+        return [
+            'grand_total_row' => $lastDataRow >= 2 ? $lastDataRow + 1 : null,
+            'subtotals' => $subtotals,
+        ];
     }
 
+    /**
+     * @param  list<array{row:int, family:string, qty:?string}>  $subtotals
+     */
     private function writeUnassignedRowsBlock(
         Worksheet $sheet,
         Collection $noCategoryRows,
@@ -224,6 +253,7 @@ class SalesAnalysisWorkbookExporter
         int &$lastDataRow,
         float &$sheetQuantityTotal,
         float &$sheetAmountTotal,
+        array &$subtotals,
         bool $leadingBlankRow = true,
     ): void {
         if ($leadingBlankRow) {
@@ -250,6 +280,11 @@ class SalesAnalysisWorkbookExporter
 
         $sheetQuantityTotal += $quantityTotal;
         $this->writeSubtotalRow($sheet, $rowNumber, $quantityTotal, $amountTotal, true);
+        $subtotals[] = [
+            'row' => $rowNumber,
+            'family' => FeesFamilyCatalog::RHP,
+            'qty' => null,
+        ];
         $lastDataRow = $rowNumber;
         $rowNumber++;
 
@@ -425,6 +460,85 @@ class SalesAnalysisWorkbookExporter
 
         $this->applyAccountingFormat($sheet, 'J', $rowNumber);
         $this->applyAccountingFormat($sheet, 'K', $rowNumber);
+    }
+
+    /**
+     * @param  list<array{row:int, family:string, qty:?string}>  $subtotals
+     */
+    private function writeFamilyFooter(
+        Worksheet $sheet,
+        int $grandTotalRow,
+        array $subtotals,
+        ?int $partsGrandTotalRow,
+    ): void {
+        $rowsByFamily = [];
+        foreach ($subtotals as $subtotal) {
+            $rowsByFamily[$subtotal['family']][] = $subtotal;
+        }
+
+        $rowNumber = $grandTotalRow + 5;
+        $familyRows = [];
+
+        foreach (FeesFamilyCatalog::labels() as $label) {
+            $sheet->setCellValue('B'.$rowNumber, $label);
+
+            $qtyRefs = [];
+            $amountRefs = [];
+            foreach ($rowsByFamily[$label] ?? [] as $item) {
+                if ($item['qty'] !== null) {
+                    $qtyRefs[] = $item['qty'].$item['row'];
+                }
+                $amountRefs[] = 'K'.$item['row'];
+            }
+
+            $sheet->setCellValue('C'.$rowNumber, $qtyRefs === [] ? 0 : '='.implode('+', $qtyRefs));
+            $sheet->setCellValue('D'.$rowNumber, $amountRefs === [] ? 0 : '='.implode('+', $amountRefs));
+            $this->applyAccountingFormat($sheet, 'C', $rowNumber);
+            $this->applyAccountingFormat($sheet, 'D', $rowNumber);
+            $familyRows[] = $rowNumber;
+            $rowNumber++;
+        }
+
+        $first = $familyRows[0];
+        $last = $familyRows[array_key_last($familyRows)];
+        $sheet->setCellValue('C'.$rowNumber, '=SUM(C'.$first.':C'.$last.')');
+        $sheet->setCellValue('D'.$rowNumber, '=SUM(D'.$first.':D'.$last.')');
+        $this->applyAccountingFormat($sheet, 'C', $rowNumber);
+        $this->applyAccountingFormat($sheet, 'D', $rowNumber);
+        $familyTotalRow = $rowNumber;
+        $rowNumber++;
+
+        if ($partsGrandTotalRow !== null) {
+            $sheet->setCellValue('D'.$rowNumber, "='Parts & TSD'!K".$partsGrandTotalRow);
+        } else {
+            $sheet->setCellValue('D'.$rowNumber, 0);
+        }
+        $this->applyAccountingFormat($sheet, 'D', $rowNumber);
+        $partsRow = $rowNumber;
+
+        $combinedRow = $partsRow + 7;
+        $sheet->setCellValue('D'.$combinedRow, '=SUM(D'.$familyTotalRow.':D'.$partsRow.')');
+        $this->applyAccountingFormat($sheet, 'D', $combinedRow);
+
+        $incomeRow = $combinedRow + 1;
+        $sheet->setCellValue('C'.$incomeRow, 'Income Statement:');
+        $sheet->setCellValue('D'.$incomeRow, 0);
+        $this->applyAccountingFormat($sheet, 'D', $incomeRow);
+
+        $differenceRow = $incomeRow + 1;
+        $sheet->setCellValue('D'.$differenceRow, '=D'.$incomeRow.'-D'.$combinedRow);
+        $this->applyAccountingFormat($sheet, 'D', $differenceRow);
+
+        $sheet->getStyle('B'.$first.':D'.$differenceRow)->getFont()->setBold(true);
+    }
+
+    private function familyQuantityColumn(bool $useNaQuantity, ?float $multipliedQuantity): ?string
+    {
+        if ($multipliedQuantity !== null) {
+            return 'L';
+        }
+
+        return $useNaQuantity ? null : 'J';
     }
 
     private function applyColumnWidths(Worksheet $sheet): void

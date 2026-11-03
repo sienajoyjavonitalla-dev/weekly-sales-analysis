@@ -128,7 +128,7 @@ class MarketplaceFeesWorkbookTest extends TestCase
         $this->assertSame('=F5', $sheet->getCell('D22')->getValue());
         $this->assertSame('CM', $sheet->getCell('C23')->getValue());
         $this->assertSame('=F9', $sheet->getCell('D23')->getValue());
-        $this->assertSame('Lg Wood', $sheet->getCell('C26')->getValue());
+        $this->assertSame('Lg. Wood', $sheet->getCell('C26')->getValue());
         $this->assertSame(0, $sheet->getCell('D26')->getValue());
     }
 

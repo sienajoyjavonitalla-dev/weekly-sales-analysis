@@ -8,11 +8,11 @@ class FeesFamilyCatalog
 
     public const CM = 'CM';
 
-    public const SM_WOOD = 'Sm Wood';
+    public const SM_WOOD = 'Sm. Wood';
 
-    public const HANDMETER = 'Handmeter';
+    public const HANDMETER = 'M.R.E';
 
-    public const LG_WOOD = 'Lg Wood';
+    public const LG_WOOD = 'Lg. Wood';
 
     /**
      * @return list<string>

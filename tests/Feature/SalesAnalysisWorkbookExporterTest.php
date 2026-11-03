@@ -181,7 +181,7 @@ class SalesAnalysisWorkbookExporterTest extends TestCase
         $this->assertEquals(12, $sheet->getStyle('A10')->getFont()->getSize());
         $this->assertSame('890-00080-001', $sheet->getCell('A11')->getCalculatedValue());
 
-        $grandTotalRow = $sheet->getHighestDataRow();
+        $grandTotalRow = $this->grandTotalRow($sheet);
         $this->assertSame(8.0, (float) $sheet->getCell('J'.$grandTotalRow)->getCalculatedValue());
         $this->assertSame(1699.0, (float) $sheet->getCell('K'.$grandTotalRow)->getCalculatedValue());
         $this->assertSame('A9D1F7', strtoupper($sheet->getStyle('A'.$grandTotalRow)->getFill()->getStartColor()->getRGB()));
@@ -274,7 +274,7 @@ class SalesAnalysisWorkbookExporterTest extends TestCase
         $this->assertSame(200.0, (float) $sheet->getCell('K8')->getCalculatedValue());
         $this->assertNull($sheet->getCell('L8')->getCalculatedValue());
 
-        $grandTotalRow = $sheet->getHighestDataRow();
+        $grandTotalRow = $this->grandTotalRow($sheet);
         $this->assertSame(142.0, (float) $sheet->getCell('J'.$grandTotalRow)->getCalculatedValue());
         $this->assertSame(1600.0, (float) $sheet->getCell('K'.$grandTotalRow)->getCalculatedValue());
     }
@@ -399,5 +399,137 @@ class SalesAnalysisWorkbookExporterTest extends TestCase
         $this->assertSame(['RHP', 'Parts & TSD', 'State', 'Sheet'], $spreadsheet->getSheetNames());
         $this->assertSame(1, $report->summary['state_rows'] ?? null);
         $this->assertSame('STATE-001', $spreadsheet->getSheetByName('State')->getCell('A2')->getCalculatedValue());
+    }
+
+    public function test_rhp_sheet_writes_family_footer_matching_source_template(): void
+    {
+        $user = User::query()->create([
+            'first_name' => 'Ana',
+            'last_name' => 'Lyst',
+            'email' => 'analyst-footer@example.com',
+            'password' => 'password',
+            'role' => 'analyst',
+        ]);
+
+        $batch = ImportBatch::query()->create([
+            'week_start' => '2026-04-01',
+            'week_ending' => '2026-04-03',
+            'status' => 'draft',
+            'created_by_user_id' => $user->id,
+            'source_system' => 'Traverse Global',
+        ]);
+
+        $rhp = ProductCategory::query()->create([
+            'code' => 'pack_5_rapid_rh_l6_smart_sensor',
+            'name' => 'PACK, 5 ,RAPID RH L6, SMART SENSOR',
+            'report_family' => 'rhp',
+            'sales_analysis_bucket' => 'rhp',
+            'weekly_meter_row_label' => 'RHP L6 5Pk Sensors*',
+            'sort_order' => 10,
+            'is_active' => true,
+        ]);
+        $cm = ProductCategory::query()->create([
+            'code' => 'top_assy_orion_c555_concrete_kit_tested',
+            'name' => 'TOP ASSY,ORION C555',
+            'report_family' => 'rhp',
+            'sales_analysis_bucket' => 'rhp',
+            'weekly_meter_row_label' => 'C555 Concrete Kits',
+            'sort_order' => 20,
+            'is_active' => true,
+        ]);
+        $mre = ProductCategory::query()->create([
+            'code' => 'meter_reach_extender',
+            'name' => 'METER REACH EXTENDER',
+            'report_family' => 'rhp',
+            'sales_analysis_bucket' => 'rhp',
+            'weekly_meter_row_label' => 'Handmeter Misc',
+            'sort_order' => 30,
+            'is_active' => true,
+        ]);
+        $parts = ProductCategory::query()->create([
+            'code' => 'tsd_parts',
+            'name' => 'TSD Parts',
+            'report_family' => 'parts_tsd',
+            'sales_analysis_bucket' => 'parts_tsd',
+            'sort_order' => 40,
+            'is_active' => true,
+        ]);
+
+        SalesRow::query()->create([
+            'import_batch_id' => $batch->id,
+            'product_category_id' => $rhp->id,
+            'source_sheet' => 'Sheet',
+            'source_row_number' => 2,
+            'source_bucket' => 'rhp',
+            'item_id' => '880-R0000-009',
+            'quantity_ordered' => 2,
+            'amount' => 518,
+            'classification_status' => 'matched',
+        ]);
+        SalesRow::query()->create([
+            'import_batch_id' => $batch->id,
+            'product_category_id' => $cm->id,
+            'source_sheet' => 'Sheet',
+            'source_row_number' => 3,
+            'source_bucket' => 'rhp',
+            'item_id' => '890-00555-001',
+            'quantity_ordered' => 1,
+            'amount' => 381.5,
+            'classification_status' => 'matched',
+        ]);
+        SalesRow::query()->create([
+            'import_batch_id' => $batch->id,
+            'product_category_id' => $mre->id,
+            'source_sheet' => 'Sheet',
+            'source_row_number' => 4,
+            'source_bucket' => 'rhp',
+            'item_id' => '880-90001-001',
+            'quantity_ordered' => 1,
+            'amount' => 45,
+            'classification_status' => 'matched',
+        ]);
+        SalesRow::query()->create([
+            'import_batch_id' => $batch->id,
+            'product_category_id' => $parts->id,
+            'source_sheet' => 'Sheet',
+            'source_row_number' => 5,
+            'source_bucket' => 'parts_tsd',
+            'item_id' => '648-00902-030',
+            'quantity_ordered' => 1,
+            'amount' => 744,
+            'classification_status' => 'matched',
+        ]);
+
+        $report = app(SalesAnalysisWorkbookExporter::class)->export($batch, $user->id);
+        $sheet = IOFactory::load(storage_path('app/private/'.$report->storage_path))->getSheetByName('RHP');
+
+        $grandTotalRow = $this->grandTotalRow($sheet);
+        $this->assertSame('RHP', $sheet->getCell('B'.($grandTotalRow + 5))->getValue());
+        $this->assertSame('CM', $sheet->getCell('B'.($grandTotalRow + 6))->getValue());
+        $this->assertSame('Sm. Wood', $sheet->getCell('B'.($grandTotalRow + 7))->getValue());
+        $this->assertSame('M.R.E', $sheet->getCell('B'.($grandTotalRow + 8))->getValue());
+        $this->assertSame('Lg. Wood', $sheet->getCell('B'.($grandTotalRow + 9))->getValue());
+        $this->assertSame(2.0, (float) $sheet->getCell('C'.($grandTotalRow + 5))->getCalculatedValue());
+        $this->assertSame(518.0, (float) $sheet->getCell('D'.($grandTotalRow + 5))->getCalculatedValue());
+        $this->assertSame(1.0, (float) $sheet->getCell('C'.($grandTotalRow + 6))->getCalculatedValue());
+        $this->assertSame(1.0, (float) $sheet->getCell('C'.($grandTotalRow + 8))->getCalculatedValue());
+        $this->assertSame(4.0, (float) $sheet->getCell('C'.($grandTotalRow + 10))->getCalculatedValue());
+        $this->assertSame(944.5, (float) $sheet->getCell('D'.($grandTotalRow + 10))->getCalculatedValue());
+        $this->assertSame(744.0, (float) $sheet->getCell('D'.($grandTotalRow + 11))->getCalculatedValue());
+        $this->assertSame(1688.5, (float) $sheet->getCell('D'.($grandTotalRow + 18))->getCalculatedValue());
+        $this->assertSame('Income Statement:', $sheet->getCell('C'.($grandTotalRow + 19))->getValue());
+        $this->assertSame(-1688.5, (float) $sheet->getCell('D'.($grandTotalRow + 20))->getCalculatedValue());
+    }
+
+    private function grandTotalRow(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet): int
+    {
+        for ($row = 2, $last = $sheet->getHighestDataRow(); $row <= $last; $row++) {
+            $fill = strtoupper($sheet->getStyle('A'.$row)->getFill()->getStartColor()->getRGB());
+            if ($fill === 'A9D1F7' && is_numeric($sheet->getCell('J'.$row)->getValue())) {
+                return $row;
+            }
+        }
+
+        $this->fail('Grand total row was not found.');
     }
 }
