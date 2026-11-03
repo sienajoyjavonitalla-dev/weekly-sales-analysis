@@ -228,12 +228,15 @@ class MarketplaceFeesWorkbookExporter
         $this->applyPercentFormat($sheet, 'E', $grandRow);
         $this->applyAccountingFormat($sheet, 'F', $grandRow);
         $sheet->getStyle('A'.$grandRow.':L'.$grandRow)->getFont()->setBold(true);
+        $this->applyRowFill($sheet, $grandRow, self::HEADER_FILL);
 
         $formula = $this->manualAmountFormula($amounts);
         if ($formula !== null) {
             $sheet->setCellValue('F'.$manualRow, $formula);
             $this->applyAccountingFormat($sheet, 'F', $manualRow);
         }
+        $sheet->getStyle('A'.$manualRow.':L'.$manualRow)->getFont()->setBold(true);
+        $this->applyRowFill($sheet, $manualRow, self::HEADER_FILL);
 
         foreach ($subtotals as $subtotal) {
             $subRow = $subtotal['row'];

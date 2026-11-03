@@ -123,7 +123,9 @@ class MarketplaceFeesWorkbookTest extends TestCase
         $this->assertNull($sheet->getCell('E3')->getValue());
         $this->assertSame('TOP ASSY,ORION C555', $sheet->getCell('A7')->getValue());
         $this->assertSame('=SUM(D2:D15)/2', $sheet->getCell('D16')->getValue());
+        $this->assertSame('A9D1F7', $sheet->getStyle('D16')->getFill()->getStartColor()->getRGB());
         $this->assertSame('=100+50.5', $sheet->getCell('F17')->getValue());
+        $this->assertSame('A9D1F7', $sheet->getStyle('F17')->getFill()->getStartColor()->getRGB());
         $this->assertSame('RHP', $sheet->getCell('C22')->getValue());
         $this->assertSame('=F5', $sheet->getCell('D22')->getValue());
         $this->assertSame('CM', $sheet->getCell('C23')->getValue());
