@@ -2766,6 +2766,10 @@ td {
   min-width: 5.25rem;
 }
 
+.meter-fees-cell[title] {
+  cursor: help;
+}
+
 .meter-fee-edit {
   display: inline-flex;
   align-items: center;

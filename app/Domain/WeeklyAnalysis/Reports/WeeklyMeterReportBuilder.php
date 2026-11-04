@@ -4,7 +4,6 @@ namespace App\Domain\WeeklyAnalysis\Reports;
 
 use App\Models\ImportBatch;
 use App\Models\SalesRow;
-use App\Models\WeeklyMeterAdditionalFee;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 
@@ -12,6 +11,7 @@ class WeeklyMeterReportBuilder
 {
     public function __construct(
         private readonly WeeklyMeterWeekCalendar $calendar,
+        private readonly MarketplaceFeesAllocator $feesAllocator,
     ) {
     }
 
@@ -25,7 +25,7 @@ class WeeklyMeterReportBuilder
         $batches = $this->batchesForMonth($year, $month);
         $batchWeekIndex = $this->batchWeekIndex($batches, $weeks);
         $rawByLabelAndWeek = $this->rawTotalsByLabelAndWeek($batches, $batchWeekIndex);
-        $feesByLabel = $this->additionalFeesByLabel($year, $month);
+        $feesByLabel = $this->feesAllocator->additionalFeesByLabel($batches);
         $weekHasData = [];
 
         foreach ($weeks as $week) {
@@ -135,7 +135,7 @@ class WeeklyMeterReportBuilder
      * @param  list<array{index:int, start:string, end:string, range:string, label:string}>  $weeks
      * @param  array<int, bool>  $weekHasData
      * @param  array<int, array{quantity:float, amount:float}>  $rawByWeek
-     * @param  list<array{amount:float, sort_order:int}>  $additionalFees
+     * @param  list<array{amount:float, sort_order:int, source:string}>  $additionalFees
      * @return array<string, mixed>
      */
     private function buildRow(
@@ -204,31 +204,6 @@ class WeeklyMeterReportBuilder
     }
 
     /**
-     * @return array<string, list<array{amount:float, sort_order:int}>>
-     */
-    private function additionalFeesByLabel(int $year, int $month): array
-    {
-        $fees = WeeklyMeterAdditionalFee::query()
-            ->where('year', $year)
-            ->where('month', $month)
-            ->orderBy('model_label')
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->get();
-
-        $grouped = [];
-
-        foreach ($fees as $fee) {
-            $grouped[$fee->model_label][] = [
-                'amount' => round((float) $fee->amount, 2),
-                'sort_order' => (int) $fee->sort_order,
-            ];
-        }
-
-        return $grouped;
-    }
-
-    /**
      * @return Collection<int, ImportBatch>
      */
     private function batchesForMonth(int $year, int $month): Collection
@@ -237,6 +212,7 @@ class WeeklyMeterReportBuilder
         $end = $start->endOfMonth();
 
         return ImportBatch::query()
+            ->with('uploadedFiles')
             ->whereDate('week_ending', '>=', $start->toDateString())
             ->whereDate('week_ending', '<=', $end->toDateString())
             ->orderBy('week_ending')

@@ -15,7 +15,6 @@ use App\Http\Controllers\Api\ReportTotalController;
 use App\Http\Controllers\Api\UnmatchedSalesRowController;
 use App\Http\Controllers\Api\UploadedFileController;
 use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\WeeklyMeterAdditionalFeeController;
 use App\Http\Controllers\Api\WeeklyMeterReportController;
 use App\Http\Controllers\Api\WeeklyMeterReportDownloadController;
 use App\Http\Controllers\Api\WorkbookImportController;
@@ -56,7 +55,6 @@ Route::middleware(['web', 'auth', 'throttle:60,1'])->group(function (): void {
     Route::get('/report-calendar', ReportCalendarController::class);
     Route::get('/weekly-meter-report', WeeklyMeterReportController::class);
     Route::get('/weekly-meter-report/download', WeeklyMeterReportDownloadController::class);
-    Route::put('/weekly-meter-report/additional-fees', [WeeklyMeterAdditionalFeeController::class, 'update']);
     Route::get('/import-batches', [ImportBatchController::class, 'index']);
     Route::post('/import-batches/discard-pending-reconciles', [ImportBatchController::class, 'discardPendingReconciles']);
     Route::get('/import-batches/{importBatch}', [ImportBatchController::class, 'show']);

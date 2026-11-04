@@ -3766,16 +3766,28 @@ function meterMtdSalesTitle(row) {
   return `${parts.join(' + ')} = ${formatMeterMoney(row.mtd_sales)}\nSum of weekly net sales${feeNote}`;
 }
 
+function meterFeeSourceLabel(source) {
+  if (source === 'amazon') {
+    return 'Amazon Fees';
+  }
+
+  if (source === 'walmart') {
+    return 'Walmart Fees';
+  }
+
+  return 'Fees';
+}
+
 function meterAdditionalFeesTitle(row) {
   const fees = row.additional_fees ?? [];
 
   if (fees.length === 0) {
-    return 'No additional fees';
+    return 'No additional fees from Amazon or Walmart Fees';
   }
 
-  const parts = fees.map((fee) => formatMeterMoney(fee.amount));
+  const parts = fees.map((fee) => `${meterFeeSourceLabel(fee.source)} ${formatMeterMoney(fee.amount)}`);
 
-  return `${parts.join(' + ')} = ${formatMeterMoney(row.additional_fees_total)}\nAdditional fee line(s)`;
+  return `${parts.join(' + ')} = ${formatMeterMoney(row.additional_fees_total)}\nAllocated from generated Amazon and Walmart Fees`;
 }
 
 function meterTotalWeekSalesTitle(weekValues) {
@@ -3811,7 +3823,7 @@ function meterTotalAdditionalFeesTitle(totals) {
     return undefined;
   }
 
-  return `Sum of all model additional fees: ${formatMeterMoney(totals.additional_fees_total)}`;
+  return `Sum of allocated Amazon and Walmart Fees: ${formatMeterMoney(totals.additional_fees_total)}`;
 }
 
 function meterPercentTitle(weekValues, mtdSales) {
@@ -3834,108 +3846,11 @@ function meterAdditionalFeesPercentTitle(totals) {
 }
 
 function formatMeterFeeDisplay(total, fees) {
-  if (!fees?.length) {
+  if (!fees?.length && (total ?? 0) === 0) {
     return '—';
   }
 
   return formatMeterMoney(total ?? 0);
-}
-
-function WeeklyMeterAdditionalFeesModal({
-  modelLabel,
-  monthLabel,
-  initialFees,
-  saving,
-  onClose,
-  onSave,
-}) {
-  const [lines, setLines] = useState(() => (
-    initialFees?.length
-      ? initialFees.map((fee) => String(fee.amount))
-      : ['']
-  ));
-  const [error, setError] = useState('');
-
-  function updateLine(index, value) {
-    setError('');
-    setLines((current) => current.map((line, lineIndex) => (lineIndex === index ? value : line)));
-  }
-
-  function addLine() {
-    setError('');
-    setLines((current) => [...current, '']);
-  }
-
-  function removeLine(index) {
-    setError('');
-    setLines((current) => (current.length <= 1 ? [''] : current.filter((_, lineIndex) => lineIndex !== index)));
-  }
-
-  async function handleSave() {
-    const fees = lines
-      .map((line) => line.trim())
-      .filter((line) => line !== '')
-      .map((line) => ({ amount: Number(line) }));
-
-    if (fees.some((fee) => Number.isNaN(fee.amount))) {
-      setError('Enter a valid number for each amount.');
-      return;
-    }
-
-    await onSave(fees);
-  }
-
-  return (
-    <Modal
-      className="modal-card-meter-fees"
-      isBusy={saving}
-      title={`Additional fees — ${modelLabel}`}
-      onClose={onClose}
-    >
-      <p className="muted">{monthLabel}</p>
-      {error ? <p className="form-error">{error}</p> : null}
-      <div className="meter-fee-lines">
-        {lines.map((line, index) => (
-          <div className="meter-fee-line" key={`fee-line-${index}`}>
-            <label>
-              Amount {index + 1}
-              <input
-                disabled={saving}
-                inputMode="decimal"
-                placeholder="0.00"
-                type="number"
-                step="0.01"
-                value={line}
-                onChange={(event) => updateLine(index, event.target.value)}
-              />
-            </label>
-            <button
-              aria-label={`Remove amount ${index + 1}`}
-              className="meter-fee-edit"
-              disabled={saving}
-              type="button"
-              onClick={() => removeLine(index)}
-            >
-              <ActionIcon name="delete" />
-            </button>
-          </div>
-        ))}
-      </div>
-      <div className="form-actions meter-fee-actions">
-        <button className="secondary-button" disabled={saving} type="button" onClick={addLine}>
-          <ButtonContent icon="add">Add more</ButtonContent>
-        </button>
-        <button className="secondary-button" disabled={saving} type="button" onClick={onClose}>
-          <ButtonContent icon="cancel">Cancel</ButtonContent>
-        </button>
-        <button className="primary-button" disabled={saving} type="button" onClick={handleSave}>
-          <ButtonContent icon="save" loading={saving}>
-            {saving ? 'Saving...' : 'Save'}
-          </ButtonContent>
-        </button>
-      </div>
-    </Modal>
-  );
 }
 
 function WeeklyMeterReportScreen({ initialYear, initialMonth, showNotice, onBackToCalendar }) {
@@ -3944,8 +3859,6 @@ function WeeklyMeterReportScreen({ initialYear, initialMonth, showNotice, onBack
   const [month, setMonth] = useState(initialMonth ?? now.getMonth() + 1);
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [feeEditor, setFeeEditor] = useState(null);
-  const [savingFees, setSavingFees] = useState(false);
   const [downloadingYear, setDownloadingYear] = useState(false);
 
   const loadReport = useCallback(async (nextYear, nextMonth) => {
@@ -3976,7 +3889,6 @@ function WeeklyMeterReportScreen({ initialYear, initialMonth, showNotice, onBack
 
   const years = report?.years ?? [now.getFullYear() - 1, now.getFullYear()];
   const availableMonths = report?.available_months ?? [month];
-  const monthLabel = `${monthNames[month - 1]} ${year}`;
   const titleColSpan = 1 + ((report?.weeks.length ?? 0) * 2) + 1 + 2;
 
   async function downloadYearReport() {
@@ -4011,30 +3923,6 @@ function WeeklyMeterReportScreen({ initialYear, initialMonth, showNotice, onBack
       showNotice('error', message);
     } finally {
       setDownloadingYear(false);
-    }
-  }
-
-  async function saveAdditionalFees(fees) {
-    if (!feeEditor) {
-      return;
-    }
-
-    setSavingFees(true);
-
-    try {
-      const response = await axios.put('/api/weekly-meter-report/additional-fees', {
-        year,
-        month,
-        model_label: feeEditor.label,
-        fees,
-      });
-      setReport(response.data.data);
-      setFeeEditor(null);
-      showNotice('success', `Additional fees saved for ${feeEditor.label}.`);
-    } catch (error) {
-      showNotice('error', messageFromError(error, 'Unable to save additional fees.'));
-    } finally {
-      setSavingFees(false);
     }
   }
 
@@ -4167,15 +4055,7 @@ function WeeklyMeterReportScreen({ initialYear, initialMonth, showNotice, onBack
                       </Fragment>
                     ))}
                     <td className="meter-num meter-fees-cell" title={meterAdditionalFeesTitle(row)}>
-                      <span>{formatMeterFeeDisplay(row.additional_fees_total, row.additional_fees)}</span>
-                      <button
-                        aria-label={`Edit additional fees for ${row.label}`}
-                        className="meter-fee-edit"
-                        type="button"
-                        onClick={() => setFeeEditor(row)}
-                      >
-                        <ActionIcon name="edit" />
-                      </button>
+                      {formatMeterFeeDisplay(row.additional_fees_total, row.additional_fees)}
                     </td>
                     <td className="meter-num meter-mtd">{row.tracks_units ? formatMeterNumber(row.mtd_units) : ''}</td>
                     <td className="meter-num meter-mtd meter-sales" title={meterMtdSalesTitle(row)}>
@@ -4220,21 +4100,6 @@ function WeeklyMeterReportScreen({ initialYear, initialMonth, showNotice, onBack
               </tbody>
             </table>
           </div>
-        ) : null}
-
-        {feeEditor ? (
-          <WeeklyMeterAdditionalFeesModal
-            initialFees={feeEditor.additional_fees}
-            modelLabel={feeEditor.label}
-            monthLabel={monthLabel}
-            saving={savingFees}
-            onClose={() => {
-              if (!savingFees) {
-                setFeeEditor(null);
-              }
-            }}
-            onSave={saveAdditionalFees}
-          />
         ) : null}
       </article>
     </section>

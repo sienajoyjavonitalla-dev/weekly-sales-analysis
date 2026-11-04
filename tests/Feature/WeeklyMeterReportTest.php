@@ -3,10 +3,13 @@
 namespace Tests\Feature;
 
 use App\Domain\WeeklyAnalysis\Exports\Services\WeeklyMeterReportExporter;
+use App\Domain\WeeklyAnalysis\Reports\WeeklyMeterModelCatalog;
 use App\Domain\WeeklyAnalysis\Reports\WeeklyMeterReportBuilder;
 use App\Models\ImportBatch;
+use App\Models\ImportBatchFeeAdjustment;
 use App\Models\ProductCategory;
 use App\Models\SalesRow;
+use App\Models\UploadedFile;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -143,41 +146,73 @@ class WeeklyMeterReportTest extends TestCase
         $this->assertSame(17533.0, (float) $sheet->getCell('N7')->getCalculatedValue());
     }
 
-    public function test_additional_fees_are_included_in_row_mtd_and_totals(): void
+    public function test_additional_fees_use_allocated_amazon_and_walmart_column_f(): void
     {
         $user = $this->createAnalyst();
-        $category = $this->createStarterKitCategory();
-        $this->createWeekSales($user, '2026-04-03', $category, 2, 1246.00, 1);
+        $kit = $this->createStarterKitCategory();
+        $c555 = $this->createCategory('c555_concrete_kits', 'C555 CONCRETE KITS', 'C555 Concrete Kits', 80);
+        $batch = $this->createWeekSales($user, '2026-04-03', $kit, 2, 1246.00, 1);
 
-        \App\Models\WeeklyMeterAdditionalFee::query()->create([
-            'year' => 2026,
-            'month' => 4,
-            'model_label' => 'RHP L6 Kits',
-            'amount' => 100.50,
-            'sort_order' => 0,
-            'created_by_user_id' => $user->id,
-        ]);
-        \App\Models\WeeklyMeterAdditionalFee::query()->create([
-            'year' => 2026,
-            'month' => 4,
-            'model_label' => 'RHP L6 Kits',
-            'amount' => -25.25,
-            'sort_order' => 1,
-            'created_by_user_id' => $user->id,
-        ]);
+        $amazonFile = $this->addFeesUpload($batch, 'amazon_fees');
+        $this->addFeeRow($batch, $amazonFile, $kit, 'KIT-L6', 75.00, 10);
+        $this->addFeeRow($batch, $amazonFile, $c555, 'C555-1', 25.00, 11);
+        $this->addFeeRow($batch, $amazonFile, $kit, 'SHIP_UPS_GROUND', 100.00, 12);
+        $this->addFeeAdjustment($batch, 'amazon', -40.00, $user);
+
+        $walmartFile = $this->addFeesUpload($batch, 'walmart_fees');
+        $this->addFeeRow($batch, $walmartFile, $kit, 'KIT-WM', 200.00, 20);
+        $this->addFeeAdjustment($batch, 'walmart', -10.00, $user);
 
         $report = app(WeeklyMeterReportBuilder::class)->build(2026, 4, CarbonImmutable::parse('2026-09-21'));
-        $row = collect($report['rows'])->firstWhere('label', 'RHP L6 Kits');
+        $kitRow = collect($report['rows'])->firstWhere('label', 'RHP L6 Kits');
+        $c555Row = collect($report['rows'])->firstWhere('label', 'C555 Concrete Kits');
 
-        $this->assertSame(75.25, $row['additional_fees_total']);
-        $this->assertCount(2, $row['additional_fees']);
-        $this->assertSame(1321.25, $row['mtd_sales']);
-        $this->assertSame(75.25, $report['totals']['additional_fees_total']);
-        $this->assertSame(5.7, $report['totals']['additional_fees_percent']);
-        $this->assertSame(1321.25, $report['totals']['mtd_sales']);
+        $this->assertSame(40.0, $kitRow['additional_fees_total']);
+        $this->assertSame(10.0, $c555Row['additional_fees_total']);
+        $this->assertNotEquals(75.0, $kitRow['additional_fees_total']);
+        $this->assertNotEquals(200.0, $kitRow['additional_fees_total']);
+        $this->assertEqualsCanonicalizing(
+            ['amazon', 'walmart'],
+            array_column($kitRow['additional_fees'], 'source'),
+        );
+        $this->assertSame(1286.0, $kitRow['mtd_sales']);
+        $this->assertSame(50.0, $report['totals']['additional_fees_total']);
+        $this->assertSame(3.9, $report['totals']['additional_fees_percent']);
+        $this->assertSame(1296.0, $report['totals']['mtd_sales']);
     }
 
-    public function test_analyst_can_replace_and_clear_additional_fees(): void
+    public function test_additional_fees_combine_amazon_misc_and_skip_weeks_without_uploaded_fees(): void
+    {
+        $user = $this->createAnalyst();
+        $kit = $this->createStarterKitCategory();
+        $misc = $this->createCategory('rhp_miscellaneous', 'RHP MISCELLANEOUS', 'BT Smart Loggers', 40);
+        $miscL6 = $this->createCategory('rhp_miscellaneous_l6', 'RHP MISCELLANEOUS L6', 'RHP L6 Misc', 41);
+        $onTotal = $this->createCategory('misc_on_total_sales_report', 'Misc (on Total Sales Report)', 'RHP L6 Misc', 42);
+
+        $weekWithFees = $this->createWeekSales($user, '2026-04-03', $kit, 2, 1246.00, 1);
+        $amazonFile = $this->addFeesUpload($weekWithFees, 'amazon_fees');
+        $this->addFeeRow($weekWithFees, $amazonFile, $kit, 'KIT-L6', 50.00, 10);
+        $this->addFeeRow($weekWithFees, $amazonFile, $misc, 'MISC-1', 30.00, 11);
+        $this->addFeeRow($weekWithFees, $amazonFile, $miscL6, 'MISC-L6', 10.00, 12);
+        $this->addFeeRow($weekWithFees, $amazonFile, $onTotal, 'MISC-TSR', 10.00, 13);
+        $this->addFeeAdjustment($weekWithFees, 'amazon', -100.00, $user);
+
+        $weekWithoutUpload = $this->createWeekSales($user, '2026-04-10', $kit, 18, 12549.00, 2);
+        $this->addFeeAdjustment($weekWithoutUpload, 'amazon', -999.00, $user);
+
+        $report = app(WeeklyMeterReportBuilder::class)->build(2026, 4, CarbonImmutable::parse('2026-09-21'));
+        $kitRow = collect($report['rows'])->firstWhere('label', 'RHP L6 Kits');
+        $miscRow = collect($report['rows'])->firstWhere('label', 'RHP L6 Misc');
+        $loggerRow = collect($report['rows'])->firstWhere('label', 'BT Smart Loggers');
+
+        $this->assertSame(50.0, $kitRow['additional_fees_total']);
+        $this->assertSame(50.0, $miscRow['additional_fees_total']);
+        $this->assertSame(0.0, $loggerRow['additional_fees_total']);
+        $this->assertSame([['amount' => 50.0, 'sort_order' => 0, 'source' => 'amazon']], $miscRow['additional_fees']);
+        $this->assertSame(100.0, $report['totals']['additional_fees_total']);
+    }
+
+    public function test_additional_fees_manual_put_route_is_removed(): void
     {
         $user = $this->createAnalyst();
 
@@ -186,41 +221,9 @@ class WeeklyMeterReportTest extends TestCase
                 'year' => 2026,
                 'month' => 4,
                 'model_label' => 'RHP L6 Kits',
-                'fees' => [
-                    ['amount' => 50],
-                    ['amount' => -10.5],
-                ],
-            ])
-            ->assertOk()
-            ->assertJsonPath('data.totals.additional_fees_total', 39.5);
-
-        $this->assertDatabaseCount('weekly_meter_additional_fees', 2);
-
-        $this->actingAs($user)
-            ->putJson('/api/weekly-meter-report/additional-fees', [
-                'year' => 2026,
-                'month' => 4,
-                'model_label' => 'RHP L6 Kits',
-                'fees' => [],
-            ])
-            ->assertOk()
-            ->assertJsonPath('data.totals.additional_fees_total', 0);
-
-        $this->assertDatabaseCount('weekly_meter_additional_fees', 0);
-    }
-
-    public function test_additional_fees_reject_unknown_model_label(): void
-    {
-        $user = $this->createAnalyst();
-
-        $this->actingAs($user)
-            ->putJson('/api/weekly-meter-report/additional-fees', [
-                'year' => 2026,
-                'month' => 4,
-                'model_label' => 'Not A Real Model',
                 'fees' => [['amount' => 10]],
             ])
-            ->assertStatus(422);
+            ->assertMethodNotAllowed();
     }
 
     public function test_exporter_includes_additional_fees_column(): void
@@ -228,20 +231,14 @@ class WeeklyMeterReportTest extends TestCase
         $user = $this->createAnalyst();
         $category = $this->createStarterKitCategory();
         $batch = $this->createWeekSales($user, '2026-04-17', $category, 26, 17533.00, 3);
-
-        \App\Models\WeeklyMeterAdditionalFee::query()->create([
-            'year' => 2026,
-            'month' => 4,
-            'model_label' => 'RHP L6 Kits',
-            'amount' => 200,
-            'sort_order' => 0,
-            'created_by_user_id' => $user->id,
-        ]);
+        $amazonFile = $this->addFeesUpload($batch, 'amazon_fees');
+        $this->addFeeRow($batch, $amazonFile, $category, 'KIT-L6', 80.00, 10);
+        $this->addFeeAdjustment($batch, 'amazon', -200.00, $user);
 
         $generated = app(WeeklyMeterReportExporter::class)->export($batch, $user->id);
         $sheet = IOFactory::load(storage_path('app/private/'.$generated->storage_path))->getActiveSheet();
 
-        $percentRow = 6 + count(\App\Domain\WeeklyAnalysis\Reports\WeeklyMeterModelCatalog::rows()) + 1;
+        $percentRow = 6 + count(WeeklyMeterModelCatalog::rows()) + 1;
 
         $this->assertSame("ADDT'L FEES", $sheet->getCell('L2')->getValue());
         $this->assertSame(200.0, (float) $sheet->getCell('L7')->getCalculatedValue());
@@ -311,14 +308,72 @@ class WeeklyMeterReportTest extends TestCase
 
     private function createStarterKitCategory(): ProductCategory
     {
+        return $this->createCategory(
+            'kit_rapid_rh_l6_starter_kit_plus_fahrenheit',
+            'KIT, RAPID RH L6 STARTER KIT PLUS-FAHRENHEIT',
+            'RHP L6 Kits',
+            30,
+        );
+    }
+
+    private function createCategory(string $code, string $name, string $meterLabel, int $sortOrder): ProductCategory
+    {
         return ProductCategory::query()->create([
-            'code' => 'kit_rapid_rh_l6_starter_kit_plus_fahrenheit',
-            'name' => 'KIT, RAPID RH L6 STARTER KIT PLUS-FAHRENHEIT',
+            'code' => $code,
+            'name' => $name,
             'report_family' => 'rhp',
             'sales_analysis_bucket' => 'rhp',
-            'weekly_meter_row_label' => 'RHP L6 Kits',
-            'sort_order' => 30,
+            'weekly_meter_row_label' => $meterLabel,
+            'sort_order' => $sortOrder,
             'is_active' => true,
+        ]);
+    }
+
+    private function addFeesUpload(ImportBatch $batch, string $fileType): UploadedFile
+    {
+        return UploadedFile::query()->create([
+            'import_batch_id' => $batch->id,
+            'file_type' => $fileType,
+            'original_name' => $fileType.'.xlsx',
+            'storage_path' => 'uploads/'.$batch->id.'/'.$fileType.'.xlsx',
+            'mime_type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'size_bytes' => 100,
+            'sha256_checksum' => hash('sha256', $batch->id.$fileType),
+            'status' => 'imported',
+        ]);
+    }
+
+    private function addFeeAdjustment(ImportBatch $batch, string $marketplace, float $amount, User $user): ImportBatchFeeAdjustment
+    {
+        return ImportBatchFeeAdjustment::query()->create([
+            'import_batch_id' => $batch->id,
+            'marketplace' => $marketplace,
+            'amount' => $amount,
+            'sort_order' => 0,
+            'created_by_user_id' => $user->id,
+        ]);
+    }
+
+    private function addFeeRow(
+        ImportBatch $batch,
+        UploadedFile $uploadedFile,
+        ProductCategory $category,
+        string $itemId,
+        float $amount,
+        int $sourceRow,
+    ): SalesRow {
+        return SalesRow::query()->create([
+            'import_batch_id' => $batch->id,
+            'uploaded_file_id' => $uploadedFile->id,
+            'workbook_type' => $uploadedFile->file_type,
+            'product_category_id' => $category->id,
+            'source_sheet' => 'Sheet',
+            'source_row_number' => $sourceRow,
+            'source_bucket' => $category->sales_analysis_bucket,
+            'item_id' => $itemId,
+            'description' => $category->name,
+            'amount' => $amount,
+            'classification_status' => 'matched',
         ]);
     }
 
