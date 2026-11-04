@@ -37,7 +37,7 @@ class ReportCalendarBuilder
 
         $batches = ImportBatch::query()
             ->has('uploadedFiles')
-            ->with(['generatedReports', 'reconciliationResult'])
+            ->with(['generatedReports', 'reconciliationResult', 'uploadedFiles:id,import_batch_id,file_type'])
             ->whereDate('week_ending', '>=', $rangeStart->toDateString())
             ->where(function ($query) use ($rangeEnd): void {
                 $query->whereNull('week_start')
@@ -65,6 +65,12 @@ class ReportCalendarBuilder
                 $report = $batch->generatedReports->firstWhere('report_type', $reportType);
 
                 if ($report === null) {
+                    continue;
+                }
+
+                if (in_array($reportType, ['amazon_fees', 'walmart_fees'], true)
+                    && ! $batch->uploadedFiles->contains('file_type', $reportType)
+                ) {
                     continue;
                 }
 

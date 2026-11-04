@@ -32,6 +32,7 @@ class ReportCalendarTest extends TestCase
             'import_batch_id' => $batch->id,
             'sales_analysis_total' => 425834.37,
         ]);
+        $this->addUpload($batch, 'amazon_fees');
         $salesAnalysis = $this->createReport($batch, 'sales_analysis');
         $meter = $this->createReport($batch, 'weekly_meter_report');
         $amazonFees = $this->createReport($batch, 'amazon_fees');
@@ -55,6 +56,23 @@ class ReportCalendarTest extends TestCase
         $this->assertEquals(1246.0, $reports['weekly_meter_report']['total']);
         $this->assertSame($amazonFees->id, $reports['amazon_fees']['id']);
         $this->assertEquals(0.0, $reports['amazon_fees']['total']);
+    }
+
+    public function test_calendar_omits_fees_report_when_uploaded_file_is_gone(): void
+    {
+        $user = $this->createAnalyst();
+        $batch = $this->createBatch($user, '2026-05-08');
+        $this->createReport($batch, 'sales_analysis');
+        $this->createReport($batch, 'walmart_fees');
+
+        $response = $this->actingAs($user)
+            ->getJson('/api/report-calendar?year=2026&month=5')
+            ->assertOk();
+
+        $reports = collect($response->json('data.weeks.0.reports'))->pluck('report_type')->all();
+        $this->assertContains('sales_analysis', $reports);
+        $this->assertNotContains('walmart_fees', $reports);
+        $this->assertNotContains('amazon_fees', $reports);
     }
 
     public function test_calendar_lists_uploaded_weeks_without_generated_reports(): void
@@ -153,17 +171,22 @@ class ReportCalendarTest extends TestCase
         ]);
 
         if ($withUpload) {
-            UploadedFile::query()->create([
-                'import_batch_id' => $batch->id,
-                'file_type' => 'sales_analysis',
-                'original_name' => 'sales.xlsx',
-                'storage_path' => 'uploads/sales.xlsx',
-                'sha256_checksum' => str_repeat('a', 64),
-                'status' => 'imported',
-            ]);
+            $this->addUpload($batch, 'sales_analysis');
         }
 
         return $batch;
+    }
+
+    private function addUpload(ImportBatch $batch, string $fileType): UploadedFile
+    {
+        return UploadedFile::query()->create([
+            'import_batch_id' => $batch->id,
+            'file_type' => $fileType,
+            'original_name' => $fileType.'.xlsx',
+            'storage_path' => 'uploads/'.$batch->id.'/'.$fileType.'.xlsx',
+            'sha256_checksum' => str_repeat('a', 64),
+            'status' => 'imported',
+        ]);
     }
 
     private function addSalesRow(ImportBatch $batch, ProductCategory $category, float $quantity, float $amount): SalesRow

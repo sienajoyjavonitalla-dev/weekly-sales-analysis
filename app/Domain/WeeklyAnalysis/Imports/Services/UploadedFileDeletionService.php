@@ -2,8 +2,11 @@
 
 namespace App\Domain\WeeklyAnalysis\Imports\Services;
 
+use App\Domain\WeeklyAnalysis\Imports\Enums\WorkbookType;
 use App\Domain\WeeklyAnalysis\Security\Services\AuditLogger;
+use App\Models\GeneratedReport;
 use App\Models\ImportBatch;
+use App\Models\ImportBatchFeeAdjustment;
 use App\Models\UploadedFile;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -29,6 +32,8 @@ class UploadedFileDeletionService
             Storage::disk('local')->delete($uploadedFile->storage_path);
         }
 
+        $this->removeGeneratedOutput($importBatch, $uploadedFile->file_type);
+
         $uploadedFile->salesRows()->delete();
         $uploadedFile->orderRows()->delete();
         $uploadedFile->incomeStatementLines()->delete();
@@ -47,6 +52,36 @@ class UploadedFileDeletionService
 
             $importBatch->delete();
         }
+    }
+
+    private function removeGeneratedOutput(?ImportBatch $importBatch, string $fileType): void
+    {
+        if ($importBatch === null) {
+            return;
+        }
+
+        $reports = GeneratedReport::query()
+            ->where('import_batch_id', $importBatch->id)
+            ->where('report_type', $fileType)
+            ->get();
+
+        foreach ($reports as $report) {
+            if (is_string($report->storage_path) && $report->storage_path !== '' && Storage::disk('local')->exists($report->storage_path)) {
+                Storage::disk('local')->delete($report->storage_path);
+            }
+
+            $report->delete();
+        }
+
+        $marketplace = WorkbookType::tryFrom($fileType)?->marketplace();
+        if ($marketplace === null) {
+            return;
+        }
+
+        ImportBatchFeeAdjustment::query()
+            ->where('import_batch_id', $importBatch->id)
+            ->where('marketplace', $marketplace)
+            ->delete();
     }
 
     /**

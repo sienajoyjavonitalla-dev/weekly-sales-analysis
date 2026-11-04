@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\GeneratedReport;
 use App\Models\ImportBatch;
+use App\Models\ImportBatchFeeAdjustment;
 use App\Models\UploadedFile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -165,6 +167,60 @@ class ImportBatchApiTest extends TestCase
 
         $this->assertDatabaseMissing('uploaded_files', ['id' => $uploadedFile->id]);
         $this->assertDatabaseMissing('import_batches', ['id' => $batch->id]);
+    }
+
+    public function test_deleting_walmart_fees_file_removes_generated_report_and_keeps_batch(): void
+    {
+        $user = $this->createAnalyst();
+        $batch = $this->createBatch($user, '2026-05-08');
+
+        UploadedFile::query()->create([
+            'import_batch_id' => $batch->id,
+            'file_type' => 'sales_analysis',
+            'original_name' => 'sales.xlsx',
+            'storage_path' => 'uploads/'.$batch->id.'/sales_analysis.xlsx',
+            'sha256_checksum' => str_repeat('a', 64),
+            'status' => 'imported',
+        ]);
+
+        $walmartFile = UploadedFile::query()->create([
+            'import_batch_id' => $batch->id,
+            'file_type' => 'walmart_fees',
+            'original_name' => 'walmart.xlsx',
+            'storage_path' => 'uploads/'.$batch->id.'/walmart_fees.xlsx',
+            'sha256_checksum' => str_repeat('b', 64),
+            'status' => 'imported',
+        ]);
+
+        GeneratedReport::query()->create([
+            'import_batch_id' => $batch->id,
+            'report_type' => 'walmart_fees',
+            'status' => 'completed',
+            'file_name' => 'walmart_fees.xlsx',
+            'storage_path' => 'generated-reports/'.$batch->id.'/walmart_fees.xlsx',
+        ]);
+
+        ImportBatchFeeAdjustment::query()->create([
+            'import_batch_id' => $batch->id,
+            'marketplace' => 'walmart',
+            'amount' => 106.67,
+            'sort_order' => 0,
+        ]);
+
+        $this->actingAs($user)
+            ->deleteJson('/api/uploaded-files/'.$walmartFile->id)
+            ->assertOk();
+
+        $this->assertDatabaseHas('import_batches', ['id' => $batch->id]);
+        $this->assertDatabaseMissing('uploaded_files', ['id' => $walmartFile->id]);
+        $this->assertDatabaseMissing('generated_reports', [
+            'import_batch_id' => $batch->id,
+            'report_type' => 'walmart_fees',
+        ]);
+        $this->assertDatabaseMissing('import_batch_fee_adjustments', [
+            'import_batch_id' => $batch->id,
+            'marketplace' => 'walmart',
+        ]);
     }
 
     public function test_analyst_cannot_delete_uploaded_file_from_finalized_batch(): void
