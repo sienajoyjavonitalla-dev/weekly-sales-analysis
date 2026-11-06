@@ -25,6 +25,14 @@
   --danger-bg: #3f1518;
   --danger-border: #7f1d1d;
   --danger-text: #fecaca;
+  --input-bg: #0f151f;
+  --input-disabled-bg: #182233;
+  --row-selected-bg: #1d2240;
+  --nav-active-text: #ffffff;
+  --secondary-button-text: #c7d2fe;
+  --top-nav-shadow: 0 12px 34px rgba(0, 0, 0, 0.28);
+  --panel-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  --color-scheme: dark;
   --button-radius: 6px;
   --button-height: 34px;
   --button-padding-y: 6px;
@@ -47,13 +55,23 @@
   box-sizing: border-box;
 }
 
-body {
+html {
+  color-scheme: var(--color-scheme, dark);
+  background-color: var(--bg);
+}
+
+body,
+#app {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(circle at top left, var(--bg-accent), transparent 34rem),
-    var(--bg);
+  background-color: var(--bg);
+  background-image: radial-gradient(
+    circle at top left,
+    var(--bg-accent),
+    transparent 34rem
+  );
+  color: var(--text);
 }
 
 button,
@@ -65,13 +83,58 @@ textarea {
 
 .app-shell {
   min-height: 100vh;
-  background: var(--page-background);
+  background-color: var(--bg);
+  background-image: radial-gradient(
+    circle at top left,
+    var(--bg-accent),
+    transparent 34rem
+  );
   color: var(--text);
+}
+
+.theme-dark {
+  --bg: #0b0f16;
+  --bg-accent: rgba(65, 79, 137, 0.22);
+  --page-background:
+    radial-gradient(circle at top left, var(--bg-accent), transparent 34rem),
+    var(--bg);
+  --surface: #111821;
+  --surface-2: #151e2a;
+  --surface-3: #1b2534;
+  --border: #253044;
+  --border-2: #2c3a51;
+  --text: #dbe4f2;
+  --text-strong: #f8fafc;
+  --text-muted: #9aa8bd;
+  --text-soft: #8b9bb0;
+  --primary: #625ff4;
+  --primary-2: #272246;
+  --primary-border: #363059;
+  --icon: #8fb7ff;
+  --success-bg: #0d3b23;
+  --success-text: #86efac;
+  --warning-bg: #3a2b0b;
+  --warning-border: #713f12;
+  --warning-text: #fde68a;
+  --danger-bg: #3f1518;
+  --danger-border: #7f1d1d;
+  --danger-text: #fecaca;
+  --input-bg: #0f151f;
+  --input-disabled-bg: #182233;
+  --row-selected-bg: #1d2240;
+  --nav-active-text: #ffffff;
+  --secondary-button-text: #c7d2fe;
+  --top-nav-shadow: 0 12px 34px rgba(0, 0, 0, 0.28);
+  --panel-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  --color-scheme: dark;
 }
 
 .theme-light {
   --bg: #f4f7fb;
   --bg-accent: rgba(99, 102, 241, 0.14);
+  --page-background:
+    radial-gradient(circle at top left, var(--bg-accent), transparent 34rem),
+    var(--bg);
   --surface: #ffffff;
   --surface-2: #eef3f9;
   --surface-3: #e4ebf5;
@@ -79,7 +142,7 @@ textarea {
   --border-2: #c7d2e1;
   --text: #233044;
   --text-strong: #111827;
-  --text-muted: #64748b;
+  --text-muted: #475569;
   --text-soft: #64748b;
   --primary: #625ff4;
   --primary-2: #ebeafe;
@@ -93,48 +156,165 @@ textarea {
   --danger-bg: #fff1f2;
   --danger-border: #fecaca;
   --danger-text: #be123c;
+  --input-bg: #ffffff;
+  --input-disabled-bg: #e4ebf5;
+  --row-selected-bg: #e8e7fe;
+  --nav-active-text: #111827;
+  --secondary-button-text: #1e293b;
+  --top-nav-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --panel-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  --color-scheme: light;
 }
 
 .theme-midnight {
   --bg: #050914;
   --bg-accent: rgba(59, 130, 246, 0.24);
+  --page-background:
+    radial-gradient(circle at top left, var(--bg-accent), transparent 34rem),
+    var(--bg);
   --surface: #0a1020;
   --surface-2: #111a2e;
   --surface-3: #17223a;
   --border: #1f2d4a;
   --border-2: #2c426c;
+  --text: #dbe4f2;
+  --text-strong: #f8fafc;
+  --text-muted: #9aa8bd;
+  --text-soft: #8b9bb0;
   --primary: #3b82f6;
   --primary-2: #10284d;
   --primary-border: #1d4ed8;
   --icon: #93c5fd;
+  --success-bg: #0d3b23;
+  --success-text: #86efac;
+  --warning-bg: #3a2b0b;
+  --warning-border: #713f12;
+  --warning-text: #fde68a;
+  --danger-bg: #3f1518;
+  --danger-border: #7f1d1d;
+  --danger-text: #fecaca;
+  --input-bg: #0a1020;
+  --input-disabled-bg: #111a2e;
+  --row-selected-bg: #152445;
+  --nav-active-text: #ffffff;
+  --secondary-button-text: #bfdbfe;
+  --top-nav-shadow: 0 12px 34px rgba(0, 0, 0, 0.28);
+  --panel-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  --color-scheme: dark;
 }
 
 .theme-ocean {
   --bg: #061718;
   --bg-accent: rgba(45, 212, 191, 0.2);
+  --page-background:
+    radial-gradient(circle at top left, var(--bg-accent), transparent 34rem),
+    var(--bg);
   --surface: #0b2224;
   --surface-2: #103033;
   --surface-3: #164044;
   --border: #1f4e53;
   --border-2: #2f686e;
+  --text: #dbe4f2;
+  --text-strong: #f8fafc;
+  --text-muted: #9aa8bd;
+  --text-soft: #8b9bb0;
   --primary: #2dd4bf;
   --primary-2: #123f3d;
   --primary-border: #14b8a6;
   --icon: #67e8f9;
+  --success-bg: #0d3b23;
+  --success-text: #86efac;
+  --warning-bg: #3a2b0b;
+  --warning-border: #713f12;
+  --warning-text: #fde68a;
+  --danger-bg: #3f1518;
+  --danger-border: #7f1d1d;
+  --danger-text: #fecaca;
+  --input-bg: #0b2224;
+  --input-disabled-bg: #103033;
+  --row-selected-bg: #134449;
+  --nav-active-text: #ffffff;
+  --secondary-button-text: #99f6e4;
+  --top-nav-shadow: 0 12px 34px rgba(0, 0, 0, 0.28);
+  --panel-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  --color-scheme: dark;
 }
 
 .theme-ember {
   --bg: #170d08;
   --bg-accent: rgba(249, 115, 22, 0.22);
+  --page-background:
+    radial-gradient(circle at top left, var(--bg-accent), transparent 34rem),
+    var(--bg);
   --surface: #24140d;
   --surface-2: #321b10;
   --surface-3: #432414;
   --border: #5a321c;
   --border-2: #7c4526;
+  --text: #f5e6d8;
+  --text-strong: #fff7ed;
+  --text-muted: #d6b39a;
+  --text-soft: #c4a08a;
   --primary: #f97316;
   --primary-2: #4a2410;
   --primary-border: #ea580c;
   --icon: #fdba74;
+  --success-bg: #0d3b23;
+  --success-text: #86efac;
+  --warning-bg: #3a2b0b;
+  --warning-border: #713f12;
+  --warning-text: #fde68a;
+  --danger-bg: #3f1518;
+  --danger-border: #7f1d1d;
+  --danger-text: #fecaca;
+  --input-bg: #24140d;
+  --input-disabled-bg: #321b10;
+  --row-selected-bg: #4a2410;
+  --nav-active-text: #ffffff;
+  --secondary-button-text: #fdba74;
+  --top-nav-shadow: 0 12px 34px rgba(0, 0, 0, 0.28);
+  --panel-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  --color-scheme: dark;
+}
+
+/* Hard overrides so light mode never inherits dark form/control paints. */
+.theme-light input,
+.theme-light select,
+.theme-light textarea {
+  background: #ffffff;
+  background-color: #ffffff;
+  color: #111827;
+  color-scheme: light;
+  border-color: #c7d2e1;
+}
+
+.theme-light input:disabled {
+  background: #e4ebf5;
+  background-color: #e4ebf5;
+  color: #64748b;
+}
+
+.theme-light .secondary-button,
+.theme-light .tab-button,
+.theme-light .meter-month-tab,
+.theme-light .sa-tab,
+.theme-light .calendar-nav-button,
+.theme-light .batch-upload-button,
+.theme-light .batch-delete-button,
+.theme-light .modal-close-button,
+.theme-light .date-range-trigger,
+.theme-light .searchable-select-trigger {
+  color: #1e293b;
+}
+
+.theme-light .secondary-button {
+  background: #eef3f9;
+  border-color: #c7d2e1;
+}
+
+.theme-light option {
+  background: #ffffff;
+  color: #111827;
 }
 
 .top-nav {
@@ -149,7 +329,7 @@ textarea {
   padding: 10px 18px;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.28);
+  box-shadow: var(--top-nav-shadow);
 }
 
 .top-nav-left,
@@ -321,7 +501,7 @@ textarea {
 
 .sidebar-title {
   margin: 0 8px 12px;
-  color: #78879c;
+  color: var(--text-muted);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -360,7 +540,7 @@ textarea {
   border: 1px solid transparent;
   border-radius: var(--button-radius);
   background: transparent;
-  color: var(--text-muted);
+  color: var(--text);
   cursor: pointer;
   font-size: var(--button-font-size);
   font-weight: 750;
@@ -375,13 +555,13 @@ textarea {
 
 .sidebar-link:hover {
   background: var(--surface-2);
-  color: #ffffff;
+  color: var(--text-strong);
 }
 
 .sidebar-link-active {
   border-color: var(--primary-border);
   background: var(--primary-2);
-  color: #ffffff;
+  color: var(--nav-active-text);
   box-shadow: inset 3px 0 0 var(--primary);
 }
 
@@ -540,7 +720,7 @@ textarea {
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--panel-shadow);
 }
 
 .hero-card {
@@ -608,11 +788,30 @@ textarea {
   z-index: 1;
   margin: 0;
   padding: 0 8px;
-  background: var(--page-background);
-  background-attachment: fixed;
+  background: var(--surface);
+}
+
+/* Modals render inside panels, so undo the border-label layout for dialog eyebrows. */
+.modal-card .eyebrow {
+  position: static;
+  top: auto;
+  left: auto;
+  z-index: auto;
+  margin: 0 0 12px;
+  padding: 0;
+  background: transparent;
 }
 
 .panel-transparent {
+  background: var(--bg);
+  box-shadow: none;
+}
+
+.panel-transparent.panel-legend .eyebrow {
+  background: var(--bg);
+}
+
+.panel-transparent.panel-legend .modal-card .eyebrow {
   background: transparent;
 }
 
@@ -675,8 +874,10 @@ textarea {
   min-height: 42px;
   border: 1px solid var(--border-2);
   border-radius: 8px;
-  background: #0f151f;
+  background: var(--input-bg, var(--surface));
+  background-color: var(--input-bg, var(--surface));
   color: var(--text-strong);
+  color-scheme: var(--color-scheme, dark);
   font-weight: 400;
   padding: 12px 14px;
   box-sizing: border-box;
@@ -691,8 +892,8 @@ textarea:focus {
 
 input:disabled {
   cursor: not-allowed;
-  background: #182233;
-  color: #64748b;
+  background: var(--input-disabled-bg);
+  color: var(--text-muted);
 }
 
 .notice {
@@ -797,7 +998,7 @@ input:disabled {
 .secondary-button {
   border: 1px solid var(--border-2);
   background: var(--surface-2);
-  color: #c7d2fe;
+  color: var(--secondary-button-text, var(--text-strong));
 }
 
 .danger-button {
@@ -1944,7 +2145,7 @@ input:disabled {
 }
 
 .selected-row td {
-  background: #1d2240;
+  background: var(--row-selected-bg);
 }
 
 .selected-row td:first-child {
@@ -2554,7 +2755,7 @@ td {
   place-items: center;
   border-radius: 999px;
   background: var(--primary-2);
-  color: #ffffff;
+  color: var(--nav-active-text);
   font-size: 0.85rem;
   font-weight: 800;
 }

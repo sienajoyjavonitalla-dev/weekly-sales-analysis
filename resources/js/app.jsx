@@ -461,6 +461,26 @@ function App() {
   }, [user, activeTab]);
 
   useEffect(() => {
+    const theme = user?.theme ?? 'dark';
+    const themeClasses = ['theme-dark', 'theme-light', 'theme-midnight', 'theme-ocean', 'theme-ember'];
+    const roots = [document.documentElement, document.body].filter(Boolean);
+    const colorScheme = theme === 'light' ? 'light' : 'dark';
+
+    roots.forEach((node) => {
+      node.classList.remove(...themeClasses);
+      node.classList.add(`theme-${theme}`);
+      node.style.colorScheme = colorScheme;
+    });
+
+    return () => {
+      roots.forEach((node) => {
+        node.classList.remove(`theme-${theme}`);
+        node.style.colorScheme = '';
+      });
+    };
+  }, [user?.theme]);
+
+  useEffect(() => {
     axios
       .get('/api/me')
       .then((response) => setUser(response.data.data))
