@@ -13,7 +13,7 @@ use App\Models\UploadedFile;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use PhpOffice\PhpSpreadsheet\IOFactory;
+use App\Domain\WeeklyAnalysis\Storage\WorkbookStorage;
 use Tests\TestCase;
 
 class WeeklyMeterReportTest extends TestCase
@@ -132,12 +132,11 @@ class WeeklyMeterReportTest extends TestCase
         $batch = $this->createWeekSales($user, '2026-04-17', $category, 26, 17533.00, 3);
 
         $generated = app(WeeklyMeterReportExporter::class)->export($batch, $user->id);
-        $path = storage_path('app/private/'.$generated->storage_path);
 
         $this->assertSame('completed', $generated->status);
-        $this->assertFileExists($path);
+        $this->assertTrue(app(WorkbookStorage::class)->exists($generated->storage_path));
 
-        $sheet = IOFactory::load($path)->getActiveSheet();
+        $sheet = $this->loadStoredSpreadsheet($generated->storage_path)->getActiveSheet();
         $this->assertSame('April 2026 Handmeter/RHP Shipments', $sheet->getCell('A1')->getValue());
         $this->assertSame('RHP L6 Kits', $sheet->getCell('A7')->getValue());
         $this->assertSame(26.0, (float) $sheet->getCell('F7')->getCalculatedValue());
@@ -236,7 +235,7 @@ class WeeklyMeterReportTest extends TestCase
         $this->addFeeAdjustment($batch, 'amazon', -200.00, $user);
 
         $generated = app(WeeklyMeterReportExporter::class)->export($batch, $user->id);
-        $sheet = IOFactory::load(storage_path('app/private/'.$generated->storage_path))->getActiveSheet();
+        $sheet = $this->loadStoredSpreadsheet($generated->storage_path)->getActiveSheet();
 
         $percentRow = 6 + count(WeeklyMeterModelCatalog::rows()) + 1;
 

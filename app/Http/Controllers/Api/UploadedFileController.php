@@ -4,21 +4,22 @@ namespace App\Http\Controllers\Api;
 
 use App\Domain\WeeklyAnalysis\Imports\Services\UploadedFileDeletionService;
 use App\Domain\WeeklyAnalysis\Security\Services\AuditLogger;
+use App\Domain\WeeklyAnalysis\Storage\WorkbookStorage;
 use App\Models\UploadedFile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class UploadedFileController
 {
     public function __construct(
         private readonly UploadedFileDeletionService $deletionService,
+        private readonly WorkbookStorage $workbookStorage,
     ) {
     }
 
-    public function download(UploadedFile $uploadedFile): BinaryFileResponse|JsonResponse
+    public function download(UploadedFile $uploadedFile): StreamedResponse|JsonResponse
     {
         Gate::authorize('view', $uploadedFile);
 
@@ -28,12 +29,12 @@ class UploadedFileController
             ], 422);
         }
 
-        if (! Storage::disk('local')->exists($uploadedFile->storage_path)) {
+        if (! $this->workbookStorage->exists($uploadedFile->storage_path)) {
             return response()->json(['message' => 'Uploaded file was not found.'], 404);
         }
 
-        return response()->download(
-            Storage::disk('local')->path($uploadedFile->storage_path),
+        return $this->workbookStorage->download(
+            $uploadedFile->storage_path,
             $uploadedFile->original_name,
         );
     }

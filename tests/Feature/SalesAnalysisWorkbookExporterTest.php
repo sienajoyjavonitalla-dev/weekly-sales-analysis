@@ -8,7 +8,6 @@ use App\Models\ProductCategory;
 use App\Models\SalesRow;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
 
 class SalesAnalysisWorkbookExporterTest extends TestCase
@@ -58,9 +57,7 @@ class SalesAnalysisWorkbookExporterTest extends TestCase
         ]);
 
         $report = app(SalesAnalysisWorkbookExporter::class)->export($batch, $user->id);
-        $path = storage_path('app/private/'.$report->storage_path);
-
-        $sheet = IOFactory::load($path)->getSheetByName('Sheet');
+        $sheet = $this->loadStoredSpreadsheet($report->storage_path)->getSheetByName('Sheet');
 
         $this->assertSame('A9D1F7', strtoupper($sheet->getStyle('A1')->getFill()->getStartColor()->getRGB()));
         $this->assertSame('674-00004-001', $sheet->getCell('A2')->getCalculatedValue());
@@ -158,7 +155,7 @@ class SalesAnalysisWorkbookExporterTest extends TestCase
         ]);
 
         $report = app(SalesAnalysisWorkbookExporter::class)->export($batch, $user->id);
-        $sheet = IOFactory::load(storage_path('app/private/'.$report->storage_path))->getSheetByName('RHP');
+        $sheet = $this->loadStoredSpreadsheet($report->storage_path)->getSheetByName('RHP');
 
         $this->assertSame('RHP MISCELLANEOUS', $sheet->getCell('A2')->getCalculatedValue());
         $this->assertTrue($sheet->getStyle('A2')->getFont()->getBold());
@@ -262,7 +259,7 @@ class SalesAnalysisWorkbookExporterTest extends TestCase
         ]);
 
         $report = app(SalesAnalysisWorkbookExporter::class)->export($batch, $user->id);
-        $sheet = IOFactory::load(storage_path('app/private/'.$report->storage_path))->getSheetByName('RHP');
+        $sheet = $this->loadStoredSpreadsheet($report->storage_path)->getSheetByName('RHP');
 
         // Pack category: header row 2, data 3-4, subtotal row 5
         $this->assertSame(14.0, (float) $sheet->getCell('J5')->getCalculatedValue());
@@ -320,7 +317,7 @@ class SalesAnalysisWorkbookExporterTest extends TestCase
         ]);
 
         $report = app(SalesAnalysisWorkbookExporter::class)->export($batch, $user->id);
-        $sheet = IOFactory::load(storage_path('app/private/'.$report->storage_path))->getSheetByName('Parts & TSD');
+        $sheet = $this->loadStoredSpreadsheet($report->storage_path)->getSheetByName('Parts & TSD');
 
         $this->assertSame('Misc (on Total Sales Report)', $sheet->getCell('A2')->getCalculatedValue());
         $this->assertSame('Misc (on Total Sales Report)', $sheet->getCell('B2')->getCalculatedValue());
@@ -358,7 +355,7 @@ class SalesAnalysisWorkbookExporterTest extends TestCase
         ]);
 
         $report = app(SalesAnalysisWorkbookExporter::class)->export($batch, $user->id);
-        $spreadsheet = IOFactory::load(storage_path('app/private/'.$report->storage_path));
+        $spreadsheet = $this->loadStoredSpreadsheet($report->storage_path);
 
         $this->assertSame(['RHP', 'Parts & TSD', 'Sheet'], $spreadsheet->getSheetNames());
         $this->assertSame(0, $report->summary['state_rows'] ?? null);
@@ -394,7 +391,7 @@ class SalesAnalysisWorkbookExporterTest extends TestCase
         ]);
 
         $report = app(SalesAnalysisWorkbookExporter::class)->export($batch, $user->id, true);
-        $spreadsheet = IOFactory::load(storage_path('app/private/'.$report->storage_path));
+        $spreadsheet = $this->loadStoredSpreadsheet($report->storage_path);
 
         $this->assertSame(['RHP', 'Parts & TSD', 'State', 'Sheet'], $spreadsheet->getSheetNames());
         $this->assertSame(1, $report->summary['state_rows'] ?? null);
@@ -501,7 +498,7 @@ class SalesAnalysisWorkbookExporterTest extends TestCase
         ]);
 
         $report = app(SalesAnalysisWorkbookExporter::class)->export($batch, $user->id);
-        $sheet = IOFactory::load(storage_path('app/private/'.$report->storage_path))->getSheetByName('RHP');
+        $sheet = $this->loadStoredSpreadsheet($report->storage_path)->getSheetByName('RHP');
 
         $grandTotalRow = $this->grandTotalRow($sheet);
         $this->assertSame('RHP', $sheet->getCell('B'.($grandTotalRow + 5))->getValue());

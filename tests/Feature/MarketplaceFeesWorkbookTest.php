@@ -110,7 +110,7 @@ class MarketplaceFeesWorkbookTest extends TestCase
         $this->assertSame('amazon_fees', $report->report_type);
         $this->assertSame('completed', $report->status);
 
-        $sheet = IOFactory::load(storage_path('app/private/'.$report->storage_path))->getActiveSheet();
+        $sheet = $this->loadStoredSpreadsheet($report->storage_path)->getActiveSheet();
 
         $this->assertSame('Sales Rep 1 ID', $sheet->getCell('A1')->getValue());
         $this->assertSame('A9D1F7', $sheet->getStyle('A1')->getFill()->getStartColor()->getRGB());
@@ -153,7 +153,7 @@ class MarketplaceFeesWorkbookTest extends TestCase
             $user->id,
         );
 
-        $sheet = IOFactory::load(storage_path('app/private/'.$report->storage_path))->getActiveSheet();
+        $sheet = $this->loadStoredSpreadsheet($report->storage_path)->getActiveSheet();
 
         $this->assertSame('RHP MISCELLANEOUS', $sheet->getCell('A2')->getValue());
         $this->assertSame('880-R4100-005', $sheet->getCell('B3')->getValue());
@@ -193,7 +193,7 @@ class MarketplaceFeesWorkbookTest extends TestCase
             $user->id,
         );
 
-        $sheet = IOFactory::load(storage_path('app/private/'.$report->storage_path))->getActiveSheet();
+        $sheet = $this->loadStoredSpreadsheet($report->storage_path)->getActiveSheet();
         $itemIds = [];
         foreach ($sheet->getRowIterator() as $row) {
             $itemIds[] = (string) $sheet->getCell('B'.$row->getRowIndex())->getValue();
@@ -222,7 +222,7 @@ class MarketplaceFeesWorkbookTest extends TestCase
             $user->id,
         );
 
-        $sheet = IOFactory::load(storage_path('app/private/'.$report->storage_path))->getActiveSheet();
+        $sheet = $this->loadStoredSpreadsheet($report->storage_path)->getActiveSheet();
 
         $this->assertSame('RHP MISCELLANEOUS', $sheet->getCell('A2')->getValue());
         $this->assertSame('880-R4100-005', $sheet->getCell('B3')->getValue());

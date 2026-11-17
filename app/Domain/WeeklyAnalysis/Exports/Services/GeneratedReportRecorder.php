@@ -2,13 +2,18 @@
 
 namespace App\Domain\WeeklyAnalysis\Exports\Services;
 
+use App\Domain\WeeklyAnalysis\Storage\WorkbookStorage;
 use App\Models\GeneratedReport;
 use App\Models\ImportBatch;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class GeneratedReportRecorder
 {
+    public function __construct(
+        private readonly WorkbookStorage $workbookStorage,
+    ) {
+    }
+
     public function save(
         ImportBatch $importBatch,
         string $reportType,
@@ -16,16 +21,9 @@ class GeneratedReportRecorder
         ?int $generatedByUserId = null,
         array $summary = [],
     ): GeneratedReport {
-        $directory = storage_path('app/private/generated-reports/'.$importBatch->id);
-
-        if (! is_dir($directory)) {
-            mkdir($directory, 0755, true);
-        }
-
         $fileName = $this->fileName($importBatch, $reportType);
-        $absolutePath = $directory.DIRECTORY_SEPARATOR.$fileName;
-
-        IOFactory::createWriter($spreadsheet, 'Xlsx')->save($absolutePath);
+        $storagePath = 'generated-reports/'.$importBatch->id.'/'.$fileName;
+        $stored = $this->workbookStorage->putSpreadsheet($storagePath, $spreadsheet);
 
         return GeneratedReport::query()->updateOrCreate(
             [
@@ -35,8 +33,8 @@ class GeneratedReportRecorder
             [
                 'status' => 'completed',
                 'file_name' => $fileName,
-                'storage_path' => 'generated-reports/'.$importBatch->id.'/'.$fileName,
-                'sha256_checksum' => hash_file('sha256', $absolutePath),
+                'storage_path' => $stored['storage_path'],
+                'sha256_checksum' => $stored['sha256_checksum'],
                 'summary' => $summary,
                 'errors' => null,
                 'generated_by_user_id' => $generatedByUserId,

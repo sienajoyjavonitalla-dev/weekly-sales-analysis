@@ -4,18 +4,19 @@ namespace App\Domain\WeeklyAnalysis\Imports\Services;
 
 use App\Domain\WeeklyAnalysis\Imports\Enums\WorkbookType;
 use App\Domain\WeeklyAnalysis\Security\Services\AuditLogger;
+use App\Domain\WeeklyAnalysis\Storage\WorkbookStorage;
 use App\Models\GeneratedReport;
 use App\Models\ImportBatch;
 use App\Models\ImportBatchFeeAdjustment;
 use App\Models\UploadedFile;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class UploadedFileDeletionService
 {
     public function __construct(
         private readonly AuditLogger $auditLogger,
+        private readonly WorkbookStorage $workbookStorage,
     ) {
     }
 
@@ -28,8 +29,8 @@ class UploadedFileDeletionService
             'reason' => $reason,
         ];
 
-        if (Storage::disk('local')->exists($uploadedFile->storage_path)) {
-            Storage::disk('local')->delete($uploadedFile->storage_path);
+        if (is_string($uploadedFile->storage_path) && $uploadedFile->storage_path !== '') {
+            $this->workbookStorage->deleteIfPresent($uploadedFile->storage_path);
         }
 
         $this->removeGeneratedOutput($importBatch, $uploadedFile->file_type);
@@ -42,9 +43,7 @@ class UploadedFileDeletionService
         $this->auditLogger->log('uploaded_file.deleted', $request, $importBatch, $importBatch, $properties);
 
         if ($importBatch !== null && $importBatch->status === 'draft' && ! $importBatch->uploadedFiles()->exists()) {
-            if (Storage::disk('local')->exists('uploads/'.$importBatch->id)) {
-                Storage::disk('local')->deleteDirectory('uploads/'.$importBatch->id);
-            }
+            $this->workbookStorage->deleteDirectory('uploads/'.$importBatch->id);
 
             $this->auditLogger->log('import_batch.deleted', $request, $importBatch, $importBatch, [
                 'reason' => 'last_uploaded_file_removed',
@@ -66,8 +65,8 @@ class UploadedFileDeletionService
             ->get();
 
         foreach ($reports as $report) {
-            if (is_string($report->storage_path) && $report->storage_path !== '' && Storage::disk('local')->exists($report->storage_path)) {
-                Storage::disk('local')->delete($report->storage_path);
+            if (is_string($report->storage_path) && $report->storage_path !== '') {
+                $this->workbookStorage->deleteIfPresent($report->storage_path);
             }
 
             $report->delete();
@@ -115,10 +114,7 @@ class UploadedFileDeletionService
             ->get();
 
         foreach ($batches as $batch) {
-            if (Storage::disk('local')->exists('uploads/'.$batch->id)) {
-                Storage::disk('local')->deleteDirectory('uploads/'.$batch->id);
-            }
-
+            $this->workbookStorage->deleteDirectory('uploads/'.$batch->id);
             $batch->delete();
         }
 

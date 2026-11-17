@@ -5,12 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Domain\WeeklyAnalysis\Exports\Services\GeneratedWorkbookPreviewReader;
 use App\Domain\WeeklyAnalysis\Exports\Services\WeeklyReportExportService;
 use App\Domain\WeeklyAnalysis\Security\Services\AuditLogger;
+use App\Domain\WeeklyAnalysis\Storage\WorkbookStorage;
 use App\Models\GeneratedReport;
 use App\Models\ImportBatch;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class GeneratedReportController
 {
@@ -50,8 +51,11 @@ class GeneratedReportController
         return response()->json(['data' => $reports], 201);
     }
 
-    public function preview(GeneratedReport $generatedReport, GeneratedWorkbookPreviewReader $previewReader): JsonResponse
-    {
+    public function preview(
+        GeneratedReport $generatedReport,
+        GeneratedWorkbookPreviewReader $previewReader,
+        WorkbookStorage $workbookStorage,
+    ): JsonResponse {
         Gate::authorize('view', $generatedReport);
 
         if (! in_array($generatedReport->report_type, ['sales_analysis', 'amazon_fees', 'walmart_fees'], true)) {
@@ -62,13 +66,15 @@ class GeneratedReportController
             return response()->json(['message' => 'Report is not ready to view.'], 422);
         }
 
-        $path = storage_path('app/private/'.$generatedReport->storage_path);
-
-        if (! is_file($path)) {
+        if (! $workbookStorage->exists($generatedReport->storage_path)) {
             return response()->json(['message' => 'Generated report file was not found.'], 404);
         }
 
         $importBatch = $generatedReport->importBatch;
+        $sheets = $workbookStorage->withLocalCopy(
+            $generatedReport->storage_path,
+            fn (string $path): array => $previewReader->read($path),
+        );
 
         return response()->json([
             'data' => [
@@ -83,27 +89,32 @@ class GeneratedReportController
                         'week_ending' => $importBatch->week_ending?->toDateString(),
                     ],
                 ],
-                'sheets' => $previewReader->read($path),
+                'sheets' => $sheets,
             ],
         ]);
     }
 
-    public function download(Request $request, GeneratedReport $generatedReport, AuditLogger $auditLogger): BinaryFileResponse|JsonResponse
-    {
+    public function download(
+        Request $request,
+        GeneratedReport $generatedReport,
+        AuditLogger $auditLogger,
+        WorkbookStorage $workbookStorage,
+    ): StreamedResponse|JsonResponse {
         Gate::authorize('download', $generatedReport);
 
         if ($generatedReport->status !== 'completed' || $generatedReport->storage_path === null) {
             return response()->json(['message' => 'Report is not ready for download.'], 422);
         }
 
-        $path = storage_path('app/private/'.$generatedReport->storage_path);
-
-        if (! is_file($path)) {
+        if (! $workbookStorage->exists($generatedReport->storage_path)) {
             return response()->json(['message' => 'Generated report file was not found.'], 404);
         }
 
         $auditLogger->log('report.downloaded', $request, $generatedReport, $generatedReport->importBatch);
 
-        return response()->download($path, $generatedReport->file_name);
+        return $workbookStorage->download(
+            $generatedReport->storage_path,
+            $generatedReport->file_name ?? basename($generatedReport->storage_path),
+        );
     }
 }

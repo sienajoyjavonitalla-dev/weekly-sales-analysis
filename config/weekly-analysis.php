@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'disk' => env('WEEKLY_ANALYSIS_DISK', 'local'),
+
     'uploads' => [
         'max_file_size_kb' => env('WEEKLY_ANALYSIS_MAX_UPLOAD_KB', 20480),
         'allowed_extensions' => ['xlsx'],

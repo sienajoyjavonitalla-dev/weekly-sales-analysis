@@ -11,7 +11,6 @@ use App\Models\ReconciliationResult;
 use App\Models\SalesRow;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
 
 class GeneratedReportRefreshTest extends TestCase
@@ -37,7 +36,7 @@ class GeneratedReportRefreshTest extends TestCase
             ->where('import_batch_id', $batch->id)
             ->where('report_type', 'weekly_meter_report')
             ->firstOrFail();
-        $sheet = IOFactory::load(storage_path('app/private/'.$meter->storage_path))->getActiveSheet();
+        $sheet = $this->loadStoredSpreadsheet($meter->storage_path)->getActiveSheet();
         $labels = collect(range(1, 60))->map(fn (int $row) => $sheet->getCell('A'.$row)->getValue());
 
         $this->assertTrue($labels->contains('RHP 4.0 Kits'));

@@ -10,7 +10,6 @@ use App\Models\ProductCategory;
 use App\Models\SalesRow;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
 
 class WeeklyReportExportServiceTest extends TestCase
@@ -79,8 +78,8 @@ class WeeklyReportExportServiceTest extends TestCase
         $this->assertSame('completed', $weekOneMeter->status);
         $this->assertSame('completed', $weekTwoMeter->status);
 
-        $weekOneSheet = IOFactory::load(storage_path('app/private/'.$weekOneMeter->storage_path))->getActiveSheet();
-        $weekTwoSheet = IOFactory::load(storage_path('app/private/'.$weekTwoMeter->storage_path))->getActiveSheet();
+        $weekOneSheet = $this->loadStoredSpreadsheet($weekOneMeter->storage_path)->getActiveSheet();
+        $weekTwoSheet = $this->loadStoredSpreadsheet($weekTwoMeter->storage_path)->getActiveSheet();
 
         $this->assertSame(2.0, (float) $weekOneSheet->getCell('B7')->getCalculatedValue());
         $this->assertSame(1246.0, (float) $weekOneSheet->getCell('C7')->getCalculatedValue());

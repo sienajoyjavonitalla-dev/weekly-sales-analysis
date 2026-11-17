@@ -24,39 +24,39 @@ class TotalSalesReportExporter extends AbstractTemplateReportExporter
      */
     public function hasTemplate(ImportBatch $importBatch): bool
     {
-        return $this->templatePathResolver->resolve($importBatch, WorkbookType::TotalSalesReport->value) !== null;
+        return $this->templatePathResolver->exists($importBatch, WorkbookType::TotalSalesReport->value);
     }
 
     public function export(ImportBatch $importBatch, ?int $generatedByUserId = null): GeneratedReport
     {
-        $templatePath = $this->templatePathResolver->resolve($importBatch, WorkbookType::TotalSalesReport->value);
+        return $this->templatePathResolver->withLocalCopy(
+            $importBatch,
+            WorkbookType::TotalSalesReport->value,
+            function (string $templatePath) use ($importBatch, $generatedByUserId): GeneratedReport {
+                $spreadsheet = IOFactory::load($templatePath);
+                $sheet = $this->currentMonthSheet($spreadsheet, $importBatch);
 
-        if ($templatePath === null) {
-            throw new RuntimeException('Total Sales Report template was not found for this import batch.');
-        }
+                if ($sheet === null) {
+                    throw new RuntimeException('Current month sheet was not found in the Total Sales Report template.');
+                }
 
-        $spreadsheet = IOFactory::load($templatePath);
-        $sheet = $this->currentMonthSheet($spreadsheet, $importBatch);
+                $columns = $this->weekColumns($sheet, $importBatch);
+                $writtenRows = $this->writeCategoryTotals($sheet, $importBatch, $columns);
+                $this->writeOrderMetrics($sheet, $importBatch);
 
-        if ($sheet === null) {
-            throw new RuntimeException('Current month sheet was not found in the Total Sales Report template.');
-        }
-
-        $columns = $this->weekColumns($sheet, $importBatch);
-        $writtenRows = $this->writeCategoryTotals($sheet, $importBatch, $columns);
-        $this->writeOrderMetrics($sheet, $importBatch);
-
-        return $this->recorder->save(
-            importBatch: $importBatch,
-            reportType: WorkbookType::TotalSalesReport->value,
-            spreadsheet: $spreadsheet,
-            generatedByUserId: $generatedByUserId,
-            summary: [
-                'sheet' => $sheet->getTitle(),
-                'week_units_column' => $columns['units'],
-                'week_amount_column' => $columns['amount'],
-                'category_rows_written' => $writtenRows,
-            ],
+                return $this->recorder->save(
+                    importBatch: $importBatch,
+                    reportType: WorkbookType::TotalSalesReport->value,
+                    spreadsheet: $spreadsheet,
+                    generatedByUserId: $generatedByUserId,
+                    summary: [
+                        'sheet' => $sheet->getTitle(),
+                        'week_units_column' => $columns['units'],
+                        'week_amount_column' => $columns['amount'],
+                        'category_rows_written' => $writtenRows,
+                    ],
+                );
+            },
         );
     }
 

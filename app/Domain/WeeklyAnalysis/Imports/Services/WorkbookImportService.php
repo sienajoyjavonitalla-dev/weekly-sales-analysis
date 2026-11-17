@@ -12,6 +12,7 @@ use App\Domain\WeeklyAnalysis\Imports\Parsers\AmazonFeesWorkbookParser;
 use App\Domain\WeeklyAnalysis\Imports\Parsers\SalesAnalysisWorkbookParser;
 use App\Domain\WeeklyAnalysis\Imports\Parsers\WalmartFeesWorkbookParser;
 use App\Domain\WeeklyAnalysis\Imports\Parsers\WeeklyMeterReportWorkbookParser;
+use App\Domain\WeeklyAnalysis\Storage\WorkbookStorage;
 use App\Models\ImportBatch;
 use App\Models\IncomeStatementLine;
 use App\Models\OrderRow;
@@ -21,7 +22,6 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile as HttpUploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
@@ -36,6 +36,7 @@ class WorkbookImportService
     public function __construct(
         private readonly SalesRowClassifier $salesRowClassifier,
         private readonly UploadedFileDeletionService $uploadedFileDeletionService,
+        private readonly WorkbookStorage $workbookStorage,
     ) {
         $this->parsers = $this->buildParserMap([
             new SalesAnalysisWorkbookParser(),
@@ -174,12 +175,12 @@ class WorkbookImportService
     ): UploadedFile {
         $extension = $file->getClientOriginalExtension() ?: 'xlsx';
         $baseName = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
-        $path = $file->storeAs(
+        $checksum = $this->workbookStorage->checksumFromPath($file->getRealPath());
+        $path = $this->workbookStorage->storeUploadedFile(
+            $file,
             'uploads/'.$importBatch->id,
             $type.'-'.now()->format('YmdHis').'-'.$baseName.'.'.$extension,
-            'local',
         );
-        $absolutePath = Storage::disk('local')->path($path);
 
         return UploadedFile::query()->updateOrCreate(
             [
@@ -191,7 +192,7 @@ class WorkbookImportService
                 'storage_path' => $path,
                 'mime_type' => $file->getMimeType(),
                 'size_bytes' => $file->getSize() ?: 0,
-                'sha256_checksum' => hash_file('sha256', $absolutePath),
+                'sha256_checksum' => $checksum,
                 'sheet_names' => $parsed->sheetNames,
                 'status' => $parsed->isValid() ? 'imported' : 'validation_failed',
                 'validation_errors' => array_map(
